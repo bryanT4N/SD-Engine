@@ -16,6 +16,18 @@ public:
 	Vec3(Vec3 const& copyFrom);							// copy constructor (from another vec3)
 	explicit Vec3(float initialX, float intialY, float intialZ);		// explicit constructor (from x, y)
 
+	// Accessors (const methods)
+	float		GetLength() const; 
+	float		GetLengthXY() const; 
+	float		GetLengthSquared() const;
+	float		GetLengthXYSquared() const;
+	float		GetOrientationAboutZDegrees() const; 
+	float		GetOrientationAboutZRadians() const; 
+	Vec3 const	GetRotatedAboutZDegrees(float rotationDegreesAboutZ) const; 
+	Vec3 const	GetRotatedAboutZRadians(float rotationRadiansAboutZ) const; 
+	Vec3 const	GetClampedToMaxLength(float maxLength) const; 
+	Vec3 const	GetNormalized() const;
+
 	// Operators (const)
 	bool		operator==(Vec3 const& compare) const;		// vec3 == vec3
 	bool		operator!=(Vec3 const& compare) const;		// vec3 != vec3

@@ -1,6 +1,9 @@
 #include "Engine/Math/Vec2.hpp"
-//#include "Engine/Math/MathUtils.hpp"
+#include "Engine/Math/MathUtils.hpp"
 //#include "Engine/Core/EngineCommon.hpp"
+
+#define _USE_MATH_DEFINES
+#include <cmath>
 
 
 //-----------------------------------------------------------------------------------------------
@@ -10,7 +13,6 @@ Vec2::Vec2( Vec2 const& copy )
 {
 }
 
-
 //-----------------------------------------------------------------------------------------------
 Vec2::Vec2( float initialX, float initialY )
 	: x(initialX)
@@ -18,6 +20,191 @@ Vec2::Vec2( float initialX, float initialY )
 {
 }
 
+//-----------------------------------------------------------------------------------------------
+Vec2 const Vec2::MakeFromPolarDegrees(float orientationDegrees, float length)
+{
+	return Vec2(length * CosDegrees(orientationDegrees), length * SinDegrees(orientationDegrees));
+}
+
+//-----------------------------------------------------------------------------------------------
+Vec2 const Vec2::MakeFromPolarRadians(float orientationRadians, float length)
+{
+	return Vec2(length * cosf(orientationRadians), length * sinf(orientationRadians));
+}
+
+//-----------------------------------------------------------------------------------------------
+float Vec2::GetLength() const
+{
+	return sqrtf(x * x + y * y);
+}
+
+//-----------------------------------------------------------------------------------------------
+float Vec2::GetLengthSquared() const
+{
+	return (x * x + y * y);
+}
+
+//-----------------------------------------------------------------------------------------------
+float Vec2::GetOrientationDegrees() const
+{
+	return Atan2Degrees(y, x);
+}
+
+//-----------------------------------------------------------------------------------------------
+float Vec2::GetOrientationRadians() const
+{
+	return atan2f(y, x);
+}
+
+//-----------------------------------------------------------------------------------------------
+Vec2 const Vec2::GetRotatedBy90Degrees() const
+{
+	return Vec2(-y, x);
+}
+
+//-----------------------------------------------------------------------------------------------
+Vec2 const Vec2::GetRotatedByMinus90Degrees() const
+{
+	return Vec2(y, -x);
+}
+
+//-----------------------------------------------------------------------------------------------
+Vec2 const Vec2::GetRotatedByDegrees(float rotationDegrees)
+{
+	return Vec2(x * CosDegrees(rotationDegrees) + y * (-SinDegrees(rotationDegrees)), x * SinDegrees(rotationDegrees) + y * (CosDegrees(rotationDegrees)));
+}
+
+//-----------------------------------------------------------------------------------------------
+Vec2 const Vec2::GetRotatedByRadians(float rotationRadians)
+{
+	return Vec2(x * cosf(rotationRadians) + y * (-sinf(rotationRadians)), x * sinf(rotationRadians) + y * (cosf(rotationRadians)));
+}
+
+//-----------------------------------------------------------------------------------------------
+Vec2 const Vec2::GetClamped(float maxLength) const
+{
+	if( GetLengthSquared() > maxLength * maxLength ) { return GetNormalized() * maxLength; }
+	return *this;
+}
+
+//-----------------------------------------------------------------------------------------------
+Vec2 const Vec2::GetNormalized() const
+{
+	float length = GetLength();
+	return Vec2(x / length, y / length);
+}
+
+//-----------------------------------------------------------------------------------------------
+void Vec2::SetOrientationDegrees(float newOrientationDegrees)
+{
+	float length = GetLength();
+	x = length * CosDegrees(newOrientationDegrees);
+	y = length * SinDegrees(newOrientationDegrees);
+}
+
+//-----------------------------------------------------------------------------------------------
+void Vec2::SetOrientationRadians(float newOrientationRadians)
+{
+	float length = GetLength();
+	x = length * cosf(newOrientationRadians);
+	y = length * sinf(newOrientationRadians);
+}
+
+//-----------------------------------------------------------------------------------------------
+void Vec2::SetPolarDegrees(float newOrientationDegrees, float newLength)
+{
+	x = newLength * CosDegrees(newOrientationDegrees);
+	y = newLength * SinDegrees(newOrientationDegrees);
+}
+
+//-----------------------------------------------------------------------------------------------
+void Vec2::SetPolarRadians(float newOrientationRadians, float newLength)
+{
+	x = newLength * cosf(newOrientationRadians);
+	y = newLength * sinf(newOrientationRadians);
+}
+
+//-----------------------------------------------------------------------------------------------
+void Vec2::Rotate90Degrees()
+{
+	Vec2 previous = Vec2(x, y);
+	x = - previous.y;
+	y = previous.x;
+}
+
+//-----------------------------------------------------------------------------------------------
+void Vec2::RotateMinus90Degrees()
+{
+	Vec2 previous = Vec2(x, y);
+	x = previous.y;
+	y = - previous.x;
+}
+
+//-----------------------------------------------------------------------------------------------
+void Vec2::RotateDegrees(float rotationDegrees)
+{
+	Vec2 previous = Vec2(x, y);
+	x = previous.x * CosDegrees(rotationDegrees) + previous.y * (-SinDegrees(rotationDegrees));
+	y = previous.x * SinDegrees(rotationDegrees) + previous.y * (CosDegrees(rotationDegrees));
+}
+
+//-----------------------------------------------------------------------------------------------
+void Vec2::RotateRadians(float rotationRadians)
+{
+	Vec2 previous = Vec2(x, y);
+	x = previous.x * cosf(rotationRadians) + previous.y * (-sinf(rotationRadians));
+	y = previous.x * sinf(rotationRadians) + previous.y * (cosf(rotationRadians));
+}
+
+//-----------------------------------------------------------------------------------------------
+void Vec2::SetLength(float newlength)
+{
+	//float length = GetLength();
+	//x = x / length * newlength;
+	//y = y / length * newlength;
+	*this = GetNormalized() * newlength;
+}
+
+//-----------------------------------------------------------------------------------------------
+void Vec2::ClampLength(float maxLength)
+{
+	if (GetLengthSquared() > maxLength * maxLength) { SetLength(maxLength); }
+}
+
+//-----------------------------------------------------------------------------------------------
+void Vec2::Normalize()
+{
+	float length = GetLength();
+	x /= length;
+	y /= length;
+}
+
+//-----------------------------------------------------------------------------------------------
+float Vec2::NormalizeAndGetPreviousLength()
+{
+	float length = GetLength();
+	Normalize();
+	return length;
+}
+
+//-----------------------------------------------------------------------------------------------
+Vec2 const operator*(float uniformScale, Vec2 const& vecToScale)
+{
+	return Vec2(uniformScale * vecToScale.x, uniformScale * vecToScale.y);
+}
+
+//-----------------------------------------------------------------------------------------------
+bool Vec2::operator==( Vec2 const& compare ) const
+{
+	return x == compare.x && y == compare.y;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+bool Vec2::operator!=( Vec2 const& compare ) const
+{
+	return !(x == compare.x && y == compare.y);
+}
 
 //-----------------------------------------------------------------------------------------------
 Vec2 const Vec2::operator + ( Vec2 const& vecToAdd ) const
@@ -33,17 +220,17 @@ Vec2 const Vec2::operator-( Vec2 const& vecToSubtract ) const
 }
 
 
-//------------------------------------------------------------------------------------------------
-Vec2 const Vec2::operator-() const
-{
-	return Vec2(-x, -y);
-}
-
-
 //-----------------------------------------------------------------------------------------------
 Vec2 const Vec2::operator*( float uniformScale ) const
 {
 	return Vec2(uniformScale*x, uniformScale*y);
+}
+
+
+//------------------------------------------------------------------------------------------------
+Vec2 const Vec2::operator-() const
+{
+	return Vec2(-x, -y);
 }
 
 
@@ -98,27 +285,6 @@ void Vec2::operator=( Vec2 const& copyFrom )
 {
 	x = copyFrom.x;
 	y = copyFrom.y;
-}
-
-
-//-----------------------------------------------------------------------------------------------
-Vec2 const operator*( float uniformScale, Vec2 const& vecToScale )
-{
-	return Vec2(uniformScale*vecToScale.x, uniformScale * vecToScale.y);
-}
-
-
-//-----------------------------------------------------------------------------------------------
-bool Vec2::operator==( Vec2 const& compare ) const
-{
-	return x == compare.x && y == compare.y;
-}
-
-
-//-----------------------------------------------------------------------------------------------
-bool Vec2::operator!=( Vec2 const& compare ) const
-{
-	return !(x == compare.x && y == compare.y);
 }
 
 

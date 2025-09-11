@@ -1,6 +1,9 @@
 #include "Engine/Math/Vec3.hpp"
-//#include "Engine/Math/MathUtils.hpp"
+#include "Engine/Math/MathUtils.hpp"
 //#include "Engine/Core/EngineCommon.hpp"
+
+#define _USE_MATH_DEFINES
+#include <cmath>
 
 
 //-----------------------------------------------------------------------------------------------
@@ -20,6 +23,64 @@ Vec3::Vec3( float initialX, float initialY, float initialZ)
 {
 }
 
+
+float Vec3::GetLength() const
+{
+	return sqrtf(x * x + y * y + z * z);
+}
+
+float Vec3::GetLengthXY() const
+{
+	return sqrtf(x * x + y * y);
+}
+
+float Vec3::GetLengthSquared() const
+{
+	return (x * x + y * y + z * z);
+}
+
+float Vec3::GetLengthXYSquared() const
+{
+	return (x * x + y * y);
+}
+
+float Vec3::GetOrientationAboutZDegrees() const
+{
+	return Atan2Degrees(y, x);
+}
+
+float Vec3::GetOrientationAboutZRadians() const
+{
+	return atan2f(y, x);
+}
+
+Vec3 const Vec3::GetRotatedAboutZDegrees(float rotationDegreesAboutZ) const
+{
+	return Vec3(
+		x * CosDegrees(rotationDegreesAboutZ) + y * (-SinDegrees(rotationDegreesAboutZ)), 
+		x * SinDegrees(rotationDegreesAboutZ) + y * (CosDegrees(rotationDegreesAboutZ)), 
+		z);
+}
+
+Vec3 const Vec3::GetRotatedAboutZRadians(float rotationRadiansAboutZ) const
+{
+	return Vec3(
+		x * cosf(rotationRadiansAboutZ) + y * (-sinf(rotationRadiansAboutZ)),
+		x * sinf(rotationRadiansAboutZ) + y * (cosf(rotationRadiansAboutZ)),
+		z);
+}
+
+Vec3 const Vec3::GetClampedToMaxLength(float maxLength) const
+{
+	if( GetLengthSquared() > maxLength * maxLength ) { return GetNormalized() * maxLength; }
+	return *this;
+}
+
+Vec3 const Vec3::GetNormalized() const
+{
+	float length = GetLength();
+	return Vec3(x / length, y / length, y / length);
+}
 
 //-----------------------------------------------------------------------------------------------
 Vec3 const Vec3::operator + ( Vec3 const& vecToAdd ) const
