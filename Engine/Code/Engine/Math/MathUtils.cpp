@@ -82,13 +82,13 @@ void TransformPosition2D(Vec2& posToTransform, float uniformscale, float rotatio
 	posToTransform = posToTransform + translation;
 }
 
-void TransformPositionXY3D(Vec3& posToTransform, float xyScale, float zRotationbegrees, Vec2 const& xyTranslation)
+void TransformPositionXY3D(Vec3& posToTransform, float xyScale, float zRotationDegrees, Vec2 const& xyTranslation)
 {
 	// XY-Scale
 	posToTransform = posToTransform * Vec3(xyScale, xyScale, 1);
 
 	// Z-Rotate
-	posToTransform = posToTransform.GetRotatedAboutZDegrees(zRotationbegrees);
+	posToTransform = posToTransform.GetRotatedAboutZDegrees(zRotationDegrees);
 
 	// XY-Translate
 	posToTransform = posToTransform + Vec3(xyTranslation.x, xyTranslation.y, 0);

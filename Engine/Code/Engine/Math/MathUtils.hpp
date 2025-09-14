@@ -32,4 +32,4 @@ bool DoSpheresOverlap(Vec3 const& centerA, float radiusA, Vec3 const& centerB, f
 //-----------------------------------------------------------------------------------------------
 // Transform utilities
 void TransformPosition2D( Vec2& posToTransform, float uniformscale, float rotationDegrees, Vec2 const& translation );
-void TransformPositionXY3D( Vec3& posToTransform, float xyScale, float zRotationbegrees, Vec2 const& xyTranslation );
+void TransformPositionXY3D( Vec3& posToTransform, float xyScale, float zRotationDegrees, Vec2 const& xyTranslation );

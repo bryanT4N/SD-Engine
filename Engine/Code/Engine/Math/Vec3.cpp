@@ -1,3 +1,4 @@
+#include "Engine/Math/Vec2.hpp"
 #include "Engine/Math/Vec3.hpp"
 #include "Engine/Math/MathUtils.hpp"
 //#include "Engine/Core/EngineCommon.hpp"
@@ -46,28 +47,24 @@ float Vec3::GetLengthXYSquared() const
 
 float Vec3::GetOrientationAboutZDegrees() const
 {
-	return Atan2Degrees(y, x);
+	return Vec2(x, y).GetOrientationDegrees();
 }
 
 float Vec3::GetOrientationAboutZRadians() const
 {
-	return atan2f(y, x);
+	return Vec2(x, y).GetOrientationRadians();
 }
 
 Vec3 const Vec3::GetRotatedAboutZDegrees(float rotationDegreesAboutZ) const
 {
-	return Vec3(
-		x * CosDegrees(rotationDegreesAboutZ) + y * (-SinDegrees(rotationDegreesAboutZ)), 
-		x * SinDegrees(rotationDegreesAboutZ) + y * (CosDegrees(rotationDegreesAboutZ)), 
-		z);
+	Vec2 RotatedXY = Vec2(x, y).GetRotatedByDegrees(rotationDegreesAboutZ);
+	return Vec3(RotatedXY.x, RotatedXY.y, z);
 }
 
 Vec3 const Vec3::GetRotatedAboutZRadians(float rotationRadiansAboutZ) const
 {
-	return Vec3(
-		x * cosf(rotationRadiansAboutZ) + y * (-sinf(rotationRadiansAboutZ)),
-		x * sinf(rotationRadiansAboutZ) + y * (cosf(rotationRadiansAboutZ)),
-		z);
+	Vec2 RotatedXY = Vec2(x, y).GetRotatedByRadians(rotationRadiansAboutZ);
+	return Vec3(RotatedXY.x, RotatedXY.y, z);
 }
 
 Vec3 const Vec3::GetClampedToMaxLength(float maxLength) const

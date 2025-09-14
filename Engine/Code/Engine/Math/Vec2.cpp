@@ -71,13 +71,13 @@ Vec2 const Vec2::GetRotatedByMinus90Degrees() const
 //-----------------------------------------------------------------------------------------------
 Vec2 const Vec2::GetRotatedByDegrees(float rotationDegrees)
 {
-	return Vec2(x * CosDegrees(rotationDegrees) + y * (-SinDegrees(rotationDegrees)), x * SinDegrees(rotationDegrees) + y * (CosDegrees(rotationDegrees)));
+	return Vec2::MakeFromPolarDegrees(GetOrientationDegrees() + rotationDegrees, GetLength());
 }
 
 //-----------------------------------------------------------------------------------------------
 Vec2 const Vec2::GetRotatedByRadians(float rotationRadians)
 {
-	return Vec2(x * cosf(rotationRadians) + y * (-sinf(rotationRadians)), x * sinf(rotationRadians) + y * (cosf(rotationRadians)));
+	return Vec2::MakeFromPolarRadians(GetOrientationRadians() + rotationRadians, GetLength());
 }
 
 //-----------------------------------------------------------------------------------------------
@@ -143,25 +143,18 @@ void Vec2::RotateMinus90Degrees()
 //-----------------------------------------------------------------------------------------------
 void Vec2::RotateDegrees(float rotationDegrees)
 {
-	Vec2 previous = Vec2(x, y);
-	x = previous.x * CosDegrees(rotationDegrees) + previous.y * (-SinDegrees(rotationDegrees));
-	y = previous.x * SinDegrees(rotationDegrees) + previous.y * (CosDegrees(rotationDegrees));
+	*this = GetRotatedByDegrees(rotationDegrees);
 }
 
 //-----------------------------------------------------------------------------------------------
 void Vec2::RotateRadians(float rotationRadians)
 {
-	Vec2 previous = Vec2(x, y);
-	x = previous.x * cosf(rotationRadians) + previous.y * (-sinf(rotationRadians));
-	y = previous.x * sinf(rotationRadians) + previous.y * (cosf(rotationRadians));
+	*this = GetRotatedByRadians(rotationRadians);
 }
 
 //-----------------------------------------------------------------------------------------------
 void Vec2::SetLength(float newlength)
 {
-	//float length = GetLength();
-	//x = x / length * newlength;
-	//y = y / length * newlength;
 	*this = GetNormalized() * newlength;
 }
 
