@@ -12,16 +12,16 @@ class Renderer
 public:
 	Renderer();
 	~Renderer();
-	void Startup(); 
-	void Shutdown();
-	void BeginFrame();
-	void EndFrame();
+	void Startup() const; 
+	void Shutdown() const;
+	void BeginFrame() const;
+	void EndFrame() const;
 
-	void CreateRenderingContext();
-	void ClearScreen(Rgba8 const& clearColor);
+	void CreateRenderingContext() const;
+	void ClearScreen(Rgba8 const& clearColor) const;
 
-	void BeginCamera(Camera const& camera);
-	void EndCamera(Camera const& camera);
+	void BeginCamera(Camera const& camera) const;
+	void EndCamera(Camera const& camera) const;
 
-	void DrawVertexArray(int numVertexes, Vertex const* vertexes);
+	void DrawVertexArray(int numVertexes, Vertex const* vertexes) const;
 };

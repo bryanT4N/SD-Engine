@@ -23,29 +23,29 @@ Renderer::~Renderer()
 }
 
 //-----------------------------------------------------------------------------------------------
-void Renderer::Startup()
+void Renderer::Startup() const
 {
 	CreateRenderingContext();
 }
 
 //-----------------------------------------------------------------------------------------------
-void Renderer::Shutdown()
+void Renderer::Shutdown() const
 {
 }
 
 //-----------------------------------------------------------------------------------------------
-void Renderer::BeginFrame()
+void Renderer::BeginFrame() const
 {
 }
 
 //-----------------------------------------------------------------------------------------------
-void Renderer::EndFrame()
+void Renderer::EndFrame() const
 {
 }
 
 //-----------------------------------------------------------------------------------------------
 // Given an existing OS Window, create a Rendering Context (RC) for OpenGL or DirectX to draw to it.
-void Renderer::CreateRenderingContext()
+void Renderer::CreateRenderingContext() const
 {
 	// Creates an OpenGL rendering context (RC) and binds it to the current window's device context (DC)
 	PIXELFORMATDESCRIPTOR pixelFormatDescriptor;
@@ -74,7 +74,7 @@ void Renderer::CreateRenderingContext()
 }
 
 //-----------------------------------------------------------------------------------------------
-void Renderer::ClearScreen(Rgba8 const& clearColor)
+void Renderer::ClearScreen(Rgba8 const& clearColor) const
 {
 	// Clear all screen (back buffer) pixels to clearColor
 	float floatR = static_cast<float>(clearColor.r) / 256.f;
@@ -88,7 +88,7 @@ void Renderer::ClearScreen(Rgba8 const& clearColor)
 }
 
 //-----------------------------------------------------------------------------------------------
-void Renderer::BeginCamera(Camera const& camera)
+void Renderer::BeginCamera(Camera const& camera) const
 {
 	// Establish a 2D (orthographic) drawing coordinate system: (0,0) bottom-left to (10,10) top-right
 	glLoadIdentity();
@@ -98,13 +98,12 @@ void Renderer::BeginCamera(Camera const& camera)
 }
 
 //-----------------------------------------------------------------------------------------------
-void Renderer::EndCamera(Camera const& camera)
+void Renderer::EndCamera(Camera const& camera) const
 {
-
 }
 
 //-----------------------------------------------------------------------------------------------
-void Renderer::DrawVertexArray(int numVertexes, Vertex const* vertexes)
+void Renderer::DrawVertexArray(int numVertexes, Vertex const* vertexes) const
 {
 	glBegin(GL_TRIANGLES);
 	for (int i = 0; i < numVertexes; ++i) 
