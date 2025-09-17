@@ -2,7 +2,6 @@
 //#include "Engine/Math/MathUtils.hpp"
 //#include "Engine/Core/EngineCommon.hpp"
 
-
 //-----------------------------------------------------------------------------------------------
 
 Vertex::Vertex(Vec3 const& position, Rgba8 const& color, Vec2 const& uvTexCoords)

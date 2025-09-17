@@ -25,6 +25,13 @@ Vec3::Vec3( float initialX, float initialY, float initialZ)
 }
 
 
+Vec3::Vec3(Vec2 const& vecXY)
+	: x(vecXY.x)
+	, y(vecXY.y)
+	, z(0.f)
+{
+}
+
 float Vec3::GetLength() const
 {
 	return sqrtf(x * x + y * y + z * z);
