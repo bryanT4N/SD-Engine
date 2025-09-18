@@ -13,7 +13,7 @@ int RandomNumberGenerator::RollRandomIntInRange(int minInclusive, int maxInclusi
 
 float RandomNumberGenerator::RollRandomFloatZeroToOne()
 {
-	return static_cast<float>(rand()) / (static_cast<float>(RAND_MAX) + 1.0);;
+	return static_cast<float>(rand()) / (static_cast<float>(RAND_MAX) + 1.0f);
 }
 
 float RandomNumberGenerator::RollRandomFloatInRange(float minInclusive, float maxInclusive)

@@ -98,7 +98,7 @@ void Renderer::BeginCamera(Camera const& camera) const
 }
 
 //-----------------------------------------------------------------------------------------------
-void Renderer::EndCamera(Camera const& camera) const
+void Renderer::EndCamera( [[maybe_unused]] Camera const& camera) const
 {
 }
 
