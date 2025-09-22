@@ -1,4 +1,6 @@
+#pragma once
 
+//-----------------------------------------------------------------------------------------------
 class RandomNumberGenerator {
 public:
 	int		RollRandomIntLessThan(int maxNotInclusive);
