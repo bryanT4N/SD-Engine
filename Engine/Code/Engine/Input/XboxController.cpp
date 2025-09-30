@@ -22,7 +22,8 @@ XINPUT_GAMEPAD_DPAD_UP, XINPUT_GAMEPAD_DPAD_DOWN, XINPUT_GAMEPAD_DPAD_LEFT, XINP
 XboxController::XboxController(int controllerID):
 	m_controllerID(controllerID) {
 	for (int buttonIndex = 0; buttonIndex < (int)XboxButtonID::NUM; ++buttonIndex) {
-		UpdateButton(XboxButtonID(buttonIndex), unsigned short(0), unsigned short(0));
+		m_buttons[buttonIndex].isPressed = false;
+		m_buttons[buttonIndex].wasPressedLastFrame = false;
 	}
 }
 
@@ -113,7 +114,7 @@ void XboxController::Reset()
 	UpdateTrigger(m_rightTrigger, unsigned char(0));
 
 	for (int buttonIndex = 0; buttonIndex < (int)XboxButtonID::NUM; ++buttonIndex) {
-		UpdateButton(XboxButtonID(buttonIndex), unsigned short(0), unsigned short(0));
+		m_buttons[buttonIndex].isPressed = false;
 	}
 }
 
