@@ -76,8 +76,8 @@ float Atan2Degrees(float y, float x)
 
 float GetShortestAngularDispDegrees(float startDegrees, float endDegrees)
 {
-	float d1 = fmod(startDegrees, 360.f),
-		d2 = fmod(endDegrees, 360.f);
+	float d1 = fmodf(startDegrees, 360.f),
+		d2 = fmodf(endDegrees, 360.f);
 	
 	d1 = d1 > 0.f ? d1 : d1 + 360.f;
 	d2 = d2 > 0.f ? d2 : d2 + 360.f;
@@ -91,7 +91,7 @@ float GetShortestAngularDispDegrees(float startDegrees, float endDegrees)
 float GetTurnedTowardDegrees(float currentDegrees, float goalDegrees, float maxDeltaDegrees)
 {
 	goalDegrees = currentDegrees + GetShortestAngularDispDegrees(currentDegrees, goalDegrees);
-	float turnedDegrees = fmod(GetClamped(goalDegrees, currentDegrees - maxDeltaDegrees, currentDegrees + maxDeltaDegrees), 360.f);
+	float turnedDegrees = fmodf(GetClamped(goalDegrees, currentDegrees - maxDeltaDegrees, currentDegrees + maxDeltaDegrees), 360.f);
 	return turnedDegrees > 0 ? turnedDegrees : turnedDegrees + 360.f;
 }
 
