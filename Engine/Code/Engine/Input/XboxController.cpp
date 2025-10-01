@@ -11,11 +11,11 @@
 
 //-----------------------------------------------------------------------------------------------
 
-short XboxButtonCodes[XboxButtonID::NUM] = { XINPUT_GAMEPAD_A, XINPUT_GAMEPAD_B, XINPUT_GAMEPAD_X, XINPUT_GAMEPAD_Y,
-XINPUT_GAMEPAD_LEFT_SHOULDER, XINPUT_GAMEPAD_RIGHT_SHOULDER,
-XINPUT_GAMEPAD_BACK, XINPUT_GAMEPAD_START,
-XINPUT_GAMEPAD_LEFT_THUMB, XINPUT_GAMEPAD_RIGHT_THUMB,
-XINPUT_GAMEPAD_DPAD_UP, XINPUT_GAMEPAD_DPAD_DOWN, XINPUT_GAMEPAD_DPAD_LEFT, XINPUT_GAMEPAD_DPAD_RIGHT
+short XboxButtonCodes[XboxButtonID::NUM] = { static_cast<short>(XINPUT_GAMEPAD_A), static_cast<short>(XINPUT_GAMEPAD_B), static_cast<short>(XINPUT_GAMEPAD_X), static_cast<short>(XINPUT_GAMEPAD_Y),
+static_cast<short>(XINPUT_GAMEPAD_LEFT_SHOULDER), static_cast<short>(XINPUT_GAMEPAD_RIGHT_SHOULDER),
+static_cast<short>(XINPUT_GAMEPAD_BACK), static_cast<short>(XINPUT_GAMEPAD_START),
+static_cast<short>(XINPUT_GAMEPAD_LEFT_THUMB), static_cast<short>(XINPUT_GAMEPAD_RIGHT_THUMB),
+static_cast<short>(XINPUT_GAMEPAD_DPAD_UP), static_cast<short>(XINPUT_GAMEPAD_DPAD_DOWN), static_cast<short>(XINPUT_GAMEPAD_DPAD_LEFT), static_cast<short>(XINPUT_GAMEPAD_DPAD_RIGHT)
 };
 
 //-----------------------------------------------------------------------------------------------
