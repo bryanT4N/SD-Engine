@@ -94,6 +94,13 @@ Vec2 const Vec2::GetNormalized() const
 	return Vec2(x / length, y / length);
 }
 
+Vec2 const Vec2::GetReflected(Vec2 const& normalOfSurfaceToReflectOffOf) const
+{
+	// TODO:
+	Vec2 decompositedPerpendicular	= GetProjectedVector2D(*this, normalOfSurfaceToReflectOffOf);
+	return *this - 2.0f * decompositedPerpendicular;
+}
+
 //-----------------------------------------------------------------------------------------------
 void Vec2::SetOrientationDegrees(float newOrientationDegrees)
 {
@@ -178,6 +185,11 @@ float Vec2::NormalizeAndGetPreviousLength()
 	float length = GetLength();
 	Normalize();
 	return length;
+}
+
+void Vec2::Reflect(Vec2 const& normalOfSurfaceToReflectOffOf)
+{
+	// TODO:
 }
 
 //-----------------------------------------------------------------------------------------------

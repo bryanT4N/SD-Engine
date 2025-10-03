@@ -1,5 +1,6 @@
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Math/Vec2.hpp"
+#include "Engine/Math/IntVec2.hpp"
 #include "Engine/Math/Vec3.hpp"
 
 #define _USE_MATH_DEFINES
@@ -95,6 +96,15 @@ float GetTurnedTowardDegrees(float currentDegrees, float goalDegrees, float maxD
 	return turnedDegrees > 0 ? turnedDegrees : turnedDegrees + 360.f;
 }
 
+float GetAngleDegreesBetweenVectors2D(Vec2 const& a, Vec2 const& b)
+{
+	Vec2 aProjectedToB = GetProjectedVector2D(a, b);
+	if (DotProduct2D(a, b) > 0)
+		return Atan2Degrees((a - aProjectedToB).GetLength(), aProjectedToB.GetLength());
+	else
+		return Atan2Degrees((a - aProjectedToB).GetLength(), - aProjectedToB.GetLength());
+}
+
 float DotProduct2D(Vec2 const& a, Vec2 const& b)
 {
 	return a.x * b.x + a.y * b.y;
@@ -130,6 +140,23 @@ float GetDistanceXYSquared3D(Vec3 const& positionA, Vec3 const& positionB)
 	return (positionB - positionA).GetLengthXYSquared();
 }
 
+int GetTaxicabDistance2D(IntVec2 const& pointA, IntVec2 const& pointB)
+{
+	int diffX = pointA.x - pointB.x,
+		diffY = pointA.y - pointB.y;
+	return abs(diffX) + abs(diffY);
+}
+
+float GetProjectedLength2D(Vec2 const& vectorToProject, Vec2 const& vectorToProjectOnto)
+{
+	return  DotProduct2D(vectorToProject, vectorToProjectOnto.GetNormalized());
+}
+
+Vec2 GetProjectedVector2D(Vec2 const& vectorToProject, Vec2 const& vectorToProjectOnto)
+{
+	return  vectorToProjectOnto.GetNormalized() * DotProduct2D(vectorToProject, vectorToProjectOnto.GetNormalized());
+}
+
 bool DoDiscsOverlap(Vec2 const& centerA, float radiusA, Vec2 const& centerB, float radiusB)
 {
 	return (radiusA + radiusB) * (radiusA + radiusB) > (centerA - centerB).GetLengthSquared();
@@ -138,6 +165,56 @@ bool DoDiscsOverlap(Vec2 const& centerA, float radiusA, Vec2 const& centerB, flo
 bool DoSpheresOverlap(Vec3 const& centerA, float radiusA, Vec3 const& centerB, float radiusB)
 {
 	return (radiusA + radiusB) * (radiusA + radiusB) > (centerA - centerB).GetLengthSquared();
+}
+
+bool IsPointInsideDisc2D(Vec2 const& point, Vec2 const& discCenter, float const& discRadius)
+{
+	return (point - discCenter).GetLength() < discRadius;
+}
+
+bool IsPointInsideOrientedSector2D(Vec2 const& point, Vec2 const& sectorTip, float sectorFwdDegrees, float sectorApertureDegrees, float sectorRadius)
+{
+	// TODO:
+	return true;
+}
+
+bool IsPointInsideDirectedSector2D(Vec2 const& point, Vec2 const& sectorTip, Vec2 const& sectorFwdNormal, float sectorApertureDegrees, float sectorRadius)
+{
+	// TODO:
+	return true;
+}
+
+Vec2 GetNearestPointOnDisc2D(Vec2 const& referencePos, Vec2 const& discCenter, float discRadius)
+{
+	if (IsPointInsideDisc2D(referencePos, discCenter, discRadius)) {
+		return referencePos;
+	}
+	float pointDirectionDegrees = (referencePos - discCenter).GetOrientationDegrees();
+	return (discCenter + Vec2::MakeFromPolarDegrees(pointDirectionDegrees, discRadius));
+}
+
+bool PushDiscOutOfFixedPoint2D(Vec2& mobileDiscCenter, float discRadius, Vec2 const& fixedPoint)
+{
+	// TODO:
+	return true;
+}
+
+bool PushDiscOutOfFixedDisc2D(Vec2& mobileDiscCenter, float discRadius, Vec2 const& fixedDiscCenter, float fixedDiscRadius)
+{
+	// TODO:
+	return true;
+}
+
+bool PushDiscsOutOfEachOther2D(Vec2& aCenter, float aRadius, Vec2& bCenter, float bRadius)
+{
+	// TODO:
+	return true;
+}
+
+bool PushDiscOutOfFixedAABB2D(Vec2& mobileDiscCenter, float discRadius, AABB2 const& fixedBox)
+{
+	// TODO:
+	return true;
 }
 
 void TransformPosition2D(Vec2& posToTransform, float uniformscale, float rotationDegrees, Vec2 const& translation)
@@ -152,6 +229,11 @@ void TransformPosition2D(Vec2& posToTransform, float uniformscale, float rotatio
 	posToTransform = posToTransform + translation;
 }
 
+void TransformPosition2D(Vec2& posToTransform, Vec2 const& iBasis, Vec2 const& jBasis, Vec2 const& translation)
+{
+	// TODO:
+}
+
 void TransformPositionXY3D(Vec3& posToTransform, float xyScale, float zRotationDegrees, Vec2 const& xyTranslation)
 {
 	// XY-Scale
@@ -162,5 +244,10 @@ void TransformPositionXY3D(Vec3& posToTransform, float xyScale, float zRotationD
 
 	// XY-Translate
 	posToTransform = posToTransform + Vec3(xyTranslation.x, xyTranslation.y, 0);
+}
+
+void TransformPositionXY3D(Vec3& posToTransform, Vec2 const& iBasis, Vec2 const& jBasis, Vec2 const& translation)
+{
+	// TODO:
 }
 

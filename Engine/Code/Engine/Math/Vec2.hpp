@@ -30,6 +30,7 @@ public:
 	Vec2 const GetRotatedByRadians(float rotationRadians);
 	Vec2 const GetClamped(float maxLength) const;
 	Vec2 const GetNormalized() const;
+	Vec2 const GetReflected(Vec2 const& normalOfSurfaceToReflectOffOf) const;
 
 	// Mutators (non-const methods)
 	void SetOrientationDegrees(float newOrientationDegrees);
@@ -44,6 +45,7 @@ public:
 	void ClampLength( float maxLength);
 	void Normalize();
 	float NormalizeAndGetPreviousLength();
+	void Reflect(Vec2 const& normalOfSurfaceToReflectOffOf);
 
 	// Operators (const)
 	bool		operator==( Vec2 const& compare ) const;		// vec2 == vec2
