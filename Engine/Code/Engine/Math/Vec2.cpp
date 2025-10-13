@@ -96,8 +96,8 @@ Vec2 const Vec2::GetNormalized() const
 
 Vec2 const Vec2::GetReflected(Vec2 const& normalOfSurfaceToReflectOffOf) const
 {
-	// TODO:
-	Vec2 decompositedPerpendicular	= GetProjectedVector2D(*this, normalOfSurfaceToReflectOffOf);
+	// Vec2 decompositedPerpendicular	= GetProjectedVector2D(*this, normalOfSurfaceToReflectOffOf);
+	Vec2 decompositedPerpendicular	= normalOfSurfaceToReflectOffOf * DotProduct2D(*this, normalOfSurfaceToReflectOffOf);
 	return *this - 2.0f * decompositedPerpendicular;
 }
 
@@ -189,7 +189,8 @@ float Vec2::NormalizeAndGetPreviousLength()
 
 void Vec2::Reflect(Vec2 const& normalOfSurfaceToReflectOffOf)
 {
-	// TODO:
+	Vec2 decompositedPerpendicular = normalOfSurfaceToReflectOffOf * DotProduct2D(*this, normalOfSurfaceToReflectOffOf);
+	*this = *this - 2.0f * decompositedPerpendicular;
 }
 
 //-----------------------------------------------------------------------------------------------

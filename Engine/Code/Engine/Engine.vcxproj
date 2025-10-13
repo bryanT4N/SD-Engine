@@ -38,6 +38,7 @@
     <ClCompile Include="Math\Vec3.cpp" />
     <ClCompile Include="Renderer\Camera.cpp" />
     <ClCompile Include="Renderer\Renderer.cpp" />
+    <ClCompile Include="Renderer\SimpleTriangleFont.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\Engine.hpp" />
@@ -59,6 +60,7 @@
     <ClInclude Include="Math\Vec3.hpp" />
     <ClInclude Include="Renderer\Camera.hpp" />
     <ClInclude Include="Renderer\Renderer.hpp" />
+    <ClInclude Include="Renderer\SimpleTriangleFont.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

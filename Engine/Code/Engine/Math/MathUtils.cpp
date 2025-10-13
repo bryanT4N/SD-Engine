@@ -2,6 +2,7 @@
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Math/Vec3.hpp"
+#include "Engine/Math/AABB2.hpp"
 
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -98,11 +99,13 @@ float GetTurnedTowardDegrees(float currentDegrees, float goalDegrees, float maxD
 
 float GetAngleDegreesBetweenVectors2D(Vec2 const& a, Vec2 const& b)
 {
-	Vec2 aProjectedToB = GetProjectedVector2D(a, b);
-	if (DotProduct2D(a, b) > 0)
-		return Atan2Degrees((a - aProjectedToB).GetLength(), aProjectedToB.GetLength());
-	else
-		return Atan2Degrees((a - aProjectedToB).GetLength(), - aProjectedToB.GetLength());
+	float productOfLengths = a.GetLength() * b.GetLength();
+	if (productOfLengths == 0) {
+		return 0.f;
+	}
+	float cosTheta = DotProduct2D(a, b) / productOfLengths;
+	cosTheta = GetClamped(cosTheta, -1.f, 1.f);
+	return ConvertRadiansToDegrees(acosf(cosTheta));
 }
 
 float DotProduct2D(Vec2 const& a, Vec2 const& b)
@@ -174,14 +177,29 @@ bool IsPointInsideDisc2D(Vec2 const& point, Vec2 const& discCenter, float const&
 
 bool IsPointInsideOrientedSector2D(Vec2 const& point, Vec2 const& sectorTip, float sectorFwdDegrees, float sectorApertureDegrees, float sectorRadius)
 {
-	// TODO:
-	return true;
+	Vec2	v			= point - sectorTip;
+	float	degrees		= Atan2Degrees(v.y, v.x);
+
+	if (v.GetLengthSquared() < sectorRadius * sectorRadius) {
+		if (std::abs(GetShortestAngularDispDegrees(degrees, sectorFwdDegrees)) < 0.5f * sectorApertureDegrees) {
+			return true;
+		}
+	}
+	return false;
 }
 
 bool IsPointInsideDirectedSector2D(Vec2 const& point, Vec2 const& sectorTip, Vec2 const& sectorFwdNormal, float sectorApertureDegrees, float sectorRadius)
 {
-	// TODO:
-	return true;
+	Vec2	v					= point - sectorTip;
+	float	degrees				= Atan2Degrees(v.y, v.x);
+	float	sectorFwdDegrees	= sectorFwdNormal.GetOrientationDegrees();
+
+	if (v.GetLengthSquared() < sectorRadius * sectorRadius) {
+		if (std::abs(GetShortestAngularDispDegrees(degrees, sectorFwdDegrees)) < 0.5f * sectorApertureDegrees) {
+			return true;
+		}
+	}
+	return false;
 }
 
 Vec2 GetNearestPointOnDisc2D(Vec2 const& referencePos, Vec2 const& discCenter, float discRadius)
@@ -195,26 +213,55 @@ Vec2 GetNearestPointOnDisc2D(Vec2 const& referencePos, Vec2 const& discCenter, f
 
 bool PushDiscOutOfFixedPoint2D(Vec2& mobileDiscCenter, float discRadius, Vec2 const& fixedPoint)
 {
-	// TODO:
-	return true;
+	Vec2	v = mobileDiscCenter - fixedPoint;
+	float	d = v.GetLength();
+	if (d > discRadius) {
+		return false;
+	}
+	else {
+		mobileDiscCenter = fixedPoint + discRadius * v.GetNormalized();
+		return true;
+	}
 }
 
 bool PushDiscOutOfFixedDisc2D(Vec2& mobileDiscCenter, float discRadius, Vec2 const& fixedDiscCenter, float fixedDiscRadius)
 {
-	// TODO:
-	return true;
+	Vec2	v = mobileDiscCenter - fixedDiscCenter;
+	float	d = v.GetLength();
+	if (d > discRadius + fixedDiscRadius) {
+		return false;
+	}
+	else {
+		mobileDiscCenter = fixedDiscCenter + (discRadius + fixedDiscRadius) * v.GetNormalized();
+		return true;
+	}
 }
 
 bool PushDiscsOutOfEachOther2D(Vec2& aCenter, float aRadius, Vec2& bCenter, float bRadius)
 {
-	// TODO:
-	return true;
+	Vec2	v = aCenter - bCenter;
+	float	d = v.GetLength();
+	if (d > aRadius + bRadius) {
+		return false;
+	}
+	else {
+		float distanceA2Push =  Interpolate(0, ((aRadius + bRadius) - d), 0.5f),
+			distanceB2Push =  Interpolate(0, ((aRadius + bRadius) - d), 0.5f);
+		aCenter = aCenter + distanceA2Push * v.GetNormalized();
+		bCenter = bCenter - distanceB2Push * v.GetNormalized();
+		return true;
+	}
 }
 
 bool PushDiscOutOfFixedAABB2D(Vec2& mobileDiscCenter, float discRadius, AABB2 const& fixedBox)
 {
-	// TODO:
-	return true;
+	if (fixedBox.IsPointInside(mobileDiscCenter)) {
+		return false;
+	}
+	else {
+		Vec2 nearestPoint = fixedBox.GetNearestPoint(mobileDiscCenter);
+		return PushDiscOutOfFixedPoint2D(mobileDiscCenter, discRadius, nearestPoint);
+	}
 }
 
 void TransformPosition2D(Vec2& posToTransform, float uniformscale, float rotationDegrees, Vec2 const& translation)
@@ -231,7 +278,7 @@ void TransformPosition2D(Vec2& posToTransform, float uniformscale, float rotatio
 
 void TransformPosition2D(Vec2& posToTransform, Vec2 const& iBasis, Vec2 const& jBasis, Vec2 const& translation)
 {
-	// TODO:
+	posToTransform = (posToTransform.x * iBasis) + (posToTransform.y * jBasis) + translation;
 }
 
 void TransformPositionXY3D(Vec3& posToTransform, float xyScale, float zRotationDegrees, Vec2 const& xyTranslation)
@@ -248,6 +295,7 @@ void TransformPositionXY3D(Vec3& posToTransform, float xyScale, float zRotationD
 
 void TransformPositionXY3D(Vec3& posToTransform, Vec2 const& iBasis, Vec2 const& jBasis, Vec2 const& translation)
 {
-	// TODO:
+	Vec2 posToTransformVec2 = (posToTransform.x * iBasis) + (posToTransform.y * jBasis) + translation;
+	posToTransform = Vec3(posToTransformVec2.x, posToTransformVec2.y, posToTransform.z);
 }
 
