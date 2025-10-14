@@ -4,6 +4,7 @@
 class Engine;		
 class Renderer;
 class InputSystem;
+class AudioSystem;
 
 //-----------------------------------------------------------------------------------------------
 extern Engine* g_engine; // Advertisement that this global exists, so external people can use it
@@ -20,4 +21,5 @@ public:
 public:
 	Renderer*		m_render	= nullptr;
 	InputSystem*	m_input		= nullptr;
+	AudioSystem*	m_audio		= nullptr;
 };

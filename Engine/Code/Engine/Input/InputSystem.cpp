@@ -91,7 +91,7 @@ void InputSystem::HandleKeyReleased(unsigned char keyCode)
 	m_keyStates[keyCode].isPressed = false;
 }
 
-XboxController const& InputSystem::GetController(int controllerID)
+XboxController& InputSystem::GetController(int controllerID)
 {
 	return m_controllers[controllerID];
 }

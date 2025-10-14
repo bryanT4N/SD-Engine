@@ -32,6 +32,7 @@ public:
 	bool					IsButtonDown(XboxButtonID buttonID) const;
 	bool					WasButtonJustPressed(XboxButtonID buttonID) const;
 	bool					WasButtonJustReleased(XboxButtonID buttonID) const;
+	void					VibrateController(unsigned short strongMotor, unsigned short weakMotor);
 		      
 private:
 	void Update();

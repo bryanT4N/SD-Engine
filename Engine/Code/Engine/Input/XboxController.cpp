@@ -81,6 +81,17 @@ bool XboxController::WasButtonJustReleased(XboxButtonID buttonID) const
 	return !m_buttons[int(buttonID)].isPressed && m_buttons[int(buttonID)].wasPressedLastFrame;
 }
 
+void XboxController::VibrateController(unsigned short strongMotor, unsigned short weakMotor)
+{
+	XINPUT_VIBRATION vibration;
+	ZeroMemory(&vibration, sizeof(XINPUT_VIBRATION));
+
+	vibration.wLeftMotorSpeed = strongMotor;
+	vibration.wRightMotorSpeed = weakMotor;
+
+	XInputSetState(m_controllerID, &vibration);
+}
+
 void XboxController::Update()
 {
 	XINPUT_STATE xboxControllerState = {}; // Clear (zero-out) the controller state structure
