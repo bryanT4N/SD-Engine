@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Audio\AudioSystem.cpp" />
     <ClCompile Include="Core\Engine.cpp" />
     <ClCompile Include="Core\ErrorWarningAssert.cpp" />
     <ClCompile Include="Core\Rgba8.cpp" />
@@ -41,6 +42,15 @@
     <ClCompile Include="Renderer\SimpleTriangleFont.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\ThirdParty\fmod\fmod.h" />
+    <ClInclude Include="..\ThirdParty\fmod\fmod.hpp" />
+    <ClInclude Include="..\ThirdParty\fmod\fmod_codec.h" />
+    <ClInclude Include="..\ThirdParty\fmod\fmod_common.h" />
+    <ClInclude Include="..\ThirdParty\fmod\fmod_dsp.h" />
+    <ClInclude Include="..\ThirdParty\fmod\fmod_dsp_effects.h" />
+    <ClInclude Include="..\ThirdParty\fmod\fmod_errors.h" />
+    <ClInclude Include="..\ThirdParty\fmod\fmod_output.h" />
+    <ClInclude Include="Audio\AudioSystem.hpp" />
     <ClInclude Include="Core\Engine.hpp" />
     <ClInclude Include="Core\ErrorWarningAssert.hpp" />
     <ClInclude Include="Core\Rgba8.hpp" />
