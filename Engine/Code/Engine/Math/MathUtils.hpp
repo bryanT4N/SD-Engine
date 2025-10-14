@@ -6,8 +6,8 @@
 // Forward type declarations
 struct Vec2;
 struct Vec3;
-struct AABB2;
 struct IntVec2;
+class AABB2;
 
 //-----------------------------------------------------------------------------------------------
 // Clamp and lerp

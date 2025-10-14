@@ -10,4 +10,5 @@ public:
 	void SetOrthoView(Vec2 const& bottomLeft, Vec2 const& topRight);
 	Vec2 GetOrthoBottomLeft() const;
 	Vec2 GetOrthoTopRight() const;
+	void Translate2D(Vec2 disp);
 };

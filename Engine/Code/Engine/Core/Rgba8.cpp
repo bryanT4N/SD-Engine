@@ -3,6 +3,11 @@
 //#include "Engine/Core/EngineCommon.hpp"
 
 
+void Rgba8::ScaleAlpha(float alphaMultiplier)
+{
+	a = static_cast<unsigned char>(alphaMultiplier * static_cast<float>(a));
+}
+
 //-----------------------------------------------------------------------------------------------
 
 

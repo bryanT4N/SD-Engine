@@ -8,6 +8,8 @@ public:
 	unsigned char b = 255;
 	unsigned char a = 255;
 
+	void ScaleAlpha( float alphaMultiplier);
+
 	// Construction/Destruction
 	~Rgba8() {}												// destructor (do nothing)
 	Rgba8() {}												// default constructor (do nothing)

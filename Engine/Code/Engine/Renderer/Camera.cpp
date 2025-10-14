@@ -15,3 +15,9 @@ Vec2 Camera::GetOrthoTopRight() const
 {
 	return m_orthoTopRight;
 }
+
+void Camera::Translate2D(Vec2 disp)
+{
+	m_orthoBottomLeft	+= disp;
+	m_orthoTopRight		+= disp;
+}
