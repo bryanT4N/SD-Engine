@@ -32,7 +32,7 @@ float	GetAngleDegreesBetweenVectors2D(Vec2 const& a, Vec2 const& b);
 
 //-----------------------------------------------------------------------------------------------
 // Dot and Cross
-float DotProduct2D( Vec2 const& a,Vec2 const& b );
+float	DotProduct2D( Vec2 const& a,Vec2 const& b );
 
 //-----------------------------------------------------------------------------------------------
 // Distance and projection utilities

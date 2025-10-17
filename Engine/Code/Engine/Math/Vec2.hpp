@@ -16,36 +16,36 @@ public:
 	explicit Vec2( float initialX, float initialY );		// explicit constructor (from x, y)
 
 	// static methods (e.g.creation functions)
-	static Vec2 const MakeFromPolarDegrees(float orientationDegrees, float length = 1.f);
-	static Vec2 const MakeFromPolarRadians(float orientationRadians, float length = 1.f);
+	static Vec2 const	MakeFromPolarDegrees(float orientationDegrees, float length = 1.f);
+	static Vec2 const	MakeFromPolarRadians(float orientationRadians, float length = 1.f);
 
 	// Accessors (const methods)
-	float GetLength() const; 
-	float GetLengthSquared() const;
-	float GetOrientationDegrees() const;
-	float GetOrientationRadians() const; 
-	Vec2 const GetRotatedBy90Degrees() const; 
-	Vec2 const GetRotatedByMinus90Degrees() const;
-	Vec2 const GetRotatedByDegrees(float rotationDegrees);
-	Vec2 const GetRotatedByRadians(float rotationRadians);
-	Vec2 const GetClamped(float maxLength) const;
-	Vec2 const GetNormalized() const;
-	Vec2 const GetReflected(Vec2 const& normalOfSurfaceToReflectOffOf) const;
+	float		GetLength() const; 
+	float		GetLengthSquared() const;
+	float		GetOrientationDegrees() const;
+	float		GetOrientationRadians() const; 
+	Vec2 const	GetRotatedBy90Degrees() const;
+	Vec2 const	GetRotatedByMinus90Degrees() const;
+	Vec2 const	GetRotatedByDegrees(float rotationDegrees);
+	Vec2 const	GetRotatedByRadians(float rotationRadians);
+	Vec2 const	GetClamped(float maxLength) const;
+	Vec2 const	GetNormalized() const;
+	Vec2 const	GetReflected(Vec2 const& normalOfSurfaceToReflectOffOf) const;
 
 	// Mutators (non-const methods)
-	void SetOrientationDegrees(float newOrientationDegrees);
-	void SetOrientationRadians(float newOrientationRadians );
-	void SetPolarDegrees(float newOrientationDegrees,float newLength);
-	void SetPolarRadians(float newOrientationRadians,float newLength);
-	void Rotate90Degrees();
-	void RotateMinus90Degrees();
-	void RotateDegrees( float rotationDegrees );
-	void RotateRadians(float rotationRadians );
-	void SetLength( float newlength );
-	void ClampLength( float maxLength);
-	void Normalize();
-	float NormalizeAndGetPreviousLength();
-	void Reflect(Vec2 const& normalOfSurfaceToReflectOffOf);
+	void		SetOrientationDegrees(float newOrientationDegrees);
+	void		SetOrientationRadians(float newOrientationRadians);
+	void		SetPolarDegrees(float newOrientationDegrees, float newLength);
+	void		SetPolarRadians(float newOrientationRadians, float newLength);
+	void		Rotate90Degrees();
+	void		RotateMinus90Degrees();
+	void		RotateDegrees(float rotationDegrees);
+	void		RotateRadians(float rotationRadians);
+	void		SetLength(float newlength);
+	void		ClampLength(float maxLength);
+	void		Normalize();
+	float		NormalizeAndGetPreviousLength();
+	void		Reflect(Vec2 const& normalOfSurfaceToReflectOffOf);
 
 	// Operators (const)
 	bool		operator==( Vec2 const& compare ) const;		// vec2 == vec2

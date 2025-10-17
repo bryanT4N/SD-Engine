@@ -63,7 +63,6 @@ void InputSystem::EndFrame()
 			m_controllers[controllerID].m_buttons[buttonId].wasPressedLastFrame = m_controllers[controllerID].m_buttons[buttonId].isPressed;
 		}
 	}
-	
 }
 
 bool InputSystem::WasKeyJustPressed(unsigned char keyCode)

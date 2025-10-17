@@ -35,19 +35,19 @@ public:
 	void					VibrateController(unsigned short strongMotor, unsigned short weakMotor);
 		      
 private:
-	void Update();
-	void Reset();
-	void UpdateJoystick(AnalogJoystick& out_joystick, short rawX, short rawY);
-	void UpdateTrigger(float& out_triggerValue, unsigned char rawValue); 
-	void UpdateButton(XboxButtonID buttonID, unsigned short buttonFlags, unsigned short buttonFlag);
+	void					Update();
+	void					Reset();
+	void					UpdateJoystick(AnalogJoystick& out_joystick, short rawX, short rawY);
+	void					UpdateTrigger(float& out_triggerValue, unsigned char rawValue); 
+	void					UpdateButton(XboxButtonID buttonID, unsigned short buttonFlags, unsigned short buttonFlag);
 
 private:
-	int					m_controllerID			= -1;
-	bool				m_isConnected			= false;
-	float				m_leftTrigger			= 0.f;
-	float				m_rightTrigger			= 0.f;
-	KeyButtonState		m_buttons[(int)XboxButtonID::NUM];
-	AnalogJoystick		m_leftstick;
-	AnalogJoystick		m_rightstick;
+	int						m_controllerID	= -1;
+	bool					m_isConnected	= false;
+	float					m_leftTrigger	= 0.f;
+	float					m_rightTrigger	= 0.f;
+	KeyButtonState			m_buttons[(int)XboxButtonID::NUM];
+	AnalogJoystick			m_leftstick;
+	AnalogJoystick			m_rightstick;
 };
 	
