@@ -5,6 +5,11 @@
 #include "Engine/Input/XboxController.hpp"
 
 //-----------------------------------------------------------------------------------------------
+struct InputConfig {
+	bool m_isEnabled = true;
+};
+
+//-----------------------------------------------------------------------------------------------
 extern unsigned char const KEYCODE_LBUTTON;
 extern unsigned char const KEYCODE_RBUTTON;
 extern unsigned char const KEYCODE_ESC;
@@ -33,7 +38,7 @@ constexpr int NUM_XBOX_CONTROLLERS	= 4;
 
 class InputSystem{
 public:
-	InputSystem(); 
+	InputSystem(InputConfig const& config); 
 	~InputSystem() = default;
 	void Startup(); 
 	void Shutdown();
@@ -48,6 +53,8 @@ public:
 	void HandleKeyReleased(unsigned char keyCode);
 
 	XboxController& GetController(int controllerID); 
+
+	InputConfig		m_config;
 
 protected:
 	KeyButtonState m_keyStates[NUM_KEYCODES];	// Indexed by key code, e.g. 65 == 'A'

@@ -4,7 +4,8 @@
 #include <Windows.h>			// #include this (massive, platform-specific) header in VERY few places (and .CPPs only)
 
 //-----------------------------------------------------------------------------------------------
-Window::Window()
+Window::Window(WindowConfig const& config)
+	:m_config(config)
 {
 
 }

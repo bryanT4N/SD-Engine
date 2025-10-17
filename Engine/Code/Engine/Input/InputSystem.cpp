@@ -24,7 +24,8 @@ unsigned char const KEYCODE_F11 = 0x7A;
 unsigned char const KEYCODE_F12 = 0x7B;
 
 //-----------------------------------------------------------------------------------------------
-InputSystem::InputSystem()
+InputSystem::InputSystem(InputConfig const& config)
+	:m_config(config)
 {
 	for (int keyCode = 0; keyCode < NUM_KEYCODES; ++keyCode) {
 		m_keyStates[keyCode].isPressed = false;

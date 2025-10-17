@@ -13,7 +13,8 @@
 HGLRC g_openGLRenderingContext = nullptr; 
 
 //-----------------------------------------------------------------------------------------------
-Renderer::Renderer()
+Renderer::Renderer(RenderConfig const& config)
+	:m_config(config)
 {
 }
 

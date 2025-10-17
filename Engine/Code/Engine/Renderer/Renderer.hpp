@@ -7,10 +7,15 @@ struct Vertex;
 class Camera;
 
 //-----------------------------------------------------------------------------------------------
+struct RenderConfig {
+	bool m_isEnabled = true;
+};
+
+//-----------------------------------------------------------------------------------------------
 class Renderer
 {
 public:
-	Renderer();
+	Renderer(RenderConfig const& config);
 	~Renderer();
 	void Startup() const; 
 	void Shutdown() const;
@@ -24,4 +29,6 @@ public:
 	void EndCamera(Camera const& camera) const;
 
 	void DrawVertexArray(int numVertexes, Vertex const* vertexes) const;
+
+	RenderConfig m_config;
 };
