@@ -4,7 +4,7 @@
 #include "Engine/Renderer/Renderer.hpp"
 
 #define WIN32_LEAN_AND_MEAN		// Always #define this before #including <windows.h>
-#include <windows.h>			// #include this (massive, platform-specific) header in VERY few places (and .CPPs only)
+#include <Windows.h>			// #include this (massive, platform-specific) header in VERY few places (and .CPPs only)
 
 #include <gl/gl.h>					// Include basic OpenGL constants and function declarations
 #pragma comment( lib, "opengl32" )	// Link in the OpenGL32.lib static library

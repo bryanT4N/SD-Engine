@@ -1,7 +1,8 @@
 #pragma once
 
 //-----------------------------------------------------------------------------------------------
-class Engine;		
+class Engine;
+class Window;
 class Renderer;
 class InputSystem;
 class AudioSystem;
@@ -19,6 +20,7 @@ public:
 	void EndFrame();
 
 public:
+	Window*			m_window	= nullptr;
 	Renderer*		m_render	= nullptr;
 	InputSystem*	m_input		= nullptr;
 	AudioSystem*	m_audio		= nullptr;
