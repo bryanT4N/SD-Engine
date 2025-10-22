@@ -2,6 +2,7 @@
 #include "Engine/Core/Vertex.hpp"
 #include "Engine/Renderer/Camera.hpp"
 #include "Engine/Renderer/Renderer.hpp"
+#include "Engine/Core/Engine.hpp"
 
 #define WIN32_LEAN_AND_MEAN		// Always #define this before #including <windows.h>
 #include <Windows.h>			// #include this (massive, platform-specific) header in VERY few places (and .CPPs only)
@@ -42,6 +43,9 @@ void Renderer::BeginFrame() const
 //-----------------------------------------------------------------------------------------------
 void Renderer::EndFrame() const
 {
+	// "Present" the back buffer by swapping the front(visible) and back(working) screen buffers
+	HDC displayDeviceContext = (HDC) g_engine->m_window->m_displayDeviceContext;
+	SwapBuffers(displayDeviceContext); // Note: call this only once at the very end of each frame
 }
 
 //-----------------------------------------------------------------------------------------------
