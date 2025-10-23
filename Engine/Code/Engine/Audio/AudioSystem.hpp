@@ -3,33 +3,39 @@
 
 //-----------------------------------------------------------------------------------------------
 #include "ThirdParty/fmod/fmod.hpp"
+#include "Game/EngineBuildPreferences.hpp"
 #include <string>
 #include <vector>
 #include <map>
 
 
 //-----------------------------------------------------------------------------------------------
-struct AudioConfig {
-	bool m_isEnabled = true;
-};
-
-//-----------------------------------------------------------------------------------------------
 typedef size_t SoundID;
 typedef size_t SoundPlaybackID;
 constexpr size_t MISSING_SOUND_ID = (size_t)(-1); // for bad SoundIDs and SoundPlaybackIDs
 
+
 //-----------------------------------------------------------------------------------------------
 class AudioSystem;
+
+
+//------------------------------------------------------------------------------------------------
+struct AudioConfig
+{
+#if defined( ENGINE_DISABLE_AUDIO )
+	bool		m_isEnabled = false;
+#else
+	bool		m_isEnabled = true;
+#endif
+};
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 class AudioSystem
 {
 public:
-	AudioSystem(AudioConfig const& config);
+	AudioSystem( AudioConfig const& config );
 	virtual ~AudioSystem();
-
-	AudioConfig					m_config;
 
 public:
 	void						Startup();
@@ -37,7 +43,8 @@ public:
 	virtual void				BeginFrame();
 	virtual void				EndFrame();
 
-	virtual SoundID				CreateOrGetSound( const std::string& soundFilePath );
+#if !defined( ENGINE_DISABLE_AUDIO )
+	virtual SoundID				CreateOrGetSound( std::string const& soundFilePath );
 	virtual SoundPlaybackID		StartSound( SoundID soundID, bool isLooped=false, float volume=1.f, float balance=0.0f, float speed=1.0f, bool isPaused=false );
 	virtual void				StopSound( SoundPlaybackID soundPlaybackID );
 	virtual void				SetSoundPlaybackVolume( SoundPlaybackID soundPlaybackID, float volume );	// volume is in [0,1]
@@ -50,5 +57,7 @@ protected:
 	FMOD::System*						m_fmodSystem;
 	std::map< std::string, SoundID >	m_registeredSoundIDs;
 	std::vector< FMOD::Sound* >			m_registeredSounds;
+#endif // !defined( ENGINE_DISABLE_AUDIO )
+	AudioConfig							m_config;
 };
 

@@ -1,4 +1,5 @@
 #include "Engine/Audio/AudioSystem.hpp"
+#include "Game/EngineBuildPreferences.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/StringUtils.hpp"
 
@@ -11,8 +12,16 @@
 //	Downside: ALL games must now have this Code/Game/EngineBuildPreferences.hpp file.
 //
 // SD1 NOTE: THIS MEANS *EVERY* GAME MUST HAVE AN EngineBuildPreferences.hpp FILE IN ITS CODE/GAME FOLDER!!
-#include "Game/EngineBuildPreferences.hpp"
-#if !defined( ENGINE_DISABLE_AUDIO )
+#if defined( ENGINE_DISABLE_AUDIO )
+#pragma message( "AudioSystem disabled in EngineBuildPreferences.hpp" )
+AudioSystem::AudioSystem( AudioConfig const& config ) : m_config( config ) {}
+AudioSystem::~AudioSystem() {}
+void AudioSystem::Startup() {}
+void AudioSystem::Shutdown() {}
+void AudioSystem::BeginFrame() {}
+void AudioSystem::EndFrame() {}
+#else
+#pragma message( "AudioSystem (FMOD) enabled in EngineBuildPreferences.hpp" )
 
 
 //-----------------------------------------------------------------------------------------------
@@ -28,8 +37,9 @@
 //-----------------------------------------------------------------------------------------------
 // Initialization code based on example from "FMOD Studio Programmers API for Windows"
 //
-AudioSystem::AudioSystem(AudioConfig const& config)
-	: m_fmodSystem( nullptr ), m_config(config)
+AudioSystem::AudioSystem( AudioConfig const& config )
+	: m_config( config )
+	, m_fmodSystem( nullptr )
 {
 }
 
@@ -112,7 +122,7 @@ SoundPlaybackID AudioSystem::StartSound( SoundID soundID, bool isLooped, float v
 		return MISSING_SOUND_ID;
 
 	FMOD::Channel* channelAssignedToSound = nullptr;
-	m_fmodSystem->playSound( sound, nullptr, isPaused, &channelAssignedToSound );
+	m_fmodSystem->playSound( sound, nullptr, true, &channelAssignedToSound );
 	if( channelAssignedToSound )
 	{
 		int loopCount = isLooped ? -1 : 0;
@@ -124,6 +134,7 @@ SoundPlaybackID AudioSystem::StartSound( SoundID soundID, bool isLooped, float v
 		channelAssignedToSound->setVolume( volume );
 		channelAssignedToSound->setPan( balance );
 		channelAssignedToSound->setLoopCount( loopCount );
+		channelAssignedToSound->setPaused( isPaused );
 	}
 
 	return (SoundPlaybackID) channelAssignedToSound;
