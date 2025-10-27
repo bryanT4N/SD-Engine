@@ -23,6 +23,9 @@
     <Filter Include="ThirdParty\fmod">
       <UniqueIdentifier>{ed24d18e-f6a2-4703-8a77-d35481632496}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Window">
+      <UniqueIdentifier>{306c42d5-a002-451c-9b20-123e1547ad1e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Vec2.cpp">
@@ -87,6 +90,9 @@
     </ClCompile>
     <ClCompile Include="Audio\AudioSystem.cpp">
       <Filter>Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Window\Window.cpp">
+      <Filter>Window</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -176,6 +182,9 @@
     </ClInclude>
     <ClInclude Include="..\ThirdParty\fmod\fmod_output.h">
       <Filter>ThirdParty\fmod</Filter>
+    </ClInclude>
+    <ClInclude Include="Window\Window.hpp">
+      <Filter>Window</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
