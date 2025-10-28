@@ -35,7 +35,7 @@ public:
 	void EndCamera(Camera const& camera) const;
 
 	void DrawVertexArray(int numVertexes, Vertex const* vertexes) const;
-	void DrawVertexArray(std::vector<Vertex> vertexes) const;
+	void DrawVertexArray(const std::vector<Vertex>& vertexes) const;
 
 	void BindTexture(Texture* texture);
 	Texture* CreateOrGetTextureFromFile(char const* imageFilePath);

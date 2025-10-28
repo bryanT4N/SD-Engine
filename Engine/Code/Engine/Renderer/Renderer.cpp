@@ -130,9 +130,19 @@ void Renderer::DrawVertexArray(int numVertexes, Vertex const* vertexes) const
 	glEnd(); // GL_TRIANGLES
 }
 
-void Renderer::DrawVertexArray(std::vector<Vertex> vertexes) const
+void Renderer::DrawVertexArray(const std::vector<Vertex>& vertexes) const
 {
-	DrawVertexArray(static_cast<int>(vertexes.size()), vertexes.data());
+	// DrawVertexArray(static_cast<int>(vertexes.size()), vertexes.data());
+
+	glBegin(GL_TRIANGLES);
+	for (Vertex vert : vertexes)
+	{
+		glColor4ub(vert.m_color.r, vert.m_color.g, vert.m_color.b, vert.m_color.a);
+		glTexCoord2f(vert.m_uvTexCoords.x, vert.m_uvTexCoords.y);
+		glVertex3f(vert.m_position.x, vert.m_position.y, vert.m_position.z);
+	}
+
+	glEnd(); // GL_TRIANGLES
 }
 
 //------------------------------------------------------------------------------------------------
