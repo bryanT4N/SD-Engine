@@ -26,6 +26,9 @@
     <Filter Include="Window">
       <UniqueIdentifier>{306c42d5-a002-451c-9b20-123e1547ad1e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ThirdParty\stb">
+      <UniqueIdentifier>{4438dd7b-96d5-49c2-bc2c-efc9e6716b60}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Vec2.cpp">
@@ -93,6 +96,12 @@
     </ClCompile>
     <ClCompile Include="Window\Window.cpp">
       <Filter>Window</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Image.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\Texture.cpp">
+      <Filter>Renderer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -185,6 +194,15 @@
     </ClInclude>
     <ClInclude Include="Window\Window.hpp">
       <Filter>Window</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Image.hpp">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Texture.hpp">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\stb\stb_image.h">
+      <Filter>ThirdParty\stb</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

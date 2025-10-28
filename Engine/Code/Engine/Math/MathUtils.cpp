@@ -211,6 +211,11 @@ Vec2 GetNearestPointOnDisc2D(Vec2 const& referencePos, Vec2 const& discCenter, f
 	return (discCenter + Vec2::MakeFromPolarDegrees(pointDirectionDegrees, discRadius));
 }
 
+Vec2 GetNearestPointOnAABB2D(Vec2 const& referencePos, AABB2 const& aabb)
+{
+	return aabb.GetNearestPoint(referencePos);
+}
+
 bool PushDiscOutOfFixedPoint2D(Vec2& mobileDiscCenter, float discRadius, Vec2 const& fixedPoint)
 {
 	Vec2	v = mobileDiscCenter - fixedPoint;

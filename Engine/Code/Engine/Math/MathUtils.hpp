@@ -56,6 +56,7 @@ bool	IsPointInsideOrientedSector2D(Vec2 const& point, Vec2 const& sectorTip,
 bool	IsPointInsideDirectedSector2D(Vec2 const& point, Vec2 const& sectorTip,
 	Vec2 const& sectorFwdNormal, float sectorApertureDegrees, float sectorRadius);
 Vec2	GetNearestPointOnDisc2D(Vec2 const& referencePos, Vec2 const& discCenter, float discRadius);
+Vec2	GetNearestPointOnAABB2D(Vec2 const& referencePos, AABB2 const& aabb);
 bool	PushDiscOutOfFixedPoint2D(Vec2& mobileDiscCenter, float discRadius, Vec2 const& fixedPoint);
 bool	PushDiscOutOfFixedDisc2D(Vec2& mobileDiscCenter, float discRadius, Vec2 const& fixedDiscCenter, float fixedDiscRadius);
 bool	PushDiscsOutOfEachOther2D(Vec2& aCenter,float aRadius, Vec2& bCenter, float bRadius);
