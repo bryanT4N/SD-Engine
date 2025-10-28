@@ -132,7 +132,7 @@ void Renderer::DrawVertexArray(int numVertexes, Vertex const* vertexes) const
 
 void Renderer::DrawVertexArray(std::vector<Vertex> vertexes) const
 {
-	DrawVertexArray(vertexes.size(), vertexes.data());
+	DrawVertexArray(static_cast<int>(vertexes.size()), vertexes.data());
 }
 
 //------------------------------------------------------------------------------------------------
