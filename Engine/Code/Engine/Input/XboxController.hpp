@@ -3,7 +3,7 @@
 #include "Engine/Input/KeyButtonState.hpp"
 
 //-----------------------------------------------------------------------------------------------
-enum XboxButtonID {
+enum class XboxButtonID {
 	A, B, X, Y, 
 	LB, RB, 
 	MENU, START, 

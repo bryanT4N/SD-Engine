@@ -11,7 +11,7 @@
 
 //-----------------------------------------------------------------------------------------------
 
-short XboxButtonCodes[XboxButtonID::NUM] = { static_cast<short>(XINPUT_GAMEPAD_A), static_cast<short>(XINPUT_GAMEPAD_B), static_cast<short>(XINPUT_GAMEPAD_X), static_cast<short>(XINPUT_GAMEPAD_Y),
+short XboxButtonCodes[(int)XboxButtonID::NUM] = { static_cast<short>(XINPUT_GAMEPAD_A), static_cast<short>(XINPUT_GAMEPAD_B), static_cast<short>(XINPUT_GAMEPAD_X), static_cast<short>(XINPUT_GAMEPAD_Y),
 static_cast<short>(XINPUT_GAMEPAD_LEFT_SHOULDER), static_cast<short>(XINPUT_GAMEPAD_RIGHT_SHOULDER),
 static_cast<short>(XINPUT_GAMEPAD_BACK), static_cast<short>(XINPUT_GAMEPAD_START),
 static_cast<short>(XINPUT_GAMEPAD_LEFT_THUMB), static_cast<short>(XINPUT_GAMEPAD_RIGHT_THUMB),
