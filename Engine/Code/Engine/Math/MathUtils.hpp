@@ -8,6 +8,7 @@ struct Vec2;
 struct Vec3;
 struct IntVec2;
 class AABB2;
+class OBB2;
 
 //-----------------------------------------------------------------------------------------------
 // Clamp and lerp
@@ -50,13 +51,30 @@ Vec2	GetProjectedVector2D(Vec2 const& vectorToProject, Vec2 const& vectorToProje
 // Geometric query utilities
 bool	DoDiscsOverlap(Vec2 const& centerA, float radiusA, Vec2 const& centerB, float radiusB); 
 bool	DoSpheresOverlap(Vec3 const& centerA, float radiusA, Vec3 const& centerB, float radiusB);
+
+//-----------------------------------------------------------------------------------------------
+// Is point inside ?
+bool	IsPointInsideAABB2D(Vec2 point, AABB2 const& alignedBox); 
+bool	IsPointInsideOBB2D(Vec2 point, OBB2 const& orientedBox);
+bool	IsPointInsideCapsule2D(Vec2 point, Vec2 boneStart, Vec2 boneEnd, float radius);
+bool	IsPointInsideTriangle2D(Vec2 point, Vec2 ccw0, Vec2 ccw1, Vec2 ccw2);							// counter-clockwise
 bool	IsPointInsideDisc2D(Vec2 const& point, Vec2 const& discCenter, float const& discRadius);
 bool	IsPointInsideOrientedSector2D(Vec2 const& point, Vec2 const& sectorTip,
 	float sectorFwdDegrees, float sectorApertureDegrees, float sectorRadius);
 bool	IsPointInsideDirectedSector2D(Vec2 const& point, Vec2 const& sectorTip,
 	Vec2 const& sectorFwdNormal, float sectorApertureDegrees, float sectorRadius);
+
+//-----------------------------------------------------------------------------------------------
+// Get nearest point on ?
 Vec2	GetNearestPointOnDisc2D(Vec2 const& referencePos, Vec2 const& discCenter, float discRadius);
 Vec2	GetNearestPointOnAABB2D(Vec2 const& referencePos, AABB2 const& aabb);
+Vec2	GetNearestPointOnOBB2D(Vec2 const& referencePos, OBB2 const& orientedBox);
+Vec2	GetNearestPointOnInfiniteLine2D(Vec2 const& referencePos, Vec2 pointOnLine, Vec2 anotherPointOnLine);
+Vec2	GetNearestPointOnLineSegment2D(Vec2 const& referencePos, Vec2 start, Vec2 end);
+Vec2	GetNearestPointOnCapsule2D(Vec2 const& referencePos, Vec2 boneStart, Vec2 boneEnd, float radius);
+Vec2	GetNearestPointOnTriangle2D(Vec2 referencePos, Vec2 ccw0, Vec2 ccw1, Vec2 ccw2);
+
+//-----------------------------------------------------------------------------------------------
 bool	PushDiscOutOfFixedPoint2D(Vec2& mobileDiscCenter, float discRadius, Vec2 const& fixedPoint);
 bool	PushDiscOutOfFixedDisc2D(Vec2& mobileDiscCenter, float discRadius, Vec2 const& fixedDiscCenter, float fixedDiscRadius);
 bool	PushDiscsOutOfEachOther2D(Vec2& aCenter,float aRadius, Vec2& bCenter, float bRadius);

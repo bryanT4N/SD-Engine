@@ -66,6 +66,10 @@ public:
 
 	// Standalone "friend" functions that are conceptually, but not actually, part of Vec2::
 	friend Vec2 const operator*( float uniformScale, Vec2 const& vecToScale );	// float * vec2
+
+	// Static const
+	static const Vec2 ZERO;        // [0, 0]
+	static const Vec2 ONE;         // [1, 1]
 };
 
 

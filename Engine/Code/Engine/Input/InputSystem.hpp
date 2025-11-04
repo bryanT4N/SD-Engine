@@ -16,7 +16,7 @@ extern unsigned char const KEYCODE_ESC;
 extern unsigned char const KEYCODE_SPACE;
 extern unsigned char const KEYCODE_ENTER;
 extern unsigned char const UPARROW;
-extern unsigned char const DONNARROW;
+extern unsigned char const DOWNARROW;
 extern unsigned char const LEFTARROW;
 extern unsigned char const RIGHTARROW;
 extern unsigned char const KEYCODE_F1;

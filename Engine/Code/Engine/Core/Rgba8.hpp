@@ -19,5 +19,16 @@ public:
 	// Operators (const)
 	bool		operator==(Rgba8 const& compare) const;		// Rgba8 == Rgba8
 	bool		operator!=(Rgba8 const& compare) const;		// Rgba8 != Rgba8
+
+	static const Rgba8 WHITE;
+	static const Rgba8 GRAY;
+	static const Rgba8 RED;
+	static const Rgba8 GREEN;
+	static const Rgba8 BLUE;
+	static const Rgba8 NAVI;
+	static const Rgba8 YELLOW;
+	static const Rgba8 CYAN;
+	static const Rgba8 PURPLE;
+	static const Rgba8 ORANGE;
 };
 
