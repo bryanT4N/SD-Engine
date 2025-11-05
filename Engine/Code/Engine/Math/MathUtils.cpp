@@ -104,9 +104,8 @@ float GetTurnedTowardDegrees(float currentDegrees, float goalDegrees, float maxD
 float GetAngleDegreesBetweenVectors2D(Vec2 const& a, Vec2 const& b)
 {
 	float productOfLengths = a.GetLength() * b.GetLength();
-	if (productOfLengths == 0) {
-		return 0.f;
-	}
+	if (productOfLengths == 0) { return 0.f; }
+
 	float cosTheta = DotProduct2D(a, b) / productOfLengths;
 	cosTheta = GetClamped(cosTheta, -1.f, 1.f);
 	return ConvertRadiansToDegrees(acosf(cosTheta));
@@ -365,11 +364,14 @@ Vec2 GetNearestPointOnTriangle2D(Vec2 referencePos, Vec2 ccw0, Vec2 ccw1, Vec2 c
 	if (DotProduct2D(sideCA, cP) <= 0.f && DotProduct2D(-sideBC, cP) <= 0.f) return ccw2;
 
 	// AB/BC/CA
-	if (DotProduct2D(outPerpendicularAB, aP) > 0 && DotProduct2D(outPerpendicularAB, bP) > 0) 
+	if (DotProduct2D(outPerpendicularAB, aP) > 0 && DotProduct2D(outPerpendicularAB, bP) > 0 &&
+		DotProduct2D(sideAB, aP) > 0 && DotProduct2D(-sideAB, bP) > 0) 
 		return GetNearestPointOnLineSegment2D(referencePos, ccw0, ccw1);
-	if (DotProduct2D(outPerpendicularBC, bP) > 0 && DotProduct2D(outPerpendicularBC, cP) > 0)
+	if (DotProduct2D(outPerpendicularBC, bP) > 0 && DotProduct2D(outPerpendicularBC, cP) > 0 &&
+		DotProduct2D(sideBC, bP) > 0 && DotProduct2D(-sideBC, cP) > 0)
 		return GetNearestPointOnLineSegment2D(referencePos, ccw1, ccw2);
-	if (DotProduct2D(outPerpendicularCA, cP) > 0 && DotProduct2D(outPerpendicularCA, aP) > 0)
+	if (DotProduct2D(outPerpendicularCA, cP) > 0 && DotProduct2D(outPerpendicularCA, aP) > 0 &&
+		DotProduct2D(sideCA, cP) > 0 && DotProduct2D(-sideCA, aP) > 0)
 		return GetNearestPointOnLineSegment2D(referencePos, ccw2, ccw0);
 
 	return referencePos;
