@@ -23,23 +23,23 @@ public:
 public:
 	Renderer(RenderConfig const& config);
 	~Renderer();
-	void Startup() const; 
-	void Shutdown() const;
-	void BeginFrame() const;
-	void EndFrame() const;
+	void		Startup() const; 
+	void		Shutdown() const;
+	void		BeginFrame() const;
+	void		EndFrame() const;
 
-	void CreateRenderingContext() const;
-	void ClearScreen(Rgba8 const& clearColor) const;
+	void		CreateRenderingContext() const;
+	void		ClearScreen(Rgba8 const& clearColor) const;
 
-	void BeginCamera(Camera const& camera) const;
-	void EndCamera(Camera const& camera) const;
+	void		BeginCamera(Camera const& camera) const;
+	void		EndCamera(Camera const& camera) const;
 
-	void DrawVertexArray(int numVertexes, Vertex const* vertexes) const;
-	void DrawVertexArray(const std::vector<Vertex>& vertexes) const;
+	void		DrawVertexArray(int numVertexes, Vertex const* vertexes) const;
+	void		DrawVertexArray(const std::vector<Vertex>& vertexes) const;
 
-	void BindTexture(Texture* texture);
-	Texture* CreateOrGetTextureFromFile(char const* imageFilePath);
-	Texture* CreateTextureFromFile(char const* imageFilePath);
-	Texture* CreateTextureFromData(char const* name, IntVec2 dimensions, int bytesPerTexel, uint8_t* texelData);
-	Texture* GetTextureFromFileName(char const* imageFilePath);
+	void		BindTexture(Texture* texture);
+	Texture*	CreateOrGetTextureFromFile(char const* imageFilePath);
+	Texture*	CreateTextureFromFile(char const* imageFilePath);
+	Texture*	CreateTextureFromData(char const* name, IntVec2 dimensions, int bytesPerTexel, uint8_t* texelData);
+	Texture*	GetTextureFromFileName(char const* imageFilePath);
 };

@@ -100,3 +100,11 @@ void AABB2::StretchToIncludePoint(Vec2 const& point)
 // 	SetDimensions(scale * GetDimensions());
 }
 
+bool AABB2::operator==(AABB2 const& compare) const {
+	return m_mins == compare.m_mins && m_maxs == compare.m_maxs;
+}
+
+bool AABB2::operator!=(AABB2 const& compare) const {
+	return m_mins != compare.m_mins || m_maxs != compare.m_maxs;
+}
+

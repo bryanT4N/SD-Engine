@@ -13,8 +13,8 @@ private:
 	~Texture();
 
 public:
-	IntVec2				GetDimensions() const { return m_dimensions; }
-	std::string const&  GetImageFilePath() const { return m_name; }
+	IntVec2				GetDimensions() const		{ return m_dimensions; }
+	std::string const&  GetImageFilePath() const	{ return m_name; }
 
 protected:
 	std::string			m_name;				// Can't be char const* -- store a copy, in case it was temporary

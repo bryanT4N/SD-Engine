@@ -21,12 +21,16 @@ public:
 	Vec2 const	GetCenter() const;
 	Vec2 const	GetDimensions() const;
 	Vec2 const	GetNearestPoint(Vec2 const& referencePosition) const;
-	Vec2 const GetPointAtUV(Vec2 const& uv) const;		// uv=(0,0) is at mins; uv=(1,1)is at maxs
-	Vec2 const GetUVForPoint(Vec2 const& point )const;	// uv=(.5,.5) at center; u or v outside [0,1] extrapolated
+	Vec2 const	GetPointAtUV(Vec2 const& uv) const;		// uv=(0,0) is at mins; uv=(1,1)is at maxs
+	Vec2 const	GetUVForPoint(Vec2 const& point )const;	// uv=(.5,.5) at center; u or v outside [0,1] extrapolated
 
 	// Mutators(non-const methods)
-	void Translate(Vec2 const& translationToApply); 
-	void SetCenter(Vec2 const& newCenter);
-	void SetDimensions(Vec2 const& newDimensions);
-	void StretchToIncludePoint(Vec2 const& point);		// does minimal stretching required (none if already on point)
+	void		Translate(Vec2 const& translationToApply);
+	void		SetCenter(Vec2 const& newCenter);
+	void		SetDimensions(Vec2 const& newDimensions);
+	void		StretchToIncludePoint(Vec2 const& point);		// does minimal stretching required (none if already on point)
+
+	// Operators (const)
+	bool		operator==(AABB2 const& compare) const;
+	bool		operator!=(AABB2 const& compare) const;
 };

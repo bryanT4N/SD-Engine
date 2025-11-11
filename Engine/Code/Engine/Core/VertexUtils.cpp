@@ -101,6 +101,19 @@ void AddVertsForAABB2D(std::vector<Vertex>& verts, const AABB2& alignedBox, Rgba
 	verts.push_back(v3);
 }
 
+void AddVertsForAABB2D(std::vector<Vertex>& verts, const AABB2& alignedBox, Rgba8 color, AABB2 UVs)
+{
+	Vertex v0 = Vertex(Vec3(alignedBox.m_mins.x, alignedBox.m_mins.y, 0.f), color, Vec2(UVs.m_mins.x, UVs.m_mins.y));
+	Vertex v1 = Vertex(Vec3(alignedBox.m_mins.x, alignedBox.m_maxs.y, 0.f), color, Vec2(UVs.m_mins.x, UVs.m_maxs.y));
+	Vertex v2 = Vertex(Vec3(alignedBox.m_maxs.x, alignedBox.m_mins.y, 0.f), color, Vec2(UVs.m_maxs.x, UVs.m_mins.y));
+	Vertex v3 = Vertex(Vec3(alignedBox.m_maxs.x, alignedBox.m_maxs.y, 0.f), color, Vec2(UVs.m_maxs.x, UVs.m_maxs.y));
+
+	verts.push_back(v0);
+	verts.push_back(v2); verts.push_back(v1);
+	verts.push_back(v1); verts.push_back(v2);
+	verts.push_back(v3);
+}
+
 void AddvertsForOBB2D(std::vector<Vertex>& verts, const OBB2& orientedBox, Rgba8 color)
 {
 	Vec2 iBasis = orientedBox.m_iBasisNormal.GetNormalized();

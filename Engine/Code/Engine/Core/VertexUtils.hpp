@@ -17,6 +17,7 @@ void AddvertsForDisc2D(std::vector<Vertex> &verts, Vec2 disCenter, float discRad
 void AddvertsForRing2D(std::vector<Vertex>& verts, Vec2 ringCenter, float ringRadius, float thickness, Rgba8 color); 
 void AddVertsForAABB2(std::vector<Vertex>& verts, const AABB2& alignedBox, Rgba8 color);
 void AddVertsForAABB2D(std::vector<Vertex>& verts, const AABB2& alignedBox, Rgba8 color);
+void AddVertsForAABB2D(std::vector<Vertex>& verts, const AABB2& alignedBox, Rgba8 color, AABB2 UVs);
 void AddvertsForOBB2D(std::vector<Vertex> &verts, const OBB2& orientedBox,Rgba8 color );
 void AddVertsForCapsule2D(std::vector<Vertex> &verts, Vec2 boneStart, Vec2 boneEnd, float radius, Rgba8 color );
 void AddvertsForTriangle2D(std::vector<Vertex> &verts, Vec2 ccw0, Vec2 ccw1, Vec2 ccw2, Rgba8 color ); // counter-clockwise
