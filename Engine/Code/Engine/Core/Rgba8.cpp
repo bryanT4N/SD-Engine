@@ -13,6 +13,7 @@ const Rgba8 Rgba8::YELLOW(255, 255, 0, 255);
 const Rgba8 Rgba8::CYAN(0, 255, 255, 255);
 const Rgba8 Rgba8::PURPLE(255, 0, 255, 255);
 const Rgba8 Rgba8::ORANGE(255, 128, 0, 255);
+const Rgba8 Rgba8::BLACK(0, 0, 0, 255);
 
 //-----------------------------------------------------------------------------------------------
 void Rgba8::ScaleAlpha(float alphaMultiplier)
