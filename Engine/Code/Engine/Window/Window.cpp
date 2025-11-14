@@ -1,6 +1,7 @@
 #include "Engine/Window/Window.hpp"
 #include "Engine/Core/Engine.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
+#include "Engine/Input/InputSystem.hpp"
 
 #define WIN32_LEAN_AND_MEAN		// Always #define this before #including <windows.h>
 #include <Windows.h>			// #include this (massive, platform-specific) header in VERY few places (and .CPPs only)
@@ -9,7 +10,7 @@
 Window::Window(WindowConfig const& config)
 	:m_config(config)
 {
-
+	
 }
 
 Window::~Window()
@@ -40,6 +41,19 @@ void Window::EndFrame() const
 }
 
 
+Vec2 Window::GetNormalizedMouseUV() const
+{
+	HWND windowHandle = static_cast<HWND>(m_windowHandle);
+	POINT cursorCoords;
+	RECT clientRect;
+	::GetCursorPos(&cursorCoords);
+	::ScreenToClient(windowHandle, &cursorCoords);
+	::GetClientRect(windowHandle, &clientRect);
+	float cursorX = static_cast<float>(cursorCoords.x) / static_cast<float>(clientRect.right);
+	float cursorY = static_cast<float>(cursorCoords.y) / static_cast<float>(clientRect.bottom);
+	return Vec2(cursorX, 1.f - cursorY);
+}
+
 //-----------------------------------------------------------------------------------------------
 // Processes all Windows messages (WM_xxx) for this app that have queued up since last frame.
 // For each message in the queue, our WindowsMessageHandlingProcedure (or "WinProc") function
@@ -68,6 +82,34 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND windowHandle, UINT wmMessa
 	{
 		unsigned char asKey = (unsigned char)wParam;
 		g_engine->m_input->HandleKeyReleased(asKey);
+		break;
+	}
+	case WM_LBUTTONDOWN:
+	{
+		if (g_engine->m_input) {
+			g_engine->m_input->HandleKeyPressed(KEYCODE_LBUTTON);
+		}
+		break;
+	}
+	case WM_LBUTTONUP:
+	{
+		if (g_engine->m_input) {
+			g_engine->m_input->HandleKeyReleased(KEYCODE_LBUTTON);
+		}
+		break;
+	}
+	case WM_RBUTTONDOWN:
+	{
+		if (g_engine->m_input) {
+			g_engine->m_input->HandleKeyPressed(KEYCODE_RBUTTON);
+		}
+		break;
+	}
+	case WM_RBUTTONUP:
+	{
+		if (g_engine->m_input) {
+			g_engine->m_input->HandleKeyReleased(KEYCODE_RBUTTON);
+		}
 		break;
 	}
 	}
@@ -157,6 +199,7 @@ void Window::CreateOSWindow()
 	SetForegroundWindow(hWnd);
 	SetFocus(hWnd);
 
+	m_windowHandle = hWnd;
 	m_displayDeviceContext = GetDC(hWnd);
 
 	HCURSOR cursor = LoadCursor(NULL, IDC_ARROW);

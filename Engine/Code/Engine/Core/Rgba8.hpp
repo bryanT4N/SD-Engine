@@ -31,5 +31,6 @@ public:
 	static const Rgba8 PURPLE;
 	static const Rgba8 ORANGE;
 	static const Rgba8 BLACK;
+	static const Rgba8 TEAL;
 };
 

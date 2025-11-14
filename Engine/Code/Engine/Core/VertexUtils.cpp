@@ -201,3 +201,15 @@ void AddvertsForSector(std::vector<Vertex>& verts, Vec2 origin, float radius, Ve
 	}
 }
 
+void AddVertsForArrow2D(std::vector<Vertex>& verts, Vec2 tailPos, Vec2 tipPos, float arrowSize, float lineThickness, Rgba8 color)
+{
+	AddVertsForLineSegment2D(verts, tailPos, tipPos, lineThickness, color);
+
+	Vec2 fwdNormal	= (tipPos - tailPos).GetNormalized();
+	Vec2 a1 = tipPos + (fwdNormal).GetRotatedByDegrees(135.f) * arrowSize;
+	Vec2 a2 = tipPos + (fwdNormal).GetRotatedByDegrees(225.f) * arrowSize;
+
+	AddVertsForLineSegment2D(verts, a1, tipPos, lineThickness, color);
+	AddVertsForLineSegment2D(verts, a2, tipPos, lineThickness, color);
+}
+

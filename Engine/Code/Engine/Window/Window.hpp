@@ -9,6 +9,9 @@ struct WindowConfig {
 };
 
 //-----------------------------------------------------------------------------------------------
+struct Vec2;
+
+//-----------------------------------------------------------------------------------------------
 class Window
 {
 public:
@@ -19,8 +22,11 @@ public:
 	void BeginFrame();
 	void EndFrame() const;
 
+	Vec2 GetNormalizedMouseUV() const;
+
 	WindowConfig		m_config;
 	void*				m_displayDeviceContext = 0;
+	void*				m_windowHandle;
 
 private:
 	void CreateOSWindow();

@@ -11,21 +11,6 @@ class AABB2;
 class OBB2;
 
 //-----------------------------------------------------------------------------------------------
-struct RaycastResult2D {
-	// Basic raycast result information (required)
-	bool	m_didImpact = false;
-	float	m_impactDist = 0.f;
-	Vec2	m_impactPos;
-	Vec2	m_impactNormal;
-
-	// Original raycast information (optional)
-	Vec2	m_rayStartPos;
-	Vec2	m_rayFwdNormal;
-	float	m_rayMaxLength = 1.f;
-};
-
-
-//-----------------------------------------------------------------------------------------------
 // Clamp and lerp
 float	GetClamped( float value, float minValue, float maxValue );
 float	GetClampedZeroToOne(float value );
@@ -101,3 +86,21 @@ void	TransformPosition2D(Vec2& posToTransform, float uniformscale, float rotatio
 void	TransformPositionXY3D(Vec3& posToTransform, float xyScale, float zRotationDegrees, Vec2 const& xyTranslation);
 void	TransformPosition2D(Vec2& posToTransform, Vec2 const& iBasis, Vec2 const& jBasis, Vec2 const& translation);
 void	TransformPositionXY3D(Vec3& posToTransform, Vec2 const& iBasis, Vec2 const& jBasis, Vec2 const& translation);
+
+//-----------------------------------------------------------------------------------------------
+struct RaycastResult2D {
+	// Basic raycast result information (required)
+	bool	m_didImpact		= false;
+	float	m_impactDist	= 0.f;
+	Vec2	m_impactPos		= Vec2::ZERO;
+	Vec2	m_impactNormal	= Vec2::ZERO;
+
+	// Original raycast information (optional)
+	Vec2	m_rayStartPos	= Vec2::ZERO;
+	Vec2	m_rayFwdNormal	= Vec2::ZERO;
+	float	m_rayMaxLength	= 1.f;
+};
+
+//-----------------------------------------------------------------------------------------------
+// Raycast utilities
+RaycastResult2D RaycastVsDisc2D( Vec2 startPos, Vec2 fwdNormal, float maxDist, Vec2 discCenter, float discRadius );

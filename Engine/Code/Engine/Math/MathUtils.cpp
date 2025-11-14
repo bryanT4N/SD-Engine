@@ -473,3 +473,36 @@ void TransformPositionXY3D(Vec3& posToTransform, Vec2 const& iBasis, Vec2 const&
 	posToTransform = Vec3(posToTransformVec2.x, posToTransformVec2.y, posToTransform.z);
 }
 
+//-----------------------------------------------------------------------------------------------
+RaycastResult2D RaycastVsDisc2D(Vec2 startPos, Vec2 fwdNormal, float maxDist, Vec2 discCenter, float discRadius) {
+	Vec2	i		= fwdNormal;
+	Vec2	j		= fwdNormal.GetRotatedBy90Degrees();
+	Vec2	sc		= discCenter - startPos;
+	float	scj		= DotProduct2D(sc, j);
+
+	if (scj > discRadius || scj < -discRadius) {
+		RaycastResult2D missResult;
+		missResult.m_didImpact		= false;
+		missResult.m_impactDist		= maxDist;
+		// hitResult.m_impactNormal = ???
+		missResult.m_impactPos		= startPos + (fwdNormal * maxDist);
+		return missResult;
+	}
+
+	float	sci		= DotProduct2D(sc, i);
+	float	a_square= discRadius * discRadius - scj * scj;
+	float	a		= sqrtf(a_square);
+
+	RaycastResult2D hitResult;
+	hitResult.m_didImpact			= true;
+	hitResult.m_impactDist			= sci - a;
+	hitResult.m_impactPos			= startPos + (fwdNormal * hitResult.m_impactDist);
+	hitResult.m_impactNormal		= hitResult.m_impactPos - startPos;
+
+	hitResult.m_rayStartPos			= startPos;
+	hitResult.m_rayFwdNormal		= fwdNormal;
+	hitResult.m_rayMaxLength		= maxDist;
+
+	return hitResult;
+}
+

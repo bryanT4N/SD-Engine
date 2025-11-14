@@ -23,3 +23,4 @@ void AddVertsForCapsule2D(std::vector<Vertex> &verts, Vec2 boneStart, Vec2 boneE
 void AddvertsForTriangle2D(std::vector<Vertex> &verts, Vec2 ccw0, Vec2 ccw1, Vec2 ccw2, Rgba8 color ); // counter-clockwise
 void AddVertsForLineSegment2D(std::vector<Vertex>& verts, Vec2 start, Vec2 end, const float& thickness, Rgba8 color);
 void AddvertsForSector(std::vector<Vertex>& verts, Vec2 origin, float radius, Vec2 direction, float angleDegrees, Rgba8 color);
+void AddVertsForArrow2D( std::vector<Vertex>& verts, Vec2 tailPos, Vec2 tipPos, float arrowSize, float lineThickness, Rgba8 color);
