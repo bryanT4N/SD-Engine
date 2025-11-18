@@ -480,28 +480,41 @@ RaycastResult2D RaycastVsDisc2D(Vec2 startPos, Vec2 fwdNormal, float maxDist, Ve
 	Vec2	sc		= discCenter - startPos;
 	float	scj		= DotProduct2D(sc, j);
 
+	RaycastResult2D missResult;
+	missResult.m_didImpact = false;
+	missResult.m_impactDist = maxDist;
+	missResult.m_impactPos = startPos + (fwdNormal * maxDist);
+
 	if (scj > discRadius || scj < -discRadius) {
-		RaycastResult2D missResult;
-		missResult.m_didImpact		= false;
-		missResult.m_impactDist		= maxDist;
-		// hitResult.m_impactNormal = ???
-		missResult.m_impactPos		= startPos + (fwdNormal * maxDist);
 		return missResult;
 	}
 
 	float	sci		= DotProduct2D(sc, i);
-	float	a_square= discRadius * discRadius - scj * scj;
-	float	a		= sqrtf(a_square);
 
 	RaycastResult2D hitResult;
-	hitResult.m_didImpact			= true;
-	hitResult.m_impactDist			= sci - a;
-	hitResult.m_impactPos			= startPos + (fwdNormal * hitResult.m_impactDist);
-	hitResult.m_impactNormal		= hitResult.m_impactPos - startPos;
 
-	hitResult.m_rayStartPos			= startPos;
-	hitResult.m_rayFwdNormal		= fwdNormal;
-	hitResult.m_rayMaxLength		= maxDist;
+	hitResult.m_rayStartPos = startPos;
+	hitResult.m_rayFwdNormal = fwdNormal;
+	hitResult.m_rayMaxLength = maxDist;
+
+	if (sci * sci + scj * scj < discRadius * discRadius) {
+		hitResult.m_didImpact		= true;
+		hitResult.m_impactDist		= 0.f;
+		hitResult.m_impactPos		= startPos;
+		hitResult.m_impactNormal	= - fwdNormal;
+
+		return hitResult;
+	}
+	
+	float	a_square = discRadius * discRadius - scj * scj;
+	float	a = sqrtf(a_square);
+
+	hitResult.m_impactDist = sci - a;
+	if (hitResult.m_impactDist < 0 || hitResult.m_impactDist > maxDist) return missResult;
+
+	hitResult.m_didImpact = true;
+	hitResult.m_impactPos = startPos + (fwdNormal * hitResult.m_impactDist);
+	hitResult.m_impactNormal = (hitResult.m_impactPos - discCenter).GetNormalized();
 
 	return hitResult;
 }
