@@ -1,9 +1,12 @@
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Math/MathUtils.hpp"
 //#include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/StringUtils.hpp"
+#include "Engine/Core/ErrorWarningAssert.hpp"
 
 #define _USE_MATH_DEFINES
 #include <cmath>
+#include <cstdlib>
 
 //-----------------------------------------------------------------------------------------------
 const Vec2 Vec2::ZERO(0.f, 0.f);
@@ -194,6 +197,23 @@ void Vec2::Reflect(Vec2 const& normalOfSurfaceToReflectOffOf)
 {
 	Vec2 decompositedPerpendicular = normalOfSurfaceToReflectOffOf * DotProduct2D(*this, normalOfSurfaceToReflectOffOf);
 	*this = *this - 2.0f * decompositedPerpendicular;
+}
+
+//-----------------------------------------------------------------------------------------------
+void Vec2::SetFromText(char const* text)
+{
+	if (text == nullptr)
+	{
+		x = 0.f;
+		y = 0.f;
+		return;
+	}
+
+	Strings parts = SplitStringOnDelimiter(std::string(text), ',');
+	ASSERT_OR_DIE(parts.size() == 2, Stringf("Vec2::SetFromText failed for \"%s\" (expected \"x,y\")", text));
+
+	x = static_cast<float>(atof(parts[0].c_str()));
+	y = static_cast<float>(atof(parts[1].c_str()));
 }
 
 //-----------------------------------------------------------------------------------------------

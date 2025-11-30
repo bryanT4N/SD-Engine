@@ -47,6 +47,8 @@ public:
 	float		NormalizeAndGetPreviousLength();
 	void		Reflect(Vec2 const& normalOfSurfaceToReflectOffOf);
 
+	void		SetFromText( char const* text );
+
 	// Operators (const)
 	bool		operator==( Vec2 const& compare ) const;		// vec2 == vec2
 	bool		operator!=( Vec2 const& compare ) const;		// vec2 != vec2

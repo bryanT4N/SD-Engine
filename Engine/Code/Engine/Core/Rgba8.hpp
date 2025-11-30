@@ -16,6 +16,8 @@ public:
 	Rgba8(Rgba8 const& copyFrom);							// copy constructor (from another Rgba8)
 	explicit Rgba8(unsigned char initialR, unsigned char initialG, unsigned char initialB, unsigned char initialA);		
 
+	void		SetFromText( char const* text );
+
 	// Operators (const)
 	bool		operator==(Rgba8 const& compare) const;		// Rgba8 == Rgba8
 	bool		operator!=(Rgba8 const& compare) const;		// Rgba8 != Rgba8

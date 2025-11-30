@@ -1,6 +1,10 @@
 #include "Engine/Core/Rgba8.hpp"
+#include "Engine/Core/StringUtils.hpp"
+#include "Engine/Core/ErrorWarningAssert.hpp"
 //#include "Engine/Math/MathUtils.hpp"
 //#include "Engine/Core/EngineCommon.hpp"
+
+#include <cstdlib>
 
 //-----------------------------------------------------------------------------------------------
 const Rgba8 Rgba8::WHITE(255, 255, 255, 255);
@@ -37,6 +41,33 @@ Rgba8::Rgba8(unsigned char initialR, unsigned char initialG, unsigned char initi
 	, b(initialB)
 	, a(initialA)
 {
+}
+
+//-----------------------------------------------------------------------------------------------
+void Rgba8::SetFromText(char const* text)
+{
+	if (text == nullptr)
+	{
+		r = 255;
+		g = 255;
+		b = 255;
+		a = 255;
+		return;
+	}
+
+	Strings parts = SplitStringOnDelimiter(std::string(text), ',');
+	ASSERT_OR_DIE(parts.size() == 3 || parts.size() == 4,
+		Stringf("Rgba8::SetFromText failed for \"%s\" (expected \"r,g,b\" or \"r,g,b,a\")", text));
+
+	int rInt = atoi(parts[0].c_str());
+	int gInt = atoi(parts[1].c_str());
+	int bInt = atoi(parts[2].c_str());
+	int aInt = (parts.size() == 4) ? atoi(parts[3].c_str()) : 255;
+
+	r = static_cast<unsigned char>(rInt);
+	g = static_cast<unsigned char>(gInt);
+	b = static_cast<unsigned char>(bInt);
+	a = static_cast<unsigned char>(aInt);
 }
 
 bool Rgba8::operator==(Rgba8 const& compare) const

@@ -44,6 +44,8 @@ public:
 //	void		operator/=(const float uniformDivisor);		// intVec2 /= float
 	void		operator=(IntVec2 const& copyFrom);				// intVec2 = intVec2
 
+	void		SetFromText( char const* text );
+
 	// Standalone "friend" functions that are conceptually, but not actually, part of intVec2::
 //	friend IntVec2 const operator*(float uniformScale, IntVec2 const& vecToScale);	// float * intVec2
 

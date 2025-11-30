@@ -1,8 +1,11 @@
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include "Engine/Core/StringUtils.hpp"
+#include "Engine/Core/ErrorWarningAssert.hpp"
 
 #define _USE_MATH_DEFINES
 #include <cmath>
+#include <cstdlib>
 
 //-----------------------------------------------------------------------------------------------
 
@@ -71,4 +74,21 @@ void IntVec2::operator=(IntVec2 const& copyFrom)
 {
 	x = copyFrom.x;
 	y = copyFrom.y;
+}
+
+//-----------------------------------------------------------------------------------------------
+void IntVec2::SetFromText(char const* text)
+{
+	if (text == nullptr)
+	{
+		x = 0;
+		y = 0;
+		return;
+	}
+
+	Strings parts = SplitStringOnDelimiter(std::string(text), ',');
+	ASSERT_OR_DIE(parts.size() == 2, Stringf("IntVec2::SetFromText failed for \"%s\" (expected \"x,y\")", text));
+
+	x = atoi(parts[0].c_str());
+	y = atoi(parts[1].c_str());
 }
