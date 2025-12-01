@@ -41,9 +41,12 @@ public:
 
 	void		BindTexture(Texture* texture);
 	Texture*	CreateOrGetTextureFromFile(char const* imageFilePath);
-	Texture*	CreateTextureFromFile(char const* imageFilePath);
-	Texture*	CreateTextureFromData(char const* name, IntVec2 dimensions, int bytesPerTexel, uint8_t* texelData);
 	Texture*	GetTextureFromFileName(char const* imageFilePath);
 
 	BitmapFont* CreateOrGetBitmapFont(char const* bitmapFontFilePathWithNoExtension);
+
+private:
+	Texture*	CreateTextureFromFile(char const* imageFilePath);
+	Texture*	CreateTextureFromData(char const* name, IntVec2 dimensions, int bytesPerTexel, uint8_t* texelData);
+	BitmapFont*	CreateBitmapFont(char const* bitmapFontFilePathWithNoExtension);
 };

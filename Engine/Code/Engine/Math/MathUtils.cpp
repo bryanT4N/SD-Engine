@@ -29,6 +29,18 @@ float Interpolate(float start, float end, float fractionTowardEnd)
 	return start + fractionTowardEnd * (end - start);
 }
 
+float NormalizeByte( unsigned char byteValue )
+{
+	return static_cast<float>( byteValue ) / 255.0f;
+}
+
+unsigned char DenormalizeByte( float normalizedValue )
+{
+	float clamped = GetClampedZeroToOne( normalizedValue );
+	float scaled = clamped * 255.0f;
+	return static_cast<unsigned char>( scaled );
+}
+
 float GetFractionWithinRange(float value, float rangeStart, float rangeEnd)
 {
 	return (value - rangeStart) / (rangeEnd - rangeStart);

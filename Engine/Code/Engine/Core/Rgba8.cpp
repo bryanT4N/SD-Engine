@@ -1,8 +1,7 @@
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
-//#include "Engine/Math/MathUtils.hpp"
-//#include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Math/MathUtils.hpp"
 
 #include <cstdlib>
 
@@ -19,6 +18,7 @@ const Rgba8 Rgba8::PURPLE(255, 0, 255, 255);
 const Rgba8 Rgba8::ORANGE(255, 128, 0, 255);
 const Rgba8 Rgba8::BLACK(0, 0, 0, 255);
 const Rgba8 Rgba8::TEAL(0, 128, 128, 255);
+
 
 //-----------------------------------------------------------------------------------------------
 void Rgba8::ScaleAlpha(float alphaMultiplier)
@@ -78,4 +78,19 @@ bool Rgba8::operator==(Rgba8 const& compare) const
 bool Rgba8::operator!=(Rgba8 const& compare) const
 {
 	return !(r == compare.r && g == compare.g && b == compare.b && a == compare.a);
+}
+
+//-----------------------------------------------------------------------------------------------
+Rgba8 Interpolate( Rgba8 start, Rgba8 end, float fractionOfEnd )
+{
+	float r = Interpolate( NormalizeByte( start.r ), NormalizeByte( end.r ), fractionOfEnd );
+	float g = Interpolate( NormalizeByte( start.g ), NormalizeByte( end.g ), fractionOfEnd );
+	float b = Interpolate( NormalizeByte( start.b ), NormalizeByte( end.b ), fractionOfEnd );
+	float a = Interpolate( NormalizeByte( start.a ), NormalizeByte( end.a ), fractionOfEnd );
+
+	return Rgba8(
+		DenormalizeByte( r ),
+		DenormalizeByte( g ),
+		DenormalizeByte( b ),
+		DenormalizeByte( a ) );
 }

@@ -36,3 +36,6 @@ public:
 	static const Rgba8 TEAL;
 };
 
+//-----------------------------------------------------------------------------------------------
+Rgba8 Interpolate( Rgba8 start, Rgba8 end, float fractionOfEnd );
+

@@ -289,7 +289,19 @@ BitmapFont* Renderer::CreateOrGetBitmapFont(char const* bitmapFontFilePathWithNo
 		}
 	}
 
-	// Load it
+	BitmapFont* newFont = CreateBitmapFont(bitmapFontFilePathWithNoExtension);
+	m_loadedFonts.push_back(newFont);
+	return newFont;
+}
+
+//------------------------------------------------------------------------------------------------
+BitmapFont* Renderer::CreateBitmapFont(char const* bitmapFontFilePathWithNoExtension)
+{
+	if (bitmapFontFilePathWithNoExtension == nullptr)
+	{
+		return nullptr;
+	}
+
 	std::string baseName = bitmapFontFilePathWithNoExtension;
 	std::string texturePath = baseName + ".png";
 
@@ -297,6 +309,5 @@ BitmapFont* Renderer::CreateOrGetBitmapFont(char const* bitmapFontFilePathWithNo
 	GUARANTEE_OR_DIE(fontTexture != nullptr, Stringf("Failed to load bitmap font texture \"%s\"", texturePath.c_str()));
 
 	BitmapFont* newFont = new BitmapFont(bitmapFontFilePathWithNoExtension, *fontTexture);
-	m_loadedFonts.push_back(newFont);
 	return newFont;
 }
