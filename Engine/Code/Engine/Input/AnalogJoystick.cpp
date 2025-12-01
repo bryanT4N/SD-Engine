@@ -49,9 +49,11 @@ void AnalogJoystick::SetDeadzoneThresholds(float normalizedInnerDeadzoneThreshol
 void AnalogJoystick::UpdatePosition(float rawNormalizedX, float rawNormalizedY)
 {
 	m_rawPosition = Vec2(rawNormalizedX, rawNormalizedY);
-	// BUG: Stick Direction Return Value
-	float correctedAbsX = RangeMapClamped(std::abs(rawNormalizedX), m_innerDeadZoneFraction, m_outerDeadZoneFraction, 0.f, 1.f);
-	float correctedAbsY = RangeMapClamped(std::abs(rawNormalizedY), m_innerDeadZoneFraction, m_outerDeadZoneFraction, 0.f, 1.f);
-	m_correctedPosition = Vec2(std::copysignf(correctedAbsX, rawNormalizedX), std::copysignf(correctedAbsY, rawNormalizedY));
+
+	float degrees	= m_rawPosition.GetOrientationDegrees();
+	float length	= m_rawPosition.GetLength();
+	length = RangeMapClamped(length, m_innerDeadZoneFraction, m_outerDeadZoneFraction, 0.f, 1.f);
+
+	m_correctedPosition = Vec2::MakeFromPolarDegrees(degrees, length);
 }
 

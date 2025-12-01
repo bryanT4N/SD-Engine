@@ -7,6 +7,7 @@ struct Rgba8;
 struct Vertex;
 class Camera;
 class Texture;
+class BitmapFont;
 
 //-----------------------------------------------------------------------------------------------
 struct RenderConfig {
@@ -19,6 +20,7 @@ class Renderer
 public:
 	RenderConfig m_config;
 	std::vector<Texture*> m_loadedTextures;
+	std::vector<BitmapFont*> m_loadedFonts;
 
 public:
 	Renderer(RenderConfig const& config);
@@ -42,4 +44,6 @@ public:
 	Texture*	CreateTextureFromFile(char const* imageFilePath);
 	Texture*	CreateTextureFromData(char const* name, IntVec2 dimensions, int bytesPerTexel, uint8_t* texelData);
 	Texture*	GetTextureFromFileName(char const* imageFilePath);
+
+	BitmapFont* CreateOrGetBitmapFont(char const* bitmapFontFilePathWithNoExtension);
 };

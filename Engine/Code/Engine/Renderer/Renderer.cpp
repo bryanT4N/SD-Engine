@@ -7,6 +7,7 @@
 #include "Engine/Renderer/Texture.hpp"
 #include "Engine/Renderer/Camera.hpp"
 #include "Engine/Renderer/Renderer.hpp"
+#include "Engine/Renderer/BitmapFont.hpp"
 
 #include <string>
 
@@ -266,4 +267,36 @@ void Renderer::BindTexture(Texture* texture)
 	{
 		glDisable(GL_TEXTURE_2D);
 	}
+}
+
+//-----------------------------------------------------------------------------------------------
+BitmapFont* Renderer::CreateOrGetBitmapFont(char const* bitmapFontFilePathWithNoExtension)
+{
+	if (bitmapFontFilePathWithNoExtension == nullptr)
+	{
+		return nullptr;
+	}
+
+	// See if we already have this font previously loaded
+	int numFonts = static_cast<int>(m_loadedFonts.size());
+	for (int fontIndex = 0; fontIndex < numFonts; ++fontIndex)
+	{
+		BitmapFont* existingFont = m_loadedFonts[fontIndex];
+		if (existingFont != nullptr &&
+			existingFont->m_fontFilePathNameWithNoExtension == bitmapFontFilePathWithNoExtension)
+		{
+			return existingFont;
+		}
+	}
+
+	// Load it
+	std::string baseName = bitmapFontFilePathWithNoExtension;
+	std::string texturePath = baseName + ".png";
+
+	Texture* fontTexture = CreateOrGetTextureFromFile(texturePath.c_str());
+	GUARANTEE_OR_DIE(fontTexture != nullptr, Stringf("Failed to load bitmap font texture \"%s\"", texturePath.c_str()));
+
+	BitmapFont* newFont = new BitmapFont(bitmapFontFilePathWithNoExtension, *fontTexture);
+	m_loadedFonts.push_back(newFont);
+	return newFont;
 }
