@@ -9,6 +9,18 @@ SpriteSheet::SpriteSheet(Texture& texture, IntVec2 const& simpleGridLayout)
 {
 	int numSprites = simpleGridLayout.x * simpleGridLayout.y;
 	m_spriteDefs.reserve(numSprites);
+
+	IntVec2 texDims = m_texture.GetDimensions();
+	float uInset = 0.0f;
+	float vInset = 0.0f;
+	if (texDims.x > 0 && texDims.y > 0)
+	{
+		float texelWidth = 1.0f / static_cast<float>(texDims.x);
+		float texelHeight = 1.0f / static_cast<float>(texDims.y);
+		uInset = texelWidth / 128.0f;
+		vInset = texelHeight / 128.0f;
+	}
+
 	for (int spriteIndex = 0; spriteIndex < numSprites; spriteIndex++) {
 		Vec2 uvMins = Vec2::ZERO; Vec2 uvMaxs = Vec2::ONE;
 		m_spriteDefs.emplace_back(*this, spriteIndex, uvMins, uvMaxs);
@@ -22,19 +34,13 @@ SpriteSheet::SpriteSheet(Texture& texture, IntVec2 const& simpleGridLayout)
 			spriteDef.m_uvAtMaxs.x = static_cast<float>(spriteX + 1) / static_cast<float>(simpleGridLayout.x);
 			spriteDef.m_uvAtMins.y = static_cast<float>(spriteY + 0) / static_cast<float>(simpleGridLayout.y);
 			spriteDef.m_uvAtMaxs.y = static_cast<float>(spriteY + 1) / static_cast<float>(simpleGridLayout.y);
+
+			spriteDef.m_uvAtMins.x += uInset;
+			spriteDef.m_uvAtMaxs.x -= uInset;
+			spriteDef.m_uvAtMins.y += vInset;
+			spriteDef.m_uvAtMaxs.y -= vInset;
 		}
 	}
-
-// 	for (int spriteY = 0; spriteY < simpleGridLayout.y; ++spriteY) {
-// 		for (int spriteX = 0; spriteX < simpleGridLayout.x; ++spriteX) {
-// 			int spriteIndex = spriteX + (spriteY * simpleGridLayout.x);
-// 			SpriteDefinition& spriteDef = m_spriteDefs[spriteIndex];
-// 			spriteDef.m_uvAtMins.x = static_cast<float>(spriteX + 0) / static_cast<float>(simpleGridLayout.x);
-// 			spriteDef.m_uvAtMins.y = static_cast<float>(spriteY + 0) / static_cast<float>(simpleGridLayout.y);
-// 			spriteDef.m_uvAtMaxs.x = static_cast<float>(spriteX + 1) / static_cast<float>(simpleGridLayout.x);
-// 			spriteDef.m_uvAtMaxs.y = static_cast<float>(spriteY + 1) / static_cast<float>(simpleGridLayout.y);
-// 		}
-// 	}
 }
 
 Texture& SpriteSheet::GetTexture() const {

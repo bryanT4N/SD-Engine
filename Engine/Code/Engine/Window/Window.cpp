@@ -2,6 +2,7 @@
 #include "Engine/Core/Engine.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Input/InputSystem.hpp"
+#include "Engine/Core/DevConsole.hpp"
 
 #define WIN32_LEAN_AND_MEAN		// Always #define this before #including <windows.h>
 #include <Windows.h>			// #include this (massive, platform-specific) header in VERY few places (and .CPPs only)
@@ -65,8 +66,15 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND windowHandle, UINT wmMessa
 		// App close requested via "X" button, or right-click "Close Window" on task bar, or "Close" from system menu, or Alt-F4
 	case WM_CLOSE:
 	{
-		ERROR_AND_DIE("X-OUT OF THE APP IS NOT CURRENTLY SUPPORTTED!");
-		//		return 0; // "Consumes" this message (tells Windows "okay, we handled it")
+		if( g_engine != nullptr && g_engine->m_devConsole != nullptr )
+		{
+			g_engine->m_devConsole->Execute( "Quit" );
+		}
+		else
+		{
+			PostQuitMessage( 0 );
+		}
+		return 0; // Consume this message; app will quit via event handling
 	}
 
 	// Raw physical keyboard "key-was-just-depressed" event (case-insensitive, not translated)

@@ -10,6 +10,13 @@ class Texture;
 class BitmapFont;
 
 //-----------------------------------------------------------------------------------------------
+enum class BlendMode
+{
+	ALPHA,
+	ADDITIVE,
+};
+
+//-----------------------------------------------------------------------------------------------
 struct RenderConfig {
 	bool m_isEnabled = true;
 };
@@ -40,6 +47,8 @@ public:
 	void		DrawVertexArray(const std::vector<Vertex>& vertexes) const;
 
 	void		BindTexture(Texture* texture);
+	void		SetBlendMode( BlendMode blendMode ) const;
+
 	Texture*	CreateOrGetTextureFromFile(char const* imageFilePath);
 	Texture*	GetTextureFromFileName(char const* imageFilePath);
 

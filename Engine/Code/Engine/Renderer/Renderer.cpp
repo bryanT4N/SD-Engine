@@ -270,6 +270,23 @@ void Renderer::BindTexture(Texture* texture)
 }
 
 //-----------------------------------------------------------------------------------------------
+void Renderer::SetBlendMode( BlendMode blendMode ) const
+{
+	if( blendMode == BlendMode::ALPHA )
+	{
+		glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+	}
+	else if( blendMode == BlendMode::ADDITIVE )
+	{
+		glBlendFunc( GL_SRC_ALPHA, GL_ONE );
+	}
+	else
+	{
+		ERROR_AND_DIE( Stringf( "Unknown / unsupported blend mode #%i", static_cast<int>( blendMode ) ) );
+	}
+}
+
+//-----------------------------------------------------------------------------------------------
 BitmapFont* Renderer::CreateOrGetBitmapFont(char const* bitmapFontFilePathWithNoExtension)
 {
 	if (bitmapFontFilePathWithNoExtension == nullptr)
