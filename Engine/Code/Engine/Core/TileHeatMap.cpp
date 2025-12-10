@@ -17,45 +17,38 @@ TileHeatMap::TileHeatMap( IntVec2 const& dimensions )
 }
 
 //-----------------------------------------------------------------------------------------------
-TileHeatMap::~TileHeatMap()
-{
+TileHeatMap::~TileHeatMap() {
 	delete[] m_values;
 	m_values = nullptr;
 }
 
 //-----------------------------------------------------------------------------------------------
-IntVec2 TileHeatMap::GetDimensions() const
-{
+IntVec2 TileHeatMap::GetDimensions() const {
 	return m_dimensions;
 }
 
 //-----------------------------------------------------------------------------------------------
-void TileHeatMap::SetAllValues( float value )
-{
+void TileHeatMap::SetAllValues( float value ) {
 	int numTiles = m_dimensions.x * m_dimensions.y;
-	for( int index = 0; index < numTiles; ++index )
-	{
+	for( int index = 0; index < numTiles; ++index ) {
 		m_values[index] = value;
 	}
 }
 
 //-----------------------------------------------------------------------------------------------
-float TileHeatMap::GetValue( IntVec2 const& tileCoords ) const
-{
+float TileHeatMap::GetValue( IntVec2 const& tileCoords ) const {
 	int index = GetIndexForTileCoords( tileCoords );
 	return m_values[index];
 }
 
 //-----------------------------------------------------------------------------------------------
-void TileHeatMap::SetValue( IntVec2 const& tileCoords, float value )
-{
+void TileHeatMap::SetValue( IntVec2 const& tileCoords, float value ) {
 	int index = GetIndexForTileCoords( tileCoords );
 	m_values[index] = value;
 }
 
 //-----------------------------------------------------------------------------------------------
-void TileHeatMap::AddValue( IntVec2 const& tileCoords, float deltaValue )
-{
+void TileHeatMap::AddValue( IntVec2 const& tileCoords, float deltaValue ) {
 	int index = GetIndexForTileCoords( tileCoords );
 	m_values[index] += deltaValue;
 }
@@ -70,19 +63,12 @@ void TileHeatMap::AddVertsForDebugDraw(
 	float specialValue,
 	Rgba8 specialColor )
 {
-	if( m_values == nullptr )
-	{
-		return;
-	}
+	if( m_values == nullptr )							{ return; }
+	if( m_dimensions.x <= 0 || m_dimensions.y <= 0 )	{ return; }
 
-	if( m_dimensions.x <= 0 || m_dimensions.y <= 0 )
-	{
-		return;
-	}
-
-	Vec2 totalSize = totalBounds.GetDimensions();
-	float tileWidth = totalSize.x / static_cast<float>( m_dimensions.x );
-	float tileHeight = totalSize.y / static_cast<float>( m_dimensions.y );
+	Vec2	totalSize	= totalBounds.GetDimensions();
+	float	tileWidth	= totalSize.x / static_cast<float>( m_dimensions.x );
+	float	tileHeight	= totalSize.y / static_cast<float>( m_dimensions.y );
 
 	for( int y = 0; y < m_dimensions.y; ++y )
 	{
@@ -93,12 +79,10 @@ void TileHeatMap::AddVertsForDebugDraw(
 			float value = m_values[index];
 
 			Rgba8 tileColor;
-			if( value == specialValue )
-			{
+			if( value == specialValue ) {
 				tileColor = specialColor;
 			}
-			else
-			{
+			else {
 				float t = RangeMapClamped( value, valueRange.m_min, valueRange.m_max, 0.0f, 1.0f );
 				t = GetClampedZeroToOne( t );
 				tileColor = Interpolate( lowColor, highColor, t );

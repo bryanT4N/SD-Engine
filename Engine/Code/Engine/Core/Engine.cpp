@@ -8,25 +8,48 @@ Engine* g_engine = nullptr;
 
 //-----------------------------------------------------------------------------------------------
 Engine::Engine(EngineConfig const& config)
+	: m_config( config )
 {
-	m_window	= new Window(config.m_windowConfig);
-	m_render	= new Renderer(config.m_renderConfig);
-	m_input		= new InputSystem(config.m_inputConfig);
-	m_audio		= new AudioSystem(config.m_audioConfig);
+	// Make this Engine instance globally visible as early as possible
+	g_engine = this;
+
+	m_window		= new Window( m_config.m_windowConfig );
+	m_render		= new Renderer( m_config.m_renderConfig );
+	m_input			= new InputSystem( m_config.m_inputConfig );
+	m_audio			= new AudioSystem( m_config.m_audioConfig );
+	m_eventSystem	= new EventSystem( m_config.m_eventSystemConfig );
+	m_devConsole	= new DevConsole( m_config.m_devConsoleConfig );
 
 	m_window->Startup();
 	m_render->Startup();
 	m_input->Startup();
 	m_audio->Startup();
+	m_eventSystem->Startup();
+	m_devConsole->Startup();
 }
 
 //-----------------------------------------------------------------------------------------------
 Engine::~Engine()
 {
+	if( m_devConsole != nullptr )
+	{
+		m_devConsole->Shutdown();
+	}
+	if( m_eventSystem != nullptr )
+	{
+		m_eventSystem->Shutdown();
+	}
+
 	m_render->Shutdown();
 	m_input->Shutdown();
 	m_audio->Shutdown();
 	m_window->Shutdown();
+
+	delete m_devConsole;
+	m_devConsole = nullptr;
+
+	delete m_eventSystem;
+	m_eventSystem = nullptr;
 
 	delete m_input;
 	m_input = nullptr;
@@ -39,6 +62,8 @@ Engine::~Engine()
 
 	delete m_window;
 	m_window = nullptr;
+
+	g_engine = nullptr;
 }
 
 //-----------------------------------------------------------------------------------------------
@@ -48,11 +73,29 @@ void Engine::BeginFrame()
 	m_render->BeginFrame();
 	m_input->BeginFrame();
 	m_audio->BeginFrame();
+
+	if( m_eventSystem != nullptr )
+	{
+		m_eventSystem->BeginFrame();
+	}
+	if( m_devConsole != nullptr )
+	{
+		m_devConsole->BeginFrame();
+	}
 }
 
 //-----------------------------------------------------------------------------------------------
 void Engine::EndFrame()
 {
+	if( m_eventSystem != nullptr )
+	{
+		m_eventSystem->EndFrame();
+	}
+	if( m_devConsole != nullptr )
+	{
+		m_devConsole->EndFrame();
+	}
+
 	m_window->EndFrame();
 	m_render->EndFrame();
 	m_input->EndFrame();
