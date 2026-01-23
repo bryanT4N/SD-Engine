@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include "Engine/Math/IntVec2.hpp"
 
 //-----------------------------------------------------------------------------------------------
 struct WindowConfig {
@@ -10,6 +11,7 @@ struct WindowConfig {
 
 //-----------------------------------------------------------------------------------------------
 struct Vec2;
+
 
 //-----------------------------------------------------------------------------------------------
 class Window
@@ -26,7 +28,12 @@ public:
 
 	WindowConfig		m_config;
 	void*				m_displayDeviceContext = 0;
+
 	void*				m_windowHandle;
+	IntVec2				m_clientDimensions;
+
+	void*				GetHwnd() const;
+	IntVec2				GetClientDimensions() const;
 
 private:
 	void CreateOSWindow();

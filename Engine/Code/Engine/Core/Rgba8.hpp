@@ -17,6 +17,7 @@ public:
 	explicit Rgba8(unsigned char initialR, unsigned char initialG, unsigned char initialB, unsigned char initialA);		
 
 	void		SetFromText( char const* text );
+	void		GetAsFloats(float* colorAsFloats) const;
 
 	// Operators (const)
 	bool		operator==(Rgba8 const& compare) const;		// Rgba8 == Rgba8

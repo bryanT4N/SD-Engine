@@ -55,6 +55,16 @@ Vec2 Window::GetNormalizedMouseUV() const
 	return Vec2(cursorX, 1.f - cursorY);
 }
 
+void* Window::GetHwnd() const
+{
+	return m_windowHandle;
+}
+
+IntVec2 Window::GetClientDimensions() const
+{
+	return m_clientDimensions;
+}
+
 //-----------------------------------------------------------------------------------------------
 // Processes all Windows messages (WM_xxx) for this app that have queued up since last frame.
 // For each message in the queue, our WindowsMessageHandlingProcedure (or "WinProc") function
@@ -182,6 +192,8 @@ void Window::CreateOSWindow()
 	clientRect.right = clientRect.left + (int)clientWidth;
 	clientRect.top = (int)clientMarginY;
 	clientRect.bottom = clientRect.top + (int)clientHeight;
+
+	m_clientDimensions = IntVec2(static_cast<int>(clientWidth), static_cast<int>(clientHeight));
 
 	// Calculate the outer dimensions of the physical window, including frame et. al.
 	RECT windowRect = clientRect;

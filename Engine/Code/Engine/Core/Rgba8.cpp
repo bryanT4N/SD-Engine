@@ -70,6 +70,17 @@ void Rgba8::SetFromText(char const* text)
 	a = static_cast<unsigned char>(aInt);
 }
 
+void Rgba8::GetAsFloats(float* colorAsFloats) const
+{
+	constexpr float inv255 = 1.0f / 255.0f;
+
+	colorAsFloats[0] = r * inv255;
+	colorAsFloats[1] = g * inv255;
+	colorAsFloats[2] = b * inv255;
+	colorAsFloats[3] = a * inv255;
+}
+
+
 bool Rgba8::operator==(Rgba8 const& compare) const
 {
 	return r == compare.r && g == compare.g && b == compare.b && a == compare.a;
