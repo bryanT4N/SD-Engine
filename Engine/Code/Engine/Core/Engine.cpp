@@ -10,22 +10,27 @@ Engine* g_engine = nullptr;
 Engine::Engine(EngineConfig const& config)
 	: m_config( config )
 {
+	// First pass: create all engine subsystems, so all pointers/objects exist;
+	// Second pass is actual startup, now that all system objects exist.
+
 	// Make this Engine instance globally visible as early as possible
 	g_engine = this;
 
-	m_window		= new Window( m_config.m_windowConfig );
-	m_render		= new Renderer( m_config.m_renderConfig );
-	m_input			= new InputSystem( m_config.m_inputConfig );
-	m_audio			= new AudioSystem( m_config.m_audioConfig );
-	m_eventSystem	= new EventSystem( m_config.m_eventSystemConfig );
-	m_devConsole	= new DevConsole( m_config.m_devConsoleConfig );
+	// Create engine subsystems, if requested by Game/App
+	if (m_config.m_windowConfig.m_isEnabled)			m_window		= new Window(m_config.m_windowConfig);
+	if (m_config.m_renderConfig.m_isEnabled)			m_render		= new Renderer( m_config.m_renderConfig );
+	if (m_config.m_inputConfig.m_isEnabled)				m_input			= new InputSystem( m_config.m_inputConfig );
+	if (m_config.m_audioConfig.m_isEnabled)				m_audio			= new AudioSystem( m_config.m_audioConfig );
+	if (m_config.m_eventSystemConfig.m_isEnabled)		m_eventSystem	= new EventSystem( m_config.m_eventSystemConfig );
+	if (m_config.m_devConsoleConfig.m_isEnabled)		m_devConsole	= new DevConsole( m_config.m_devConsoleConfig );
 
-	m_window->Startup();
-	m_render->Startup();
-	m_input->Startup();
-	m_audio->Startup();
-	m_eventSystem->Startup();
-	m_devConsole->Startup();
+	// Start up existing engine subsystems
+	if(m_window)		m_window->Startup();
+	if(m_render)		m_render->Startup();
+	if(m_input)			m_input->Startup();
+	if(m_audio)			m_audio->Startup();
+	if(m_eventSystem)	m_eventSystem->Startup();
+	if(m_devConsole)	m_devConsole->Startup();
 }
 
 //-----------------------------------------------------------------------------------------------

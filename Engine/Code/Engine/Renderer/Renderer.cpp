@@ -246,7 +246,7 @@ Texture* Renderer::GetTextureFromFileName(char const* imageFilePath)
 
 	std::string targetName = imageFilePath;
 
-	for (int indexTexture = 0; indexTexture < m_loadedTextures.size(); ++indexTexture) {
+	for (int indexTexture = 0; indexTexture < static_cast<int>(m_loadedTextures.size()); ++indexTexture) {
 		Texture* tex = m_loadedTextures[indexTexture];
 		if (m_loadedTextures[indexTexture]->GetImageFilePath() == imageFilePath)
 			return tex;
