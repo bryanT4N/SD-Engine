@@ -16,4 +16,6 @@ public:
 	explicit Vertex(Vec3 const& position, Rgba8 const& color, Vec2 const& uvTexCoords);
 };
 
+//-----------------------------------------------------------------------------------------------
+typedef Vertex Vertex_PCU;
 
