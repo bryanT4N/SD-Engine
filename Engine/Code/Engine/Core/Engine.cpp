@@ -36,19 +36,12 @@ Engine::Engine(EngineConfig const& config)
 //-----------------------------------------------------------------------------------------------
 Engine::~Engine()
 {
-	if( m_devConsole != nullptr )
-	{
-		m_devConsole->Shutdown();
-	}
-	if( m_eventSystem != nullptr )
-	{
-		m_eventSystem->Shutdown();
-	}
-
-	m_render->Shutdown();
-	m_input->Shutdown();
-	m_audio->Shutdown();
-	m_window->Shutdown();
+	if( m_devConsole != nullptr )	m_devConsole->Shutdown();
+	if( m_eventSystem != nullptr )	m_eventSystem->Shutdown();
+	if( m_render != nullptr )		m_render->Shutdown();
+	if( m_input != nullptr )		m_input->Shutdown();
+	if( m_audio != nullptr )		m_audio->Shutdown();
+	if( m_window != nullptr )		m_window->Shutdown();
 
 	delete m_devConsole;
 	m_devConsole = nullptr;
@@ -74,37 +67,25 @@ Engine::~Engine()
 //-----------------------------------------------------------------------------------------------
 void Engine::BeginFrame()
 {
-	m_window->BeginFrame();
-	m_render->BeginFrame();
-	m_input->BeginFrame();
-	m_audio->BeginFrame();
+	if( m_window != nullptr )		m_window->BeginFrame();
+	if( m_render != nullptr )		m_render->BeginFrame();
+	if( m_input != nullptr )		m_input->BeginFrame();
+	if( m_audio != nullptr )		m_audio->BeginFrame();
 
-	if( m_eventSystem != nullptr )
-	{
-		m_eventSystem->BeginFrame();
-	}
-	if( m_devConsole != nullptr )
-	{
-		m_devConsole->BeginFrame();
-	}
+	if( m_eventSystem != nullptr )	m_eventSystem->BeginFrame();
+	if( m_devConsole != nullptr )	m_devConsole->BeginFrame();
 }
 
 //-----------------------------------------------------------------------------------------------
 void Engine::EndFrame()
 {
-	if( m_eventSystem != nullptr )
-	{
-		m_eventSystem->EndFrame();
-	}
-	if( m_devConsole != nullptr )
-	{
-		m_devConsole->EndFrame();
-	}
+	if( m_eventSystem != nullptr )	m_eventSystem->EndFrame();
+	if( m_devConsole != nullptr )	m_devConsole->EndFrame();
 
-	m_window->EndFrame();
-	m_render->EndFrame();
-	m_input->EndFrame();
-	m_audio->EndFrame();
+	if( m_window != nullptr )		m_window->EndFrame();
+	if( m_render != nullptr )		m_render->EndFrame();
+	if( m_input != nullptr )		m_input->EndFrame();
+	if( m_audio != nullptr )		m_audio->EndFrame();
 }
 
 //-----------------------------------------------------------------------------------------------

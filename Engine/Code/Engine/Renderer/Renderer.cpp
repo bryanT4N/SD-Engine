@@ -8,19 +8,60 @@
 #include "Engine/Renderer/Camera.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
+#include "Engine/Renderer/Shader.hpp"
+#include "Engine/Renderer/VertexBuffer.hpp"
 
 #include <string>
+#include <cstring>
 
 #include "ThirdParty/stb/stb_image.h"
 
 #define WIN32_LEAN_AND_MEAN		// Always #define this before #including <windows.h>
 #include <Windows.h>			// #include this (massive, platform-specific) header in VERY few places (and .CPPs only)
 
-#include <gl/gl.h>					// Include basic OpenGL constants and function declarations
-#pragma comment( lib, "opengl32" )	// Link in the OpenGL32.lib static library
+#include <d3d11.h>
+#include <d3dcompiler.h>
+#include <dxgi.h>
+
+#pragma comment(lib,"d3d11.lib")
+#pragma comment(lib,"dxgi.lib")
+#pragma comment(lib,"d3dcompiler.lib")
+
+#if defined(ENGINE_DEBUG_RENDER)
+#include <dxgidebug.h>
+#pragma comment(lib,"dxguid.lib")
+#endif
 
 //-----------------------------------------------------------------------------------------------
-HGLRC g_openGLRenderingContext = nullptr; 
+static char const* g_defaultShaderSource = R"(
+struct vs_input_t
+{
+	float3 localPosition : POSITION;
+	float4 color : COLOR;
+	float2 uv : TEXCOORD;
+};
+
+struct v2p_t
+{
+	float4 position : SV_Position;
+	float4 color : COLOR;
+	float2 uv : TEXCOORD;
+};
+
+v2p_t VertexMain(vs_input_t input)
+{
+	v2p_t v2p;
+	v2p.position = float4(input.localPosition, 1);
+	v2p.color = input.color;
+	v2p.uv = input.uv;
+	return v2p;
+}
+
+float4 PixelMain(v2p_t input) :SV_Target0
+{
+	return float4(input.color);
+}
+)";
 
 //-----------------------------------------------------------------------------------------------
 Renderer::Renderer(RenderConfig const& config)
@@ -34,81 +75,189 @@ Renderer::~Renderer()
 }
 
 //-----------------------------------------------------------------------------------------------
-void Renderer::Startup() const
+void Renderer::Startup()
 {
-	CreateRenderingContext();
+
+	unsigned int deviceFlags = 0;
+
+#if defined(ENGINE_DEBUG_RENDER)
+	deviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
+#endif
+
+	// Create debug module
+#if defined(ENGINE_DEBUG_RENDER)
+	m_dxgiDebugModule = (void*)::LoadLibraryA("dxgidebug.dll");
+	if (m_dxgiDebugModule == nullptr) {
+		ERROR_AND_DIE("Could not load dxgidebug.dl1.");
+	}
+
+	typedef HRESULT(WINAPI* GetDebugModuleCB)(REFIID, void**);
+	((GetDebugModuleCB)::GetProcAddress((HMODULE)m_dxgiDebugModule, "DXGIGetDebugInterface"))
+		(__uuidof(IDXGIDebug), &m_dxgiDebug);
+
+	if (m_dxgiDebug == nullptr)
+	{
+		ERROR_AND_DIE("Could not load debug module.");
+	}
+#endif
+
+	// CREATE THE DEVICE AND SWAP CHAIN
+	// Create device and swap chain
+	DXGI_SWAP_CHAIN_DESC swapChainDesc = { };
+	swapChainDesc.BufferDesc.Width = g_engine->m_window->GetClientDimensions().x;
+	swapChainDesc.BufferDesc.Height = g_engine->m_window->GetClientDimensions().y;
+	swapChainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	swapChainDesc.SampleDesc.Count = 1;
+	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+	swapChainDesc.BufferCount = 2;
+	swapChainDesc.OutputWindow = (HWND)g_engine->m_window->GetHwnd();
+	swapChainDesc.Windowed = true;
+	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+
+	HRESULT hr;
+	hr = D3D11CreateDeviceAndSwapChain(
+		nullptr, D3D_DRIVER_TYPE_HARDWARE, NULL, deviceFlags,
+		nullptr, 0, D3D11_SDK_VERSION, &swapChainDesc,
+		&m_swapChain, &m_device, nullptr, &m_deviceContext);
+
+	if (!SUCCEEDED(hr)) {
+		ERROR_AND_DIE("Could not create D3D 11 device and swap chain.");
+	}
+
+	// SAVE BACK BUFFER VIEW
+	// Get back buffer texture
+	ID3D11Texture2D* backBuffer;
+	hr = m_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&backBuffer);
+	if (!SUCCEEDED(hr)) {
+		ERROR_AND_DIE("Could not get swap chain buffer.");
+	}
+
+	hr = m_device->CreateRenderTargetView(backBuffer, NULL, &m_renderTargetView);
+	if (!SUCCEEDED(hr)) {
+		ERROR_AND_DIE("Could create render target view for swap chain buffer.");
+	}
+
+	backBuffer->Release();
+
+
+	// Set viewport
+	D3D11_VIEWPORT viewport = { };
+	viewport.TopLeftX = 0.0f;
+	viewport.TopLeftY = 0.0f;
+	viewport.Width = (float)g_engine->m_window->GetClientDimensions().x;
+	viewport.Height = (float)g_engine->m_window->GetClientDimensions().y;
+	viewport.MinDepth = 0.0f;
+	viewport.MaxDepth = 1.0f;
+
+	m_deviceContext->RSSetViewports(1, &viewport);
+
+	// Set rasterizer state
+	D3D11_RASTERIZER_DESC rasterizerDesc = { };
+	rasterizerDesc.FillMode = D3D11_FILL_SOLID;
+	rasterizerDesc.CullMode = D3D11_CULL_NONE;
+	rasterizerDesc.FrontCounterClockwise = false;
+	rasterizerDesc.DepthBias = 0;
+	rasterizerDesc.DepthBiasClamp = 0.0f;
+	rasterizerDesc.SlopeScaledDepthBias = 0.0f;
+	rasterizerDesc.DepthClipEnable = true;
+	rasterizerDesc.ScissorEnable = false;
+	rasterizerDesc.MultisampleEnable = false;
+	rasterizerDesc.AntialiasedLineEnable = true;
+
+	hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerState);
+	if (!SUCCEEDED(hr)) {
+		ERROR_AND_DIE("Could not create rasterizer state.");
+	}
+
+	m_deviceContext->RSSetState(m_rasterizerState);
+
+	Shader* defaultShader = CreateShader("Default", g_defaultShaderSource);
+	BindShader(defaultShader);
+
+	m_immediateVBO = CreateVertexBuffer(sizeof(Vertex_PCU), sizeof(Vertex_PCU));
 }
 
 //-----------------------------------------------------------------------------------------------
-void Renderer::Shutdown() const
+void Renderer::Shutdown()
 {
+	for (int shaderIndex = 0; shaderIndex < static_cast<int>(m_loadedShaders.size()); ++shaderIndex) {
+		delete m_loadedShaders[shaderIndex];
+		m_loadedShaders[shaderIndex] = nullptr;
+	}
+	m_loadedShaders.clear();
+	m_currentShader = nullptr;
+
+	delete m_immediateVBO;
+	m_immediateVBO = nullptr;
+
+	DX_SAFE_RELEASE(m_rasterizerState);
+//	DX_SAFE_RELEASE(m_vertexBuffer);
+//	DX_SAFE_RELEASE(m_vertexShader);
+//	DX_SAFE_RELEASE(m_pixelShader);
+//	DX_SAFE_RELEASE(m_inputLayoutForVertex_PCU);
+	DX_SAFE_RELEASE(m_renderTargetView);
+	DX_SAFE_RELEASE(m_swapChain);
+	DX_SAFE_RELEASE(m_deviceContext);
+	DX_SAFE_RELEASE(m_device);
+
+	// Report error leaks and release debug module
+#if defined(ENGINE_DEBUG_RENDER)
+	((IDXGIDebug*)m_dxgiDebug)->ReportLiveObjects(
+		DXGI_DEBUG_ALL, (DXGI_DEBUG_RLO_FLAGS)(DXGI_DEBUG_RLO_DETAIL | DXGI_DEBUG_RLO_IGNORE_INTERNAL)
+	);
+
+	((IDXGIDebug*)m_dxgiDebug)->Release();
+	m_dxgiDebug = nullptr;
+
+	::FreeLibrary((HMODULE)m_dxgiDebugModule);
+	m_dxgiDebugModule = nullptr;
+#endif
+
 }
 
 //-----------------------------------------------------------------------------------------------
 void Renderer::BeginFrame() const
 {
+	if (m_deviceContext == nullptr || m_renderTargetView == nullptr) {
+		return;
+	}
+
+	m_deviceContext->OMSetRenderTargets(1, &m_renderTargetView, nullptr);
 }
 
 //-----------------------------------------------------------------------------------------------
 void Renderer::EndFrame() const
 {
-	// "Present" the back buffer by swapping the front(visible) and back(working) screen buffers
-	HDC displayDeviceContext = (HDC) g_engine->m_window->m_displayDeviceContext;
-	SwapBuffers(displayDeviceContext); // Note: call this only once at the very end of each frame
-}
-
-//-----------------------------------------------------------------------------------------------
-// Given an existing OS Window, create a Rendering Context (RC) for OpenGL or DirectX to draw to it.
-void Renderer::CreateRenderingContext() const
-{
-	// Creates an OpenGL rendering context (RC) and binds it to the current window's device context (DC)
-	PIXELFORMATDESCRIPTOR pixelFormatDescriptor;
-	memset(&pixelFormatDescriptor, 0, sizeof(pixelFormatDescriptor));
-	pixelFormatDescriptor.nSize = sizeof(pixelFormatDescriptor);
-	pixelFormatDescriptor.nVersion = 1;
-	pixelFormatDescriptor.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-	pixelFormatDescriptor.iPixelType = PFD_TYPE_RGBA;
-	pixelFormatDescriptor.cColorBits = 24;
-	pixelFormatDescriptor.cDepthBits = 24;
-	pixelFormatDescriptor.cAccumBits = 0;
-	pixelFormatDescriptor.cStencilBits = 8;
-
-	HWND windowHandle =::GetActiveWindow(); // #TempHack: Later, the window subsystem will hold this
-	HDC displayDeviceContext = GetDC( windowHandle );
-
-	// These two OpenGL-like functions (wglCreateContext and wglMakeCurrent) will remain here for now.
-	int pixelFormatCode = ChoosePixelFormat(displayDeviceContext, &pixelFormatDescriptor);
-	SetPixelFormat(displayDeviceContext, pixelFormatCode, &pixelFormatDescriptor);
-	g_openGLRenderingContext = wglCreateContext(displayDeviceContext);
-	wglMakeCurrent(displayDeviceContext, g_openGLRenderingContext);
-
-	// Configure some initial drawing state for OpenGL ( enable alpha blending )
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	// Present
+	HRESULT hr;
+	hr = m_swapChain->Present(0, 0);
+	if (hr == DXGI_ERROR_DEVICE_REMOVED || hr == DXGI_ERROR_DEVICE_RESET)
+	{
+		ERROR_AND_DIE("Device has been lost, application will now terminate.");
+	}
 }
 
 //-----------------------------------------------------------------------------------------------
 void Renderer::ClearScreen(Rgba8 const& clearColor) const
 {
-	// Clear all screen (back buffer) pixels to clearColor
-	float floatR = static_cast<float>(clearColor.r) / 256.f;
-	float floatG = static_cast<float>(clearColor.g) / 256.f;
-	float floatB = static_cast<float>(clearColor.b) / 256.f;
-	float floatA = static_cast<float>(clearColor.a) / 256.f;
-
-	// Note: glClearColor takes colors as floats in [0,1], not bytes in [0,255]
-	glClearColor(floatR, floatG, floatB, floatA);
-	glClear(GL_COLOR_BUFFER_BIT); // ALWAYS clear the screen at the top of each frame's Render()!
+	// Clear the screen
+	float colorAsFloats[4];
+	clearColor.GetAsFloats(colorAsFloats);
+	m_deviceContext->ClearRenderTargetView(m_renderTargetView, colorAsFloats);
 }
 
 //-----------------------------------------------------------------------------------------------
-void Renderer::BeginCamera(Camera const& camera) const
+void Renderer::BeginCamera([[maybe_unused]] Camera const& camera) const
 {
-	// Establish a 2D (orthographic) drawing coordinate system: (0,0) bottom-left to (10,10) top-right
-	glLoadIdentity();
+	D3D11_VIEWPORT viewport = { };
+	viewport.TopLeftX = 0.0f;
+	viewport.TopLeftY = 0.0f;
+	viewport.Width = (float)g_engine->m_window->GetClientDimensions().x;
+	viewport.Height = (float)g_engine->m_window->GetClientDimensions().y;
+	viewport.MinDepth = 0.0f;
+	viewport.MaxDepth = 1.0f;
 
-	// arguments are: xLeft, xRight, yBottom, yTop, zNear, zFar
-	glOrtho(camera.GetOrthoBottomLeft().x, camera.GetOrthoTopRight().x, camera.GetOrthoBottomLeft().y, camera.GetOrthoTopRight().y, 0.f, 1.f); 
+	m_deviceContext->RSSetViewports(1, &viewport);
 }
 
 //-----------------------------------------------------------------------------------------------
@@ -119,31 +268,202 @@ void Renderer::EndCamera( [[maybe_unused]] Camera const& camera) const
 //-----------------------------------------------------------------------------------------------
 void Renderer::DrawVertexArray(int numVertexes, Vertex const* vertexes) const
 {
-	glBegin(GL_TRIANGLES);
-	for (int i = 0; i < numVertexes; ++i) 
-	{
-		Vertex const& vert = vertexes[i];
-		glColor4ub(vert.m_color.r, vert.m_color.g, vert.m_color.b, vert.m_color.a);
-		glTexCoord2f(vert.m_uvTexCoords.x, vert.m_uvTexCoords.y);
-		glVertex3f(vert.m_position.x, vert.m_position.y, vert.m_position.z);
+	if (m_immediateVBO == nullptr || vertexes == nullptr || numVertexes <= 0) {
+		return;
 	}
 
-	glEnd(); // GL_TRIANGLES
+	unsigned int dataSize = static_cast<unsigned int>(numVertexes) * sizeof(Vertex);
+	CopyCPUToGPU(vertexes, dataSize, m_immediateVBO);
+	DrawVertexBuffer(m_immediateVBO, static_cast<unsigned int>(numVertexes));
 }
 
 void Renderer::DrawVertexArray(const std::vector<Vertex>& vertexes) const
 {
-	// DrawVertexArray(static_cast<int>(vertexes.size()), vertexes.data());
+	DrawVertexArray(static_cast<int>(vertexes.size()), vertexes.data());
+}
 
-	glBegin(GL_TRIANGLES);
-	for (Vertex vert : vertexes)
-	{
-		glColor4ub(vert.m_color.r, vert.m_color.g, vert.m_color.b, vert.m_color.a);
-		glTexCoord2f(vert.m_uvTexCoords.x, vert.m_uvTexCoords.y);
-		glVertex3f(vert.m_position.x, vert.m_position.y, vert.m_position.z);
+//------------------------------------------------------------------------------------------------
+VertexBuffer* Renderer::CreateVertexBuffer(unsigned int size, unsigned int stride) const
+{
+	VertexBuffer* vbo = new VertexBuffer(m_device, size, stride);
+	return vbo;
+}
+
+//------------------------------------------------------------------------------------------------
+void Renderer::CopyCPUToGPU(const void* data, unsigned int size, VertexBuffer* vbo) const
+{
+	if (vbo == nullptr || data == nullptr || size == 0) {
+		return;
 	}
 
-	glEnd(); // GL_TRIANGLES
+	if (vbo->GetSize() < size) {
+		vbo->Resize(size);
+	}
+
+	D3D11_MAPPED_SUBRESOURCE resource;
+	m_deviceContext->Map(vbo->m_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
+	memcpy(resource.pData, data, size);
+	m_deviceContext->Unmap(vbo->m_buffer, 0);
+}
+
+//------------------------------------------------------------------------------------------------
+void Renderer::BindVertexBuffer(VertexBuffer* vbo) const
+{
+	if (vbo == nullptr) {
+		return;
+	}
+
+	UINT stride = vbo->GetStride();
+	UINT startOffset = 0;
+	m_deviceContext->IASetVertexBuffers(0, 1, &vbo->m_buffer, &stride, &startOffset);
+	m_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+}
+
+//------------------------------------------------------------------------------------------------
+void Renderer::DrawVertexBuffer(VertexBuffer* vbo, unsigned int vertexCount) const
+{
+	if (vbo == nullptr || vertexCount == 0) {
+		return;
+	}
+
+	BindVertexBuffer(vbo);
+	m_deviceContext->Draw(vertexCount, 0);
+}
+
+//------------------------------------------------------------------------------------------------
+Shader* Renderer::CreateShader(char const* shaderName, char const* shaderSource)
+{
+	if (shaderName == nullptr || shaderSource == nullptr) {
+		ERROR_AND_DIE("CreateShader received null input.");
+	}
+
+	for (int shaderIndex = 0; shaderIndex < static_cast<int>(m_loadedShaders.size()); ++shaderIndex) {
+		Shader* shader = m_loadedShaders[shaderIndex];
+		if (shader && shader->GetName() == shaderName) {
+			return shader;
+		}
+	}
+
+	ShaderConfig config;
+	config.m_name = shaderName;
+	Shader* newShader = new Shader(config);
+
+	std::vector<unsigned char> vertexByteCode;
+	bool vertexCompiled = CompileShaderToByteCode(vertexByteCode, shaderName, shaderSource,
+		config.m_vertexEntryPoint.c_str(), "vs_5_0");
+	if (!vertexCompiled) {
+		delete newShader;
+		return nullptr;
+	}
+
+	HRESULT hr = m_device->CreateVertexShader(
+		vertexByteCode.data(),
+		vertexByteCode.size(),
+		nullptr,
+		&newShader->m_vertexShader);
+	if (!SUCCEEDED(hr)) {
+		delete newShader;
+		ERROR_AND_DIE("Could not create vertex shader.");
+	}
+
+	std::vector<unsigned char> pixelByteCode;
+	bool pixelCompiled = CompileShaderToByteCode(pixelByteCode, shaderName, shaderSource,
+		config.m_pixelEntryPoint.c_str(), "ps_5_0");
+	if (!pixelCompiled) {
+		delete newShader;
+		return nullptr;
+	}
+
+	hr = m_device->CreatePixelShader(
+		pixelByteCode.data(),
+		pixelByteCode.size(),
+		nullptr,
+		&newShader->m_pixelShader);
+	if (!SUCCEEDED(hr)) {
+		delete newShader;
+		ERROR_AND_DIE("Could not create pixel shader.");
+	}
+
+	D3D11_INPUT_ELEMENT_DESC inputElementDesc[] = {
+		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,
+			0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{"COLOR", 0, DXGI_FORMAT_R8G8B8A8_UNORM,
+			0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,
+			0, D3D11_APPEND_ALIGNED_ELEMENT,
+			D3D11_INPUT_PER_VERTEX_DATA, 0},
+	};
+
+	UINT numElements = ARRAYSIZE(inputElementDesc);
+	hr = m_device->CreateInputLayout(
+		inputElementDesc, numElements,
+		vertexByteCode.data(),
+		vertexByteCode.size(),
+		&newShader->m_inputLayout);
+	if (!SUCCEEDED(hr)) {
+		delete newShader;
+		ERROR_AND_DIE("Could not create input layout.");
+	}
+
+	m_loadedShaders.push_back(newShader);
+	return newShader;
+}
+
+//------------------------------------------------------------------------------------------------
+bool Renderer::CompileShaderToByteCode(std::vector<unsigned char>& outByteCode, char const* name,
+	char const* source, char const* entryPoint, char const* target)
+{
+	DWORD shaderFlags = D3DCOMPILE_OPTIMIZATION_LEVEL3;
+#if defined(ENGINE_DEBUG_RENDER)
+	shaderFlags = D3DCOMPILE_DEBUG;
+	shaderFlags |= D3DCOMPILE_SKIP_OPTIMIZATION;
+	shaderFlags |= D3DCOMPILE_WARNINGS_ARE_ERRORS;
+#endif
+
+	ID3DBlob* shaderBlob = nullptr;
+	ID3DBlob* errorBlob = nullptr;
+
+	HRESULT hr = D3DCompile(
+		source, strlen(source),
+		name, nullptr, nullptr,
+		entryPoint, target, shaderFlags,
+		0, &shaderBlob, &errorBlob);
+
+	if (SUCCEEDED(hr))
+	{
+		outByteCode.resize(shaderBlob->GetBufferSize());
+		memcpy(
+			outByteCode.data(),
+			shaderBlob->GetBufferPointer(),
+			shaderBlob->GetBufferSize());
+	}
+	else
+	{
+		if (errorBlob != nullptr) {
+			DebuggerPrintf((char*)errorBlob->GetBufferPointer());
+		}
+		ERROR_AND_DIE(Stringf("Could not compile shader: %s", name));
+	}
+
+	shaderBlob->Release();
+	if (errorBlob != nullptr) {
+		errorBlob->Release();
+	}
+
+	return SUCCEEDED(hr);
+}
+
+//------------------------------------------------------------------------------------------------
+void Renderer::BindShader(Shader* shader)
+{
+	if (shader == nullptr) {
+		return;
+	}
+
+	m_currentShader = shader;
+	m_deviceContext->VSSetShader(shader->m_vertexShader, nullptr, 0);
+	m_deviceContext->PSSetShader(shader->m_pixelShader, nullptr, 0);
+	m_deviceContext->IASetInputLayout(shader->m_inputLayout);
 }
 
 //------------------------------------------------------------------------------------------------
@@ -196,46 +516,6 @@ Texture* Renderer::CreateTextureFromData(char const* name, IntVec2 dimensions, i
 	newTexture->m_name = name; // NOTE: m_name must be a std::string, otherwise it may point to temporary data!
 	newTexture->m_dimensions = dimensions;
 
-	// Enable OpenGL texturing
-	glEnable(GL_TEXTURE_2D);
-
-	// Tell OpenGL that our pixel data is single-byte aligned
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
-	// Ask OpenGL for an unused texName (ID number) to use for this texture
-	glGenTextures(1, (GLuint*)&newTexture->m_textureID);
-
-	// Tell OpenGL to bind (set) this as the currently active texture
-	glBindTexture(GL_TEXTURE_2D, newTexture->m_textureID);
-
-	// Set texture clamp vs. wrap (repeat) default settings
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // GL_CLAMP or GL_REPEAT
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT); // GL_CLAMP or GL_REPEAT
-
-	// Set magnification (texel > pixel) and minification (texel < pixel) filters
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); // one of: GL_NEAREST, GL_LINEAR
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); // one of: GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_NEAREST, GL_LINEAR_MIPMAP_LINEAR
-
-	// Pick the appropriate OpenGL format (RGB or RGBA) for this texel data
-	GLenum bufferFormat = GL_RGBA; // the format our source pixel data is in; any of: GL_RGB, GL_RGBA, GL_LUMINANCE, GL_LUMINANCE_ALPHA, ...
-	if (bytesPerTexel == 3)
-	{
-		bufferFormat = GL_RGB;
-	}
-	GLenum internalFormat = bufferFormat; // the format we want the texture to be on the card; technically allows us to translate into a different texture format as we upload to OpenGL
-
-	// Upload the image texel data (raw pixels bytes) to OpenGL under the currently-bound OpenGL texture ID
-	glTexImage2D(			// Upload this pixel data to our new OpenGL texture
-		GL_TEXTURE_2D,		// Creating this as a 2d texture
-		0,					// Which mipmap level to use as the "root" (0 = the highest-quality, full-res image), if mipmaps are enabled
-		internalFormat,		// Type of texel format we want OpenGL to use for this texture internally on the video card
-		dimensions.x,		// Texel-width of image; for maximum compatibility, use 2^N + 2^B, where N is some integer in the range [3,11], and B is the border thickness [0,1]
-		dimensions.y,		// Texel-height of image; for maximum compatibility, use 2^M + 2^B, where M is some integer in the range [3,11], and B is the border thickness [0,1]
-		0,					// Border size, in texels (must be 0 or 1, recommend 0)
-		bufferFormat,		// Pixel format describing the composition of the pixel data in buffer
-		GL_UNSIGNED_BYTE,	// Pixel color components are unsigned bytes (one byte per color channel/component)
-		texelData);		// Address of the actual pixel data bytes/buffer in system memory
-
 	m_loadedTextures.push_back(newTexture);
 	return newTexture;
 }
@@ -260,12 +540,9 @@ void Renderer::BindTexture(Texture* texture)
 {
 	if (texture)
 	{
-		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D, texture->m_textureID);
 	}
 	else
 	{
-		glDisable(GL_TEXTURE_2D);
 	}
 }
 
@@ -274,11 +551,9 @@ void Renderer::SetBlendMode( BlendMode blendMode ) const
 {
 	if( blendMode == BlendMode::ALPHA )
 	{
-		glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 	}
 	else if( blendMode == BlendMode::ADDITIVE )
 	{
-		glBlendFunc( GL_SRC_ALPHA, GL_ONE );
 	}
 	else
 	{
