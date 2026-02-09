@@ -2,6 +2,10 @@
 #include "Engine/Math/IntVec2.hpp"
 #include <string>
 
+//-----------------------------------------------------------------------------------------------
+struct ID3D11Texture2D;
+struct ID3D11ShaderResourceView;
+
 //------------------------------------------------------------------------------------------------
 class Texture
 {
@@ -17,9 +21,8 @@ public:
 	std::string const&  GetImageFilePath() const	{ return m_name; }
 
 protected:
-	std::string			m_name;				// Can't be char const* -- store a copy, in case it was temporary
-	IntVec2				m_dimensions;
-
-	// #ToDo in SD2: Use #if defined( ENGINE_RENDER_D3D11 ) to do something different for DX11; #else do:
-	unsigned int		m_textureID = 0xFFFFFFFF;
+	std::string					m_name;
+	IntVec2						m_dimensions;
+	ID3D11Texture2D*			m_texture				= nullptr;
+	ID3D11ShaderResourceView*	m_shaderResourceView	= nullptr;
 };
