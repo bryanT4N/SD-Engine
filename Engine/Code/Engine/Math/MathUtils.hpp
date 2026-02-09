@@ -16,7 +16,7 @@ float	GetClamped( float value, float minValue, float maxValue );
 float	GetClampedZeroToOne(float value );
 float	Interpolate( float start, float end, float fractionTowardEnd );
 float	NormalizeByte( unsigned char byteValue );
-unsigned char DenormalizeByte( float normalizedValue );
+unsigned char DenormalizeByte( float zeroToOne );
 float	GetFractionWithinRange( float value, float rangeStart, float rangeEnd );
 float	RangeMap( float inValue, float inStart, float inEnd, float outStart, float outEnd );
 float	RangeMapClamped( float inValue, float inStart, float inEnd, float outStart, float outEnd );
@@ -36,6 +36,9 @@ float	GetAngleDegreesBetweenVectors2D(Vec2 const& a, Vec2 const& b);
 //-----------------------------------------------------------------------------------------------
 // Dot and Cross
 float	DotProduct2D( Vec2 const& a,Vec2 const& b );
+float	DotProduct3D( Vec3 const& a, Vec3 const& b );
+float	CrossProduct2D( Vec2 const& a, Vec2 const& b );
+Vec3	CrossProduct3D( Vec3 const& a, Vec3 const& b );
 
 //-----------------------------------------------------------------------------------------------
 // Distance and projection utilities

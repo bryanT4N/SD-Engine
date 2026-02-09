@@ -34,11 +34,14 @@ float NormalizeByte( unsigned char byteValue )
 	return static_cast<float>( byteValue ) / 255.0f;
 }
 
-unsigned char DenormalizeByte( float normalizedValue )
+unsigned char DenormalizeByte( float zeroToOne )
 {
-	float clamped = GetClampedZeroToOne( normalizedValue );
-	float scaled = clamped * 255.0f;
-	return static_cast<unsigned char>( scaled );
+	float clamped = GetClampedZeroToOne( zeroToOne );
+	unsigned int bucket = static_cast<unsigned int>( clamped * 256.0f );
+	if( bucket > 255 ) {
+		bucket = 255;
+	}
+	return static_cast<unsigned char>( bucket );
 }
 
 float GetFractionWithinRange(float value, float rangeStart, float rangeEnd)
@@ -127,6 +130,28 @@ float GetAngleDegreesBetweenVectors2D(Vec2 const& a, Vec2 const& b)
 float DotProduct2D(Vec2 const& a, Vec2 const& b)
 {
 	return a.x * b.x + a.y * b.y;
+}
+
+//-----------------------------------------------------------------------------------------------
+float DotProduct3D( Vec3 const& a, Vec3 const& b )
+{
+	return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
+//-----------------------------------------------------------------------------------------------
+float CrossProduct2D( Vec2 const& a, Vec2 const& b )
+{
+	return ( a.x * b.y ) - ( a.y * b.x );
+}
+
+//-----------------------------------------------------------------------------------------------
+Vec3 CrossProduct3D( Vec3 const& a, Vec3 const& b )
+{
+	return Vec3(
+		( a.y * b.z ) - ( a.z * b.y ),
+		( a.z * b.x ) - ( a.x * b.z ),
+		( a.x * b.y ) - ( a.y * b.x )
+	);
 }
 
 //-----------------------------------------------------------------------------------------------
