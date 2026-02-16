@@ -106,6 +106,9 @@
     <ClCompile Include="Core\Image.cpp">
       <Filter>Core</Filter>
     </ClCompile>
+    <ClCompile Include="Core\Clock.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
     <ClCompile Include="Renderer\Texture.cpp">
       <Filter>Renderer</Filter>
     </ClCompile>
@@ -161,6 +164,9 @@
       <Filter>Renderer</Filter>
     </ClCompile>
     <ClCompile Include="Core\FileUtils.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Timer.cpp">
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Renderer\ConstantBuffer.cpp">
@@ -264,6 +270,9 @@
     <ClInclude Include="Core\Image.hpp">
       <Filter>Core</Filter>
     </ClInclude>
+    <ClInclude Include="Core\Clock.hpp">
+      <Filter>Core</Filter>
+    </ClInclude>
     <ClInclude Include="Renderer\Texture.hpp">
       <Filter>Renderer</Filter>
     </ClInclude>
@@ -332,6 +341,9 @@
     </ClInclude>
     <ClInclude Include="Renderer\DefaultShader.hpp">
       <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Timer.hpp">
+      <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
