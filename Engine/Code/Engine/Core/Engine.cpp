@@ -19,18 +19,18 @@ Engine::Engine(EngineConfig const& config)
 	// Create engine subsystems, if requested by Game/App
 	if (m_config.m_windowConfig.m_isEnabled)			m_window		= new Window(m_config.m_windowConfig);
 	if (m_config.m_renderConfig.m_isEnabled)			m_render		= new Renderer( m_config.m_renderConfig );
+	if (m_config.m_eventSystemConfig.m_isEnabled)		m_eventSystem	= new EventSystem( m_config.m_eventSystemConfig );
 	if (m_config.m_inputConfig.m_isEnabled)				m_input			= new InputSystem( m_config.m_inputConfig );
 	if (m_config.m_audioConfig.m_isEnabled)				m_audio			= new AudioSystem( m_config.m_audioConfig );
-	if (m_config.m_eventSystemConfig.m_isEnabled)		m_eventSystem	= new EventSystem( m_config.m_eventSystemConfig );
 	if (m_config.m_devConsoleConfig.m_isEnabled)		m_devConsole	= new DevConsole( m_config.m_devConsoleConfig );
 
 	// Start up existing engine subsystems
 	if(m_window)		m_window->Startup();
 	if(m_render)		m_render->Startup();
-	if(m_input)			m_input->Startup();
-	if(m_audio)			m_audio->Startup();
 	if(m_eventSystem)	m_eventSystem->Startup();
 	if(m_devConsole)	m_devConsole->Startup();
+	if(m_input)			m_input->Startup();
+	if(m_audio)			m_audio->Startup();
 }
 
 //-----------------------------------------------------------------------------------------------
@@ -69,11 +69,12 @@ void Engine::BeginFrame()
 {
 	if( m_window != nullptr )		m_window->BeginFrame();
 	if( m_render != nullptr )		m_render->BeginFrame();
-	if( m_input != nullptr )		m_input->BeginFrame();
-	if( m_audio != nullptr )		m_audio->BeginFrame();
 
 	if( m_eventSystem != nullptr )	m_eventSystem->BeginFrame();
 	if( m_devConsole != nullptr )	m_devConsole->BeginFrame();
+
+	if( m_input != nullptr )		m_input->BeginFrame();
+	if( m_audio != nullptr )		m_audio->BeginFrame();
 }
 
 //-----------------------------------------------------------------------------------------------

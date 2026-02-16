@@ -1,6 +1,7 @@
 #include "Engine/Window/Window.hpp"
 #include "Engine/Core/Engine.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
+#include "Engine/Core/EventSystem.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Core/DevConsole.hpp"
 
@@ -76,31 +77,36 @@ LRESULT CALLBACK WindowsMessageHandlingProcedure(HWND windowHandle, UINT wmMessa
 		// App close requested via "X" button, or right-click "Close Window" on task bar, or "Close" from system menu, or Alt-F4
 	case WM_CLOSE:
 	{
-		if( g_engine != nullptr && g_engine->m_devConsole != nullptr )
-		{
-			g_engine->m_devConsole->Execute( "Quit" );
+		int handledCount = FireEvent("Quit");
+		if (handledCount == 0) {
+			PostQuitMessage(0);
 		}
-		else
-		{
-			PostQuitMessage( 0 );
-		}
-		return 0; // Consume this message; app will quit via event handling
+		return 0;
 	}
 
 	// Raw physical keyboard "key-was-just-depressed" event (case-insensitive, not translated)
 	case WM_KEYDOWN:
 	{
-		unsigned char asKey = (unsigned char)wParam;
-		g_engine->m_input->HandleKeyPressed(asKey);
-		break;
+		EventArgs args;
+		args.SetValue("KeyCode", Stringf("%d", (unsigned char)wParam));
+		FireEvent("KeyPressed", args);
+		return 0;
 	}
 
 	// Raw physical keyboard "key-was-just-released" event (case-insensitive, not translated)
 	case WM_KEYUP:
 	{
-		unsigned char asKey = (unsigned char)wParam;
-		g_engine->m_input->HandleKeyReleased(asKey);
-		break;
+		EventArgs args;
+		args.SetValue("KeyCode", Stringf("%d", (unsigned char)wParam));
+		FireEvent("KeyReleased", args);
+		return 0;
+	}
+	case WM_CHAR:
+	{
+		EventArgs args;
+		args.SetValue("CharCode", Stringf("%d", (unsigned char)wParam));
+		FireEvent("CharInput", args);
+		return 0;
 	}
 	case WM_LBUTTONDOWN:
 	{

@@ -1,6 +1,17 @@
 #include "Engine/Core/EventSystem.hpp"
 #include "Engine/Core/Engine.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
+#include <algorithm>
+#include <cctype>
+
+//-----------------------------------------------------------------------------------------------
+static std::string NormalizeEventName(std::string const& eventName)
+{
+	std::string normalized = eventName;
+	std::transform(normalized.begin(), normalized.end(), normalized.begin(),
+		[](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+	return normalized;
+}
 
 //-----------------------------------------------------------------------------------------------
 EventSystem::EventSystem( EventSystemConfig const& config )
@@ -48,7 +59,8 @@ void EventSystem::SubscribeEventCallbackFunction( std::string const& eventName, 
 		return;
 	}
 
-	SubscriptionList& list = m_subscriptionListsByEventName[eventName];
+	std::string normalizedEventName = NormalizeEventName(eventName);
+	SubscriptionList& list = m_subscriptionListsByEventName[normalizedEventName];
 
 	EventSubscription subscription;
 	subscription.m_callback = functionPtr;
@@ -63,7 +75,8 @@ void EventSystem::UnsubscribeEventCallbackFunction( std::string const& eventName
 		return;
 	}
 
-	std::map< std::string, SubscriptionList >::iterator found = m_subscriptionListsByEventName.find( eventName );
+	std::string normalizedEventName = NormalizeEventName(eventName);
+	std::map< std::string, SubscriptionList >::iterator found = m_subscriptionListsByEventName.find( normalizedEventName );
 	if( found == m_subscriptionListsByEventName.end() )
 	{
 		return;
@@ -81,13 +94,35 @@ void EventSystem::UnsubscribeEventCallbackFunction( std::string const& eventName
 }
 
 //-----------------------------------------------------------------------------------------------
+Strings EventSystem::GetRegisteredCommandNames() const
+{
+	Strings names;
+	names.reserve(m_subscriptionListsByEventName.size());
+
+	for (std::map< std::string, SubscriptionList >::const_iterator iter = m_subscriptionListsByEventName.begin();
+		iter != m_subscriptionListsByEventName.end();
+		++iter)
+	{
+		names.push_back(iter->first);
+	}
+
+	return names;
+}
+
+//-----------------------------------------------------------------------------------------------
 int EventSystem::FireEvent( std::string const& eventName, EventArgs& args )
 {
 	int numRecipients = 0;
 
-	std::map< std::string, SubscriptionList >::iterator found = m_subscriptionListsByEventName.find( eventName );
+	std::string normalizedEventName = NormalizeEventName(eventName);
+	std::map< std::string, SubscriptionList >::iterator found = m_subscriptionListsByEventName.find( normalizedEventName );
 	if( found == m_subscriptionListsByEventName.end() )
 	{
+		if (g_engine != nullptr && g_engine->m_devConsole != nullptr) {
+			g_engine->m_devConsole->AddLine(
+				DevConsole::LOG_COLOR_ERROR,
+				Stringf("Unknown command: %s", eventName.c_str()));
+		}
 		return 0;
 	}
 
@@ -147,6 +182,16 @@ void UnsubscribeEventCallbackFunction( std::string const& eventName, EventCallba
 	}
 
 	g_engine->m_eventSystem->UnsubscribeEventCallbackFunction( eventName, functionPtr );
+}
+
+//-----------------------------------------------------------------------------------------------
+Strings GetRegisteredCommandNames()
+{
+	if (g_engine == nullptr || g_engine->m_eventSystem == nullptr) {
+		return Strings();
+	}
+
+	return g_engine->m_eventSystem->GetRegisteredCommandNames();
 }
 
 //-----------------------------------------------------------------------------------------------

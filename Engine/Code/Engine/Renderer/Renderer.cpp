@@ -15,6 +15,7 @@
 
 #include <string>
 #include <cstring>
+#include <cstdio>
 
 #include "ThirdParty/stb/stb_image.h"
 
@@ -53,6 +54,23 @@ struct CameraConstants
 };
 
 static const int k_cameraConstantsSlot = 2;
+
+//-----------------------------------------------------------------------------------------------
+static bool DoesFileExist(char const* filepath)
+{
+	if (filepath == nullptr) {
+		return false;
+	}
+
+	FILE* file = nullptr;
+	errno_t fileError = fopen_s(&file, filepath, "rb");
+	if (fileError != 0 || file == nullptr) {
+		return false;
+	}
+
+	fclose(file);
+	return true;
+}
 
 //-----------------------------------------------------------------------------------------------
 Renderer::Renderer(RenderConfig const& config)
@@ -162,7 +180,20 @@ void Renderer::Startup()
 
 	m_deviceContext->RSSetState(m_rasterizerState);
 
-	m_defaultShader = CreateShader("Default", g_defaultShaderSource);
+	std::string defaultShaderPath = "Data/Shaders/Default.hlsl";
+	std::string defaultShaderSourceFromFile;
+	if (DoesFileExist(defaultShaderPath.c_str())) {
+		int bytesRead = FileReadToString(defaultShaderSourceFromFile, defaultShaderPath);
+		if (bytesRead > 0) {
+			m_defaultShader = CreateShader("Default", defaultShaderSourceFromFile.c_str());
+		}
+	}
+
+	if (m_defaultShader == nullptr) {
+		m_defaultShader = CreateShader("Default", g_defaultShaderSource);
+	}
+
+	GUARANTEE_OR_DIE(m_defaultShader != nullptr, "Could not create default shader.");
 	BindShader(m_defaultShader);
 
 	m_immediateVBO = CreateVertexBuffer(sizeof(Vertex_PCU), sizeof(Vertex_PCU));

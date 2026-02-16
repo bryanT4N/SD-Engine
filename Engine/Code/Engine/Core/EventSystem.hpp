@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Engine/Core/NamedStrings.hpp"
+#include "Engine/Core/StringUtils.hpp"
 
 #include <string>
 #include <vector>
@@ -45,6 +46,8 @@ public:
 	void SubscribeEventCallbackFunction( std::string const& eventName, EventCallbackFunction functionPtr );
 	void UnsubscribeEventCallbackFunction( std::string const& eventName, EventCallbackFunction functionPtr );
 
+	Strings GetRegisteredCommandNames() const;
+
 	// Returns how many subscribers were notified for this event name.
 	int  FireEvent( std::string const& eventName, EventArgs& args );
 	int  FireEvent( std::string const& eventName );
@@ -59,6 +62,7 @@ protected:
 
 void SubscribeEventCallbackFunction( std::string const& eventName, EventCallbackFunction functionPtr );
 void UnsubscribeEventCallbackFunction( std::string const& eventName, EventCallbackFunction functionPtr );
+Strings GetRegisteredCommandNames();
 int  FireEvent( std::string const& eventName, EventArgs& args );
 int  FireEvent( std::string const& eventName );
 

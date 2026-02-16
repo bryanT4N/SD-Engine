@@ -1,8 +1,8 @@
 #pragma once
 #include "Engine/Input/AnalogJoystick.hpp"
-#include "Engine/Input/InputSystem.hpp"
 #include "Engine/Input/KeyButtonState.hpp"
 #include "Engine/Input/XboxController.hpp"
+#include "Engine/Core/EventSystem.hpp"
 
 //-----------------------------------------------------------------------------------------------
 struct InputConfig {
@@ -17,6 +17,15 @@ extern unsigned char const KEYCODE_SPACE;
 extern unsigned char const KEYCODE_ENTER;
 extern unsigned char const KEYCODE_TILDE;
 extern unsigned char const KEYCODE_SLASH;
+extern unsigned char const KEYCODE_UPARROW;
+extern unsigned char const KEYCODE_DOWNARROW;
+extern unsigned char const KEYCODE_LEFTARROW;
+extern unsigned char const KEYCODE_RIGHTARROW;
+extern unsigned char const KEYCODE_BACKSPACE;
+extern unsigned char const KEYCODE_INSERT;
+extern unsigned char const KEYCODE_DELETE;
+extern unsigned char const KEYCODE_HOME;
+extern unsigned char const KEYCODE_END;
 extern unsigned char const UPARROW;
 extern unsigned char const DOWNARROW;
 extern unsigned char const LEFTARROW;
@@ -38,6 +47,8 @@ extern unsigned char const KEYCODE_F12;
 constexpr int NUM_KEYCODES			= 256;
 constexpr int NUM_XBOX_CONTROLLERS	= 4;
 
+class InputSystem;
+
 class InputSystem{
 public:
 	InputSystem(InputConfig const& config); 
@@ -57,6 +68,9 @@ public:
 	XboxController& GetController(int controllerID); 
 
 	InputConfig		m_config;
+
+	static bool Event_KeyPressed(EventArgs& args);
+	static bool Event_KeyReleased(EventArgs& args);
 
 protected:
 	KeyButtonState m_keyStates[NUM_KEYCODES];	// Indexed by key code, e.g. 65 == 'A'

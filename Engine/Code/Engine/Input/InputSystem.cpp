@@ -1,4 +1,5 @@
 #include "Engine/Input/InputSystem.hpp"
+#include "Engine/Core/Engine.hpp"
 
 //-----------------------------------------------------------------------------------------------
 unsigned char const KEYCODE_LBUTTON = 0x01;
@@ -8,10 +9,19 @@ unsigned char const KEYCODE_SPACE = 0x20;
 unsigned char const KEYCODE_ENTER = 0x0D;
 unsigned char const KEYCODE_TILDE = 0xC0;		// VK_OEM_3 (`/~ key)
 unsigned char const KEYCODE_SLASH = 0xBF;		// VK_OEM_2 (/ ? key)
-unsigned char const UPARROW = 0x26;
-unsigned char const DOWNARROW = 0x28;
-unsigned char const LEFTARROW = 0x25;
-unsigned char const RIGHTARROW = 0x27;
+unsigned char const KEYCODE_UPARROW = 0x26;
+unsigned char const KEYCODE_DOWNARROW = 0x28;
+unsigned char const KEYCODE_LEFTARROW = 0x25;
+unsigned char const KEYCODE_RIGHTARROW = 0x27;
+unsigned char const KEYCODE_BACKSPACE = 0x08;
+unsigned char const KEYCODE_INSERT = 0x2D;
+unsigned char const KEYCODE_DELETE = 0x2E;
+unsigned char const KEYCODE_HOME = 0x24;
+unsigned char const KEYCODE_END = 0x23;
+unsigned char const UPARROW = KEYCODE_UPARROW;
+unsigned char const DOWNARROW = KEYCODE_DOWNARROW;
+unsigned char const LEFTARROW = KEYCODE_LEFTARROW;
+unsigned char const RIGHTARROW = KEYCODE_RIGHTARROW;
 unsigned char const KEYCODE_F1 = 0x70;
 unsigned char const KEYCODE_F2 = 0x71;
 unsigned char const KEYCODE_F3 = 0x72;
@@ -37,12 +47,14 @@ InputSystem::InputSystem(InputConfig const& config)
 
 void InputSystem::Startup()
 {
-
+	SubscribeEventCallbackFunction("KeyPressed", InputSystem::Event_KeyPressed);
+	SubscribeEventCallbackFunction("KeyReleased", InputSystem::Event_KeyReleased);
 }
 
 void InputSystem::Shutdown()
 {
-
+	UnsubscribeEventCallbackFunction("KeyPressed", InputSystem::Event_KeyPressed);
+	UnsubscribeEventCallbackFunction("KeyReleased", InputSystem::Event_KeyReleased);
 }
 
 void InputSystem::BeginFrame()
@@ -98,3 +110,36 @@ XboxController& InputSystem::GetController(int controllerID)
 	return m_controllers[controllerID];
 }
 
+//-----------------------------------------------------------------------------------------------
+bool InputSystem::Event_KeyPressed(EventArgs& args)
+{
+	if (g_engine == nullptr || g_engine->m_input == nullptr) {
+		return false;
+	}
+
+	int keyCodeInt = args.GetValue("KeyCode", -1);
+	if (keyCodeInt < 0 || keyCodeInt >= NUM_KEYCODES) {
+		return false;
+	}
+
+	unsigned char keyCode = static_cast<unsigned char>(keyCodeInt);
+	g_engine->m_input->HandleKeyPressed(keyCode);
+	return true;
+}
+
+//-----------------------------------------------------------------------------------------------
+bool InputSystem::Event_KeyReleased(EventArgs& args)
+{
+	if (g_engine == nullptr || g_engine->m_input == nullptr) {
+		return false;
+	}
+
+	int keyCodeInt = args.GetValue("KeyCode", -1);
+	if (keyCodeInt < 0 || keyCodeInt >= NUM_KEYCODES) {
+		return false;
+	}
+
+	unsigned char keyCode = static_cast<unsigned char>(keyCodeInt);
+	g_engine->m_input->HandleKeyReleased(keyCode);
+	return true;
+}
