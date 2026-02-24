@@ -6,11 +6,15 @@
 #include "Engine/Core/Rgba8.hpp"
 
 struct Vec2;
+struct Vec3;
 struct Vertex;
 
 //-----------------------------------------------------------------------------------------------
 void TransformVertexArrayXY3D(int numVerts, Vertex* verts, float uniformScaleXY, float rotationDegreesAboutZ, Vec2 const& translationXY);
 void TransformVertexArrayXY3D(std::vector<Vertex> &verts, float uniformScaleXY, float rotationDegreesAboutZ, Vec2 const& translationXY);
+void AddVertsForQuad3D(std::vector<Vertex>& verts,
+	const Vec3& bottomLeft, const Vec3& bottomRight, const Vec3& topRight, const Vec3& topLeft,
+	const Rgba8& color = Rgba8::WHITE, const AABB2& UVs = AABB2(0.f, 0.f, 1.f, 1.f));
 
 //-----------------------------------------------------------------------------------------------
 void AddvertsForDisc2D(std::vector<Vertex> &verts, Vec2 disCenter, float discRadius, Rgba8 color);

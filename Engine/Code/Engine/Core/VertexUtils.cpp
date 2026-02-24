@@ -25,6 +25,19 @@ void TransformVertexArrayXY3D(std::vector<Vertex> &verts, float uniformScaleXY, 
 	}
 }
 
+void AddVertsForQuad3D(std::vector<Vertex>& verts,
+	const Vec3& bottomLeft, const Vec3& bottomRight, const Vec3& topRight, const Vec3& topLeft,
+	const Rgba8& color, const AABB2& UVs)
+{
+	verts.push_back(Vertex(bottomLeft, color, Vec2(UVs.m_mins.x, UVs.m_mins.y)));
+	verts.push_back(Vertex(bottomRight, color, Vec2(UVs.m_maxs.x, UVs.m_mins.y)));
+	verts.push_back(Vertex(topRight, color, Vec2(UVs.m_maxs.x, UVs.m_maxs.y)));
+
+	verts.push_back(Vertex(bottomLeft, color, Vec2(UVs.m_mins.x, UVs.m_mins.y)));
+	verts.push_back(Vertex(topRight, color, Vec2(UVs.m_maxs.x, UVs.m_maxs.y)));
+	verts.push_back(Vertex(topLeft, color, Vec2(UVs.m_mins.x, UVs.m_maxs.y)));
+}
+
 //-----------------------------------------------------------------------------------------------
 void AddvertsForDisc2D(std::vector<Vertex>& verts, Vec2 disCenter, float discRadius, Rgba8 color)
 {
