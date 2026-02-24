@@ -2,6 +2,7 @@
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Math/Vec3.hpp"
+#include "Engine/Math/Vec4.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/OBB2.hpp"
 
@@ -136,6 +137,12 @@ float DotProduct2D(Vec2 const& a, Vec2 const& b)
 float DotProduct3D( Vec3 const& a, Vec3 const& b )
 {
 	return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
+//-----------------------------------------------------------------------------------------------
+float DotProduct4D( Vec4 const& a, Vec4 const& b )
+{
+	return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
 }
 
 //-----------------------------------------------------------------------------------------------

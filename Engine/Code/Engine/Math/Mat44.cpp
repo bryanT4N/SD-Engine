@@ -158,6 +158,43 @@ Mat44 Mat44::MakeXRotationDegrees( float rotationDegreesAboutX )
 	return Mat44( values );
 }
 
+Mat44 Mat44::MakeOrthoProjection( float left, float right, float bottom, float top, float zNear, float zFar )
+{
+	float const scaleX = 2.f / ( right - left );
+	float const scaleY = 2.f / ( top - bottom );
+	float const scaleZ = 1.f / ( zFar - zNear );
+	float const translateX = -( right + left ) / ( right - left );
+	float const translateY = -( top + bottom ) / ( top - bottom );
+	float const translateZ = -zNear / ( zFar - zNear );
+
+	float const values[16] = {
+		scaleX, 0.f,    0.f,    0.f,
+		0.f,    scaleY, 0.f,    0.f,
+		0.f,    0.f,    scaleZ, 0.f,
+		translateX, translateY, translateZ, 1.f
+	};
+	return Mat44( values );
+}
+
+Mat44 Mat44::MakePerspectiveProjection( float fovYDegrees, float aspect, float zNear, float zFar )
+{
+	float const halfFovY = 0.5f * fovYDegrees;
+	float const sinHalfFovY = SinDegrees( halfFovY );
+	float const cosHalfFovY = CosDegrees( halfFovY );
+	float const scaleY = cosHalfFovY / sinHalfFovY;
+	float const scaleX = scaleY / aspect;
+	float const scaleZ = zFar / ( zFar - zNear );
+	float const translateZ = -( zNear * zFar ) / ( zFar - zNear );
+
+	float const values[16] = {
+		scaleX, 0.f,    0.f,      0.f,
+		0.f,    scaleY, 0.f,      0.f,
+		0.f,    0.f,    scaleZ,   1.f,
+		0.f,    0.f,    translateZ, 0.f
+	};
+	return Mat44( values );
+}
+
 
 Vec2 Mat44::TransformVectorQuantity2D( Vec2 const vectorQuantityXY ) const
 {
@@ -267,6 +304,36 @@ Vec4 const Mat44::GetTranslation4D() const {
 	return Vec4( m_values[ Tx ], m_values[ Ty ], m_values[ Tz ], m_values[ Tw ] );
 }
 
+Mat44 const Mat44::GetOrthonormalInverse() const
+{
+	Mat44 inverse;
+
+	inverse.m_values[ Ix ] = m_values[ Ix ];
+	inverse.m_values[ Iy ] = m_values[ Jx ];
+	inverse.m_values[ Iz ] = m_values[ Kx ];
+	inverse.m_values[ Iw ] = 0.f;
+
+	inverse.m_values[ Jx ] = m_values[ Iy ];
+	inverse.m_values[ Jy ] = m_values[ Jy ];
+	inverse.m_values[ Jz ] = m_values[ Ky ];
+	inverse.m_values[ Jw ] = 0.f;
+
+	inverse.m_values[ Kx ] = m_values[ Iz ];
+	inverse.m_values[ Ky ] = m_values[ Jz ];
+	inverse.m_values[ Kz ] = m_values[ Kz ];
+	inverse.m_values[ Kw ] = 0.f;
+
+	float const tx = m_values[ Tx ];
+	float const ty = m_values[ Ty ];
+	float const tz = m_values[ Tz ];
+	inverse.m_values[ Tx ] = -( m_values[ Ix ] * tx + m_values[ Iy ] * ty + m_values[ Iz ] * tz );
+	inverse.m_values[ Ty ] = -( m_values[ Jx ] * tx + m_values[ Jy ] * ty + m_values[ Jz ] * tz );
+	inverse.m_values[ Tz ] = -( m_values[ Kx ] * tx + m_values[ Ky ] * ty + m_values[ Kz ] * tz );
+	inverse.m_values[ Tw ] = 1.f;
+
+	return inverse;
+}
+
 
 void Mat44::SetTranslation2D( Vec2 const translationXY ) 
 {
@@ -354,6 +421,61 @@ void Mat44::SetIJKT4D( Vec4 const iBasis4D, Vec4 const jBasis4D, Vec4 const kBas
 	m_values[ Ty ] = translation4D.y;
 	m_values[ Tz ] = translation4D.z;
 	m_values[ Tw ] = translation4D.w;
+}
+
+void Mat44::Transpose()
+{
+	float temp = m_values[ Iy ];
+	m_values[ Iy ] = m_values[ Jx ];
+	m_values[ Jx ] = temp;
+
+	temp = m_values[ Iz ];
+	m_values[ Iz ] = m_values[ Kx ];
+	m_values[ Kx ] = temp;
+
+	temp = m_values[ Iw ];
+	m_values[ Iw ] = m_values[ Tx ];
+	m_values[ Tx ] = temp;
+
+	temp = m_values[ Jz ];
+	m_values[ Jz ] = m_values[ Ky ];
+	m_values[ Ky ] = temp;
+
+	temp = m_values[ Jw ];
+	m_values[ Jw ] = m_values[ Ty ];
+	m_values[ Ty ] = temp;
+
+	temp = m_values[ Kw ];
+	m_values[ Kw ] = m_values[ Tz ];
+	m_values[ Tz ] = temp;
+}
+
+void Mat44::Orthonormalize_XFwd_YLeft_ZUp()
+{
+	Vec3 iBasis = GetIBasis3D();
+	Vec3 jBasis = GetJBasis3D();
+	Vec3 kBasis = GetKBasis3D();
+	Vec3 translation = GetTranslation3D();
+
+	iBasis = iBasis.GetNormalized();
+
+	kBasis = kBasis - DotProduct3D( kBasis, iBasis ) * iBasis;
+	if( kBasis.GetLengthSquared() == 0.f ) {
+		kBasis = CrossProduct3D( iBasis, jBasis );
+	}
+	kBasis = kBasis.GetNormalized();
+
+	jBasis = jBasis - DotProduct3D( jBasis, iBasis ) * iBasis - DotProduct3D( jBasis, kBasis ) * kBasis;
+	if( jBasis.GetLengthSquared() == 0.f ) {
+		jBasis = CrossProduct3D( kBasis, iBasis );
+	}
+	jBasis = jBasis.GetNormalized();
+
+	SetIJK3D( iBasis, jBasis, kBasis );
+	m_values[ Tx ] = translation.x;
+	m_values[ Ty ] = translation.y;
+	m_values[ Tz ] = translation.z;
+	m_values[ Tw ] = 1.f;
 }
 
 

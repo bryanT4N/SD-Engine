@@ -73,6 +73,9 @@
     <ClCompile Include="Math\AABB2.cpp">
       <Filter>Math</Filter>
     </ClCompile>
+    <ClCompile Include="Math\AABB3.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
     <ClCompile Include="Math\EulerAngles.cpp">
       <Filter>Math</Filter>
     </ClCompile>
@@ -211,6 +214,9 @@
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Math\AABB2.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\AABB3.hpp">
       <Filter>Math</Filter>
     </ClInclude>
     <ClInclude Include="Math\EulerAngles.hpp">

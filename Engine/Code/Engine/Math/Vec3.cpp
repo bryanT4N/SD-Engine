@@ -83,7 +83,11 @@ Vec3 const Vec3::GetClampedToMaxLength(float maxLength) const
 Vec3 const Vec3::GetNormalized() const
 {
 	float length = GetLength();
-	return Vec3(x / length, y / length, y / length);
+	if( length == 0.f ) {
+		return Vec3(0.f, 0.f, 0.f);
+	}
+
+	return Vec3(x / length, y / length, z / length);
 }
 
 //-----------------------------------------------------------------------------------------------

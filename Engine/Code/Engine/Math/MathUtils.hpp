@@ -6,6 +6,7 @@
 // Forward type declarations
 struct Vec2;
 struct Vec3;
+struct Vec4;
 struct IntVec2;
 class AABB2;
 class OBB2;
@@ -37,6 +38,7 @@ float	GetAngleDegreesBetweenVectors2D(Vec2 const& a, Vec2 const& b);
 // Dot and Cross
 float	DotProduct2D( Vec2 const& a,Vec2 const& b );
 float	DotProduct3D( Vec3 const& a, Vec3 const& b );
+float	DotProduct4D( Vec4 const& a, Vec4 const& b );
 float	CrossProduct2D( Vec2 const& a, Vec2 const& b );
 Vec3	CrossProduct3D( Vec3 const& a, Vec3 const& b );
 
