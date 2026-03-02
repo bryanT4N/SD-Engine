@@ -34,6 +34,7 @@ public:
 
 	void*				GetHwnd() const;
 	IntVec2				GetClientDimensions() const;
+	bool				HasFocus() const;
 
 private:
 	void CreateOSWindow();

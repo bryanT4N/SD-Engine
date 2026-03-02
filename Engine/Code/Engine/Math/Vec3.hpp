@@ -21,6 +21,16 @@ public:
 	explicit Vec3(float initialX, float intialY, float intialZ);	// explicit constructor (from x, y)
 	Vec3(Vec2 const& vecXY);										// constructor from another vec2
 
+	// static methods (e.g.creation functions)
+	static Vec3 const	MakeFromPolarRadians(
+							float pitchRadians,
+							float yawRadians,
+							float length = 1.0f);
+	static Vec3 const	MakeFromPolarDegrees(
+							float pitchDegrees,
+							float yawDegrees,
+							float length = 1.0f);
+
 	// Accessors (const methods)
 	float		GetLength() const; 
 	float		GetLengthXY() const; 

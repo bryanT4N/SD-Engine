@@ -3,10 +3,27 @@
 #include "Engine/Input/KeyButtonState.hpp"
 #include "Engine/Input/XboxController.hpp"
 #include "Engine/Core/EventSystem.hpp"
+#include "Engine/Math/IntVec2.hpp"
+#include "Engine/Math/Vec2.hpp"
 
 //-----------------------------------------------------------------------------------------------
 struct InputConfig {
 	bool m_isEnabled = true;
+};
+
+//-----------------------------------------------------------------------------------------------
+enum class CursorMode
+{
+	POINTER,
+	FPS,
+};
+
+//-----------------------------------------------------------------------------------------------
+struct CursorState
+{
+	IntVec2 m_cursorClientDelta;
+	IntVec2 m_cursorClientPosition;
+	CursorMode m_cursorMode = CursorMode::POINTER;
 };
 
 //-----------------------------------------------------------------------------------------------
@@ -42,6 +59,7 @@ extern unsigned char const KEYCODE_F9;
 extern unsigned char const KEYCODE_F10;
 extern unsigned char const KEYCODE_F11;
 extern unsigned char const KEYCODE_F12;
+extern unsigned char const KEYCODE_SHIFT;
 
 //-----------------------------------------------------------------------------------------------
 constexpr int NUM_KEYCODES			= 256;
@@ -57,6 +75,11 @@ public:
 	void Shutdown();
 	void BeginFrame();
 	void EndFrame();
+
+	void SetCursorMode(CursorMode cursorMode);
+	Vec2 GetCursorClientDelta() const;
+	Vec2 GetCursorClientPosition() const;
+	Vec2 GetCursorNormalizedPosition() const;
 
 	bool WasKeyJustPressed(unsigned char keyCode); 
 	bool WasKeyJustReleased(unsigned char keyCode);
@@ -74,5 +97,13 @@ public:
 
 protected:
 	KeyButtonState m_keyStates[NUM_KEYCODES];	// Indexed by key code, e.g. 65 == 'A'
-	XboxController m_controllers[NUM_XBOX_CONTROLLERS] = { XboxController(0), XboxController(1), XboxController(2), XboxController(3)};
+	XboxController m_controllers[NUM_XBOX_CONTROLLERS] = {
+		XboxController(0),
+		XboxController(1),
+		XboxController(2),
+		XboxController(3)
+	};
+	CursorState m_cursorState;
+	IntVec2 m_previousCursorClientPosition;
+	bool m_isCursorVisible = true;
 };

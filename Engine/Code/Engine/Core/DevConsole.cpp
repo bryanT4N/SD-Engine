@@ -491,6 +491,8 @@ void DevConsole::Render(AABB2 const& bounds, BitmapFont& bitmapFont, float fontA
 	std::vector<Vertex> textVerts;
 	std::vector<Vertex> insertionVerts;
 
+	// DevConsole overlay must always use alpha blending regardless of previous draw state.
+	g_engine->m_render->SetBlendMode(BlendMode::ALPHA);
 	AddVertsForAABB2D(bgVerts, bounds, Rgba8(0, 0, 0, 160));
 
 	int lineCount = m_config.m_linesOnScreen;

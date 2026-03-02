@@ -38,6 +38,123 @@ void AddVertsForQuad3D(std::vector<Vertex>& verts,
 	verts.push_back(Vertex(topLeft, color, Vec2(UVs.m_mins.x, UVs.m_maxs.y)));
 }
 
+
+void AddVertsForAABB3D(
+	std::vector<Vertex>& verts,
+	AABB3 const& bounds,
+	Rgba8 const& color,
+	AABB2 const& UVs)
+{
+	float minX = bounds.m_mins.x;
+	float minY = bounds.m_mins.y;
+	float minZ = bounds.m_mins.z;
+	float maxX = bounds.m_maxs.x;
+	float maxY = bounds.m_maxs.y;
+	float maxZ = bounds.m_maxs.z;
+
+	// +X
+	AddVertsForQuad3D(verts,
+		Vec3(maxX, minY, minZ),
+		Vec3(maxX, maxY, minZ),
+		Vec3(maxX, maxY, maxZ),
+		Vec3(maxX, minY, maxZ),
+		color,
+		UVs);
+	// -X
+	AddVertsForQuad3D(verts,
+		Vec3(minX, minY, maxZ),
+		Vec3(minX, maxY, maxZ),
+		Vec3(minX, maxY, minZ),
+		Vec3(minX, minY, minZ),
+		color,
+		UVs);
+	// +Y
+	AddVertsForQuad3D(verts,
+		Vec3(minX, maxY, minZ),
+		Vec3(minX, maxY, maxZ),
+		Vec3(maxX, maxY, maxZ),
+		Vec3(maxX, maxY, minZ),
+		color,
+		UVs);
+	// -Y
+	AddVertsForQuad3D(verts,
+		Vec3(minX, minY, maxZ),
+		Vec3(minX, minY, minZ),
+		Vec3(maxX, minY, minZ),
+		Vec3(maxX, minY, maxZ),
+		color,
+		UVs);
+	// +Z
+	AddVertsForQuad3D(verts,
+		Vec3(minX, minY, maxZ),
+		Vec3(maxX, minY, maxZ),
+		Vec3(maxX, maxY, maxZ),
+		Vec3(minX, maxY, maxZ),
+		color,
+		UVs);
+	// -Z
+	AddVertsForQuad3D(verts,
+		Vec3(maxX, minY, minZ),
+		Vec3(minX, minY, minZ),
+		Vec3(minX, maxY, minZ),
+		Vec3(maxX, maxY, minZ),
+		color,
+		UVs);
+}
+
+
+void AddVertsForSphere3D(
+	std::vector<Vertex>& verts,
+	Vec3 const& center,
+	float radius,
+	Rgba8 const& color,
+	AABB2 const& UVs,
+	int numSlices,
+	int numStacks)
+{
+	if (radius <= 0.f || numSlices < 3 || numStacks < 2) {
+		return;
+	}
+
+	for (int stackIndex = 0; stackIndex < numStacks; ++stackIndex) {
+		float v0 = static_cast<float>(stackIndex) / static_cast<float>(numStacks);
+		float v1 = static_cast<float>(stackIndex + 1) / static_cast<float>(numStacks);
+		float pitch0 = RangeMap(v0, 0.f, 1.f, -90.f, 90.f);
+		float pitch1 = RangeMap(v1, 0.f, 1.f, -90.f, 90.f);
+
+		for (int sliceIndex = 0; sliceIndex < numSlices; ++sliceIndex) {
+			float u0 = static_cast<float>(sliceIndex) / static_cast<float>(numSlices);
+			float u1 = static_cast<float>(sliceIndex + 1) / static_cast<float>(numSlices);
+			float yaw0 = RangeMap(u0, 0.f, 1.f, 0.f, 360.f);
+			float yaw1 = RangeMap(u1, 0.f, 1.f, 0.f, 360.f);
+
+			Vec3 bottomLeft = center + Vec3::MakeFromPolarDegrees(pitch0, yaw0, radius);
+			Vec3 bottomRight = center + Vec3::MakeFromPolarDegrees(pitch0, yaw1, radius);
+			Vec3 topRight = center + Vec3::MakeFromPolarDegrees(pitch1, yaw1, radius);
+			Vec3 topLeft = center + Vec3::MakeFromPolarDegrees(pitch1, yaw0, radius);
+
+			// Keep engine-wide UV convention; flip sphere V so +Z (north pole) maps to texture top.
+			float uvU0 = Interpolate(UVs.m_mins.x, UVs.m_maxs.x, u0);
+			float uvU1 = Interpolate(UVs.m_mins.x, UVs.m_maxs.x, u1);
+			float uvV0 = Interpolate(UVs.m_maxs.y, UVs.m_mins.y, v0);
+			float uvV1 = Interpolate(UVs.m_maxs.y, UVs.m_mins.y, v1);
+			AABB2 quadUVs(
+				uvU0,
+				uvV0,
+				uvU1,
+				uvV1);
+			AddVertsForQuad3D(
+				verts,
+				bottomLeft,
+				bottomRight,
+				topRight,
+				topLeft,
+				color,
+				quadUVs);
+		}
+	}
+}
+
 //-----------------------------------------------------------------------------------------------
 void AddvertsForDisc2D(std::vector<Vertex>& verts, Vec2 disCenter, float discRadius, Rgba8 color)
 {

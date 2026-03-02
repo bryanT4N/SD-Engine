@@ -32,6 +32,31 @@ Vec3::Vec3(Vec2 const& vecXY)
 {
 }
 
+
+Vec3 const Vec3::MakeFromPolarRadians(
+	float pitchRadians,
+	float yawRadians,
+	float length)
+{
+	float cosPitch = cosf(pitchRadians);
+	return Vec3(
+		length * cosf(yawRadians) * cosPitch,
+		length * sinf(yawRadians) * cosPitch,
+		-length * sinf(pitchRadians));
+}
+
+
+Vec3 const Vec3::MakeFromPolarDegrees(
+	float pitchDegrees,
+	float yawDegrees,
+	float length)
+{
+	return MakeFromPolarRadians(
+		ConvertDegreesToRadians(pitchDegrees),
+		ConvertDegreesToRadians(yawDegrees),
+		length);
+}
+
 float Vec3::GetLength() const
 {
 	return sqrtf(x * x + y * y + z * z);

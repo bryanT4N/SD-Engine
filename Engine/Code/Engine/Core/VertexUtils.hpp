@@ -2,6 +2,7 @@
 
 #include <vector>
 #include "Engine/Math/AABB2.hpp"
+#include "Engine/Math/AABB3.hpp"
 #include "Engine/Math/OBB2.hpp"
 #include "Engine/Core/Rgba8.hpp"
 
@@ -15,6 +16,17 @@ void TransformVertexArrayXY3D(std::vector<Vertex> &verts, float uniformScaleXY, 
 void AddVertsForQuad3D(std::vector<Vertex>& verts,
 	const Vec3& bottomLeft, const Vec3& bottomRight, const Vec3& topRight, const Vec3& topLeft,
 	const Rgba8& color = Rgba8::WHITE, const AABB2& UVs = AABB2(0.f, 0.f, 1.f, 1.f));
+void AddVertsForAABB3D(std::vector<Vertex>& verts,
+	AABB3 const& bounds,
+	Rgba8 const& color = Rgba8::WHITE,
+	AABB2 const& UVs = AABB2(0.f, 0.f, 1.f, 1.f));
+void AddVertsForSphere3D(std::vector<Vertex>& verts,
+	Vec3 const& center,
+	float radius,
+	Rgba8 const& color = Rgba8::WHITE,
+	AABB2 const& UVs = AABB2(0.f, 0.f, 1.f, 1.f),
+	int numSlices = 32,
+	int numStacks = 16);
 
 //-----------------------------------------------------------------------------------------------
 void AddvertsForDisc2D(std::vector<Vertex> &verts, Vec2 disCenter, float discRadius, Rgba8 color);

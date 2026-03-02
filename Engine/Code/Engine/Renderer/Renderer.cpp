@@ -43,17 +43,21 @@
 //-----------------------------------------------------------------------------------------------
 struct CameraConstants
 {
-	float OrthoMinX;
-	float OrthoMinY;
-	float OrthoMinZ;
-	float OrthoMaxX;
-	float OrthoMaxY;
-	float OrthoMaxZ;
-	float pad0;
-	float pad1;
+	Mat44 WorldToCameraTransform;		// View transform
+	Mat44 CameraToRenderTransform;		// Non-standard transform from game to DirectX conventions
+	Mat44 RenderToClipTransform;		// Projection transform
 };
 
 static const int k_cameraConstantsSlot = 2;
+
+//-----------------------------------------------------------------------------------------------
+struct ModelConstants
+{
+	Mat44 ModelToWorldTransform;		// Model transform
+	float ModelColor[4];
+};
+
+static const int k_modelConstantsSlot = 3;
 
 //-----------------------------------------------------------------------------------------------
 static bool DoesFileExist(char const* filepath)
@@ -148,6 +152,29 @@ void Renderer::Startup()
 
 	backBuffer->Release();
 
+	// Create depth stencil texture and view
+	D3D11_TEXTURE2D_DESC depthTextureDesc = { };
+	depthTextureDesc.Width = g_engine->m_window->GetClientDimensions().x;
+	depthTextureDesc.Height = g_engine->m_window->GetClientDimensions().y;
+	depthTextureDesc.MipLevels = 1;
+	depthTextureDesc.ArraySize = 1;
+	depthTextureDesc.Usage = D3D11_USAGE_DEFAULT;
+	depthTextureDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	depthTextureDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+	depthTextureDesc.SampleDesc.Count = 1;
+
+	hr = m_device->CreateTexture2D(&depthTextureDesc, nullptr, &m_depthStencilTexture);
+	if (!SUCCEEDED(hr))
+	{
+		ERROR_AND_DIE("Could not create texture for depth stencil.");
+	}
+
+	hr = m_device->CreateDepthStencilView(m_depthStencilTexture, nullptr, &m_depthStencilDSV);
+	if (!SUCCEEDED(hr))
+	{
+		ERROR_AND_DIE("Could not create depth stencil view.");
+	}
+
 
 	// Set viewport
 	D3D11_VIEWPORT viewport = { };
@@ -198,6 +225,7 @@ void Renderer::Startup()
 
 	m_immediateVBO = CreateVertexBuffer(sizeof(Vertex_PCU), sizeof(Vertex_PCU));
 	m_cameraCBO = CreateConstantBuffer(sizeof(CameraConstants));
+	m_modelCBO = CreateConstantBuffer(sizeof(ModelConstants));
 
 	// Blend states
 	D3D11_BLEND_DESC blendDesc = { };
@@ -277,6 +305,50 @@ void Renderer::Startup()
 
 	m_desiredSamplerMode = SamplerMode::POINT_CLAMP;
 
+	// Depth stencil states
+	D3D11_DEPTH_STENCIL_DESC depthStencilDesc = { };
+	hr = m_device->CreateDepthStencilState(
+		&depthStencilDesc,
+		&m_depthStencilStates[(int)DepthMode::DISABLED]);
+	if (!SUCCEEDED(hr))
+	{
+		ERROR_AND_DIE("CreateDepthStencilState for DepthMode::DISABLED failed.");
+	}
+
+	depthStencilDesc.DepthEnable = TRUE;
+
+	depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+	depthStencilDesc.DepthFunc = D3D11_COMPARISON_ALWAYS;
+	hr = m_device->CreateDepthStencilState(
+		&depthStencilDesc,
+		&m_depthStencilStates[(int)DepthMode::READ_ONLY_ALWAYS]);
+	if (!SUCCEEDED(hr))
+	{
+		ERROR_AND_DIE("CreateDepthStencilState for DepthMode::READ_ONLY_ALWAYS failed.");
+	}
+
+	depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+	depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
+	hr = m_device->CreateDepthStencilState(
+		&depthStencilDesc,
+		&m_depthStencilStates[(int)DepthMode::READ_ONLY_LESS_EQUAL]);
+	if (!SUCCEEDED(hr))
+	{
+		ERROR_AND_DIE("CreateDepthStencilState for DepthMode::READ_ONLY_LESS_EQUAL failed.");
+	}
+
+	depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+	depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
+	hr = m_device->CreateDepthStencilState(
+		&depthStencilDesc,
+		&m_depthStencilStates[(int)DepthMode::READ_WRITE_LESS_EQUAL]);
+	if (!SUCCEEDED(hr))
+	{
+		ERROR_AND_DIE("CreateDepthStencilState for DepthMode::READ_WRITE_LESS_EQUAL failed.");
+	}
+
+	m_desiredDepthMode = DepthMode::DISABLED;
+
 	// Default texture (2x2 white)
 	Image defaultImage(IntVec2(2, 2), Rgba8::WHITE);
 	m_defaultTexture = CreateTextureFromImage(defaultImage);
@@ -300,6 +372,9 @@ void Renderer::Shutdown()
 	delete m_cameraCBO;
 	m_cameraCBO = nullptr;
 
+	delete m_modelCBO;
+	m_modelCBO = nullptr;
+
 	for (int i = 0; i < (int)BlendMode::COUNT; ++i)
 	{
 		DX_SAFE_RELEASE(m_blendStates[i]);
@@ -312,6 +387,12 @@ void Renderer::Shutdown()
 	}
 	m_samplerState = nullptr;
 
+	for (int i = 0; i < (int)DepthMode::COUNT; ++i)
+	{
+		DX_SAFE_RELEASE(m_depthStencilStates[i]);
+	}
+	m_depthStencilState = nullptr;
+
 	for (int i = 0; i < static_cast<int>(m_loadedTextures.size()); ++i)
 	{
 		delete m_loadedTextures[i];
@@ -320,6 +401,8 @@ void Renderer::Shutdown()
 	m_currentTexture = nullptr;
 	m_defaultTexture = nullptr;
 
+	DX_SAFE_RELEASE(m_depthStencilDSV);
+	DX_SAFE_RELEASE(m_depthStencilTexture);
 	DX_SAFE_RELEASE(m_rasterizerState);
 	DX_SAFE_RELEASE(m_renderTargetView);
 	DX_SAFE_RELEASE(m_swapChain);
@@ -348,7 +431,7 @@ void Renderer::BeginFrame() const
 		return;
 	}
 
-	m_deviceContext->OMSetRenderTargets(1, &m_renderTargetView, nullptr);
+	m_deviceContext->OMSetRenderTargets(1, &m_renderTargetView, m_depthStencilDSV);
 }
 
 //-----------------------------------------------------------------------------------------------
@@ -370,6 +453,15 @@ void Renderer::ClearScreen(Rgba8 const& clearColor) const
 	float colorAsFloats[4];
 	clearColor.GetAsFloats(colorAsFloats);
 	m_deviceContext->ClearRenderTargetView(m_renderTargetView, colorAsFloats);
+
+	if (m_depthStencilDSV != nullptr)
+	{
+		m_deviceContext->ClearDepthStencilView(
+			m_depthStencilDSV,
+			D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
+			1.0f,
+			0);
+	}
 }
 
 //-----------------------------------------------------------------------------------------------
@@ -386,21 +478,42 @@ void Renderer::BeginCamera(Camera const& camera)
 	m_deviceContext->RSSetViewports(1, &viewport);
 
 	CameraConstants cameraConstants;
-	cameraConstants.OrthoMinX = camera.GetOrthoBottomLeft().x;
-	cameraConstants.OrthoMinY = camera.GetOrthoBottomLeft().y;
-	cameraConstants.OrthoMinZ = 0.f;
-	cameraConstants.OrthoMaxX = camera.GetOrthoTopRight().x;
-	cameraConstants.OrthoMaxY = camera.GetOrthoTopRight().y;
-	cameraConstants.OrthoMaxZ = 1.f;
-	cameraConstants.pad0 = 0.f;
-	cameraConstants.pad1 = 0.f;
+	cameraConstants.WorldToCameraTransform = camera.GetWorldToCameraTransform();
+	cameraConstants.CameraToRenderTransform = camera.GetCameraToRenderTransform();
+	cameraConstants.RenderToClipTransform = camera.GetRenderToClipTransform();
 	CopyCPUToGPU(&cameraConstants, sizeof(CameraConstants), m_cameraCBO);
 	BindConstantBuffer(k_cameraConstantsSlot, m_cameraCBO);
+
+	SetModelConstants();
 }
 
 //-----------------------------------------------------------------------------------------------
 void Renderer::EndCamera( [[maybe_unused]] Camera const& camera) const
 {
+}
+
+
+//-----------------------------------------------------------------------------------------------
+void Renderer::SetModelConstants(
+	Mat44 const& modelToWorldTransform,
+	Rgba8 const& modelColor)
+{
+	if (m_modelCBO == nullptr) {
+		return;
+	}
+
+	ModelConstants modelConstants;
+	modelConstants.ModelToWorldTransform = modelToWorldTransform;
+
+	float modelColorAsFloats[4];
+	modelColor.GetAsFloats(modelColorAsFloats);
+	modelConstants.ModelColor[0] = modelColorAsFloats[0];
+	modelConstants.ModelColor[1] = modelColorAsFloats[1];
+	modelConstants.ModelColor[2] = modelColorAsFloats[2];
+	modelConstants.ModelColor[3] = modelColorAsFloats[3];
+
+	CopyCPUToGPU(&modelConstants, sizeof(ModelConstants), m_modelCBO);
+	BindConstantBuffer(k_modelConstantsSlot, m_modelCBO);
 }
 
 //-----------------------------------------------------------------------------------------------
@@ -772,6 +885,13 @@ void Renderer::SetSamplerMode(SamplerMode samplerMode)
 
 
 //-----------------------------------------------------------------------------------------------
+void Renderer::SetDepthMode(DepthMode depthMode)
+{
+	m_desiredDepthMode = depthMode;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 void Renderer::SetStatesIfChanged()
 {
 	if (m_blendState != m_blendStates[(int)m_desiredBlendMode])
@@ -786,6 +906,12 @@ void Renderer::SetStatesIfChanged()
 	{
 		m_samplerState = m_samplerStates[(int)m_desiredSamplerMode];
 		m_deviceContext->PSSetSamplers(0, 1, &m_samplerState);
+	}
+
+	if (m_depthStencilState != m_depthStencilStates[(int)m_desiredDepthMode])
+	{
+		m_depthStencilState = m_depthStencilStates[(int)m_desiredDepthMode];
+		m_deviceContext->OMSetDepthStencilState(m_depthStencilState, 0);
 	}
 }
 

@@ -7,48 +7,42 @@ SamplerState diffuseSampler : register(s0);
 
 cbuffer CameraConstants : register(b2)
 {
-	float OrthoMinX;
-	float OrthoMinY;
-	float OrthoMinZ;
-	float OrthoMaxX;
-	float OrthoMaxY;
-	float OrthoMaxZ;
-	float pad0;
-	float pad1;
+	float4x4 WorldToCameraTransform;   // View transform
+	float4x4 CameraToRenderTransform;  // Non-standard transform from game to DirectX conventions
+	float4x4 RenderToClipTransform;    // Projection transform
+};
+
+cbuffer ModelConstants : register(b3)
+{
+	float4x4 ModelToWorldTransform;    // Model transform
+	float4 ModelColor;
 };
 
 struct vs_input_t
 {
-	float3 localPosition : POSITION;
+	float3 modelSpacePosition : POSITION;
 	float4 color : COLOR;
 	float2 uv : TEXCOORD;
 };
 
 struct v2p_t
 {
-	float4 position : SV_Position;
+	float4 clipSpacePosition : SV_Position;
 	float4 color : COLOR;
 	float2 uv : TEXCOORD;
 };
 
-float RangeMap(float value, float inMin, float inMax, float outMin, float outMax)
-{
-	return outMin + (outMax - outMin) * (value - inMin) / (inMax - inMin);
-}
-
 v2p_t VertexMain(vs_input_t input)
 {
-	float4 localPosition = float4(input.localPosition, 1);
-
-	float4 clipPosition;
-	clipPosition.x = RangeMap(localPosition.x, OrthoMinX, OrthoMaxX, -1.0f, 1.0f);
-	clipPosition.y = RangeMap(localPosition.y, OrthoMinY, OrthoMaxY, -1.0f, 1.0f);
-	clipPosition.z = RangeMap(localPosition.z, OrthoMinZ, OrthoMaxZ, 0.0f, 1.0f);
-	clipPosition.w = localPosition.w;
+	float4 modelSpacePosition = float4(input.modelSpacePosition, 1);
+	float4 worldSpacePosition = mul(ModelToWorldTransform, modelSpacePosition);
+	float4 cameraSpacePosition = mul(WorldToCameraTransform, worldSpacePosition);
+	float4 renderSpacePosition = mul(CameraToRenderTransform, cameraSpacePosition);
+	float4 clipSpacePosition = mul(RenderToClipTransform, renderSpacePosition);
 
 	v2p_t v2p;
-	v2p.position = clipPosition;
-	v2p.color = input.color;
+	v2p.clipSpacePosition = clipSpacePosition;
+	v2p.color = input.color * ModelColor;
 	v2p.uv = input.uv;
 	return v2p;
 }

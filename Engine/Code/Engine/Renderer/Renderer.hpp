@@ -1,5 +1,7 @@
 #pragma once
+#include "Engine/Core/Rgba8.hpp"
 #include "Engine/Math/IntVec2.hpp"
+#include "Engine/Math/Mat44.hpp"
 #include "Game/EngineBuildPreferences.hpp"
 #include <vector>
 
@@ -14,7 +16,6 @@
 	} while (0)
 
 //-----------------------------------------------------------------------------------------------
-struct Rgba8;
 struct Vertex;
 class Camera;
 class Texture;
@@ -30,6 +31,9 @@ struct ID3D11DeviceContext;
 struct IDXGISwapChain;
 struct ID3D11RasterizerState;
 struct ID3D11RenderTargetView;
+struct ID3D11Texture2D;
+struct ID3D11DepthStencilView;
+struct ID3D11DepthStencilState;
 struct ID3D11BlendState;
 struct ID3D11SamplerState;
 
@@ -53,6 +57,15 @@ enum class SamplerMode
 	COUNT,
 };
 
+enum class DepthMode
+{
+	DISABLED,
+	READ_ONLY_ALWAYS,
+	READ_ONLY_LESS_EQUAL,
+	READ_WRITE_LESS_EQUAL,
+	COUNT
+};
+
 //-----------------------------------------------------------------------------------------------
 struct RenderConfig {
 	bool m_isEnabled = true;
@@ -72,6 +85,8 @@ protected:
 	IDXGISwapChain*				m_swapChain					= nullptr;
 	ID3D11RasterizerState*		m_rasterizerState			= nullptr;
 	ID3D11RenderTargetView*		m_renderTargetView			= nullptr;
+	ID3D11Texture2D*			m_depthStencilTexture		= nullptr;
+	ID3D11DepthStencilView*		m_depthStencilDSV			= nullptr;
 #if defined(ENGINE_DEBUG_RENDER)
 	void*						m_dxgiDebug					= nullptr;
 	void*						m_dxgiDebugModule			= nullptr;
@@ -81,6 +96,7 @@ protected:
 	Shader*						m_defaultShader				= nullptr;
 	VertexBuffer*				m_immediateVBO				= nullptr;
 	ConstantBuffer*				m_cameraCBO					= nullptr;
+	ConstantBuffer*				m_modelCBO					= nullptr;
 
 	ID3D11BlendState*			m_blendState				= nullptr;
 	BlendMode					m_desiredBlendMode			= BlendMode::ALPHA;
@@ -89,6 +105,10 @@ protected:
 	ID3D11SamplerState*			m_samplerState				= nullptr;
 	SamplerMode					m_desiredSamplerMode		= SamplerMode::POINT_CLAMP;
 	ID3D11SamplerState*			m_samplerStates[(int)(SamplerMode::COUNT)] = {};
+
+	ID3D11DepthStencilState*	m_depthStencilState			= nullptr;
+	DepthMode					m_desiredDepthMode			= DepthMode::DISABLED;
+	ID3D11DepthStencilState*	m_depthStencilStates[(int)(DepthMode::COUNT)] = {};
 
 	const Texture*				m_currentTexture			= nullptr;
 	const Texture*				m_defaultTexture			= nullptr;
@@ -105,6 +125,9 @@ public:
 
 	void		BeginCamera(Camera const& camera);
 	void		EndCamera(Camera const& camera) const;
+	void		SetModelConstants(
+					Mat44 const& modelToWorldTransform = Mat44(),
+					Rgba8 const& modelColor = Rgba8::WHITE);
 
 	void		DrawVertexArray(int numVertexes, Vertex const* vertexes);
 	void		DrawVertexArray(const std::vector<Vertex>& vertexes);
@@ -116,6 +139,7 @@ public:
 	void		BindTexture(const Texture* texture);
 	void		SetBlendMode(BlendMode blendMode);
 	void		SetSamplerMode(SamplerMode samplerMode);
+	void		SetDepthMode(DepthMode depthMode);
 	void		SetStatesIfChanged();
 
 	ConstantBuffer* CreateConstantBuffer(const unsigned int size);

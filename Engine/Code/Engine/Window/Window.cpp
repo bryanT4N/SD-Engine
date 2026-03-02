@@ -66,6 +66,16 @@ IntVec2 Window::GetClientDimensions() const
 	return m_clientDimensions;
 }
 
+bool Window::HasFocus() const
+{
+	HWND windowHandle = static_cast<HWND>(m_windowHandle);
+	if (windowHandle == nullptr) {
+		return false;
+	}
+
+	return ::GetForegroundWindow() == windowHandle;
+}
+
 //-----------------------------------------------------------------------------------------------
 // Processes all Windows messages (WM_xxx) for this app that have queued up since last frame.
 // For each message in the queue, our WindowsMessageHandlingProcedure (or "WinProc") function
