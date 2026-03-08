@@ -563,3 +563,145 @@ RaycastResult2D RaycastVsDisc2D(Vec2 startPos, Vec2 fwdNormal, float maxDist, Ve
 	return hitResult;
 }
 
+//-----------------------------------------------------------------------------------------------
+RaycastResult2D RaycastVsLineSegment2D(Vec2 startPos, Vec2 fwdNormal, float maxDist,
+	Vec2 lineStart, Vec2 lineEnd)
+{
+	RaycastResult2D missResult;
+	missResult.m_didImpact = false;
+	missResult.m_impactDist = maxDist;
+	missResult.m_impactPos = startPos + (fwdNormal * maxDist);
+
+	Vec2 const segmentDisplacement = lineEnd - lineStart;
+	if (segmentDisplacement.GetLengthSquared() == 0.f) {
+		return missResult;
+	}
+
+	Vec2 const iBasis = fwdNormal;
+	Vec2 const jBasis = iBasis.GetRotatedBy90Degrees();
+	Vec2 const rayToLineStart = lineStart - startPos;
+	Vec2 const rayToLineEnd = lineEnd - startPos;
+
+	float const lineStartJ = DotProduct2D(rayToLineStart, jBasis);
+	float const lineEndJ = DotProduct2D(rayToLineEnd, jBasis);
+	if ((lineStartJ * lineEndJ) >= 0.f) {
+		return missResult;
+	}
+
+	float const lineStartI = DotProduct2D(rayToLineStart, iBasis);
+	float const lineEndI = DotProduct2D(rayToLineEnd, iBasis);
+	if ((lineStartI <= 0.f) && (lineEndI <= 0.f)) {
+		return missResult;
+	}
+	if ((lineStartI >= maxDist) && (lineEndI >= maxDist)) {
+		return missResult;
+	}
+
+	float const lineFraction = lineStartJ / (lineStartJ - lineEndJ);
+	float const impactDist = lineStartI + lineFraction * (lineEndI - lineStartI);
+	if ((impactDist <= 0.f) || (impactDist >= maxDist)) {
+		return missResult;
+	}
+
+	RaycastResult2D hitResult;
+	hitResult.m_didImpact = true;
+	hitResult.m_impactDist = impactDist;
+	hitResult.m_impactPos = startPos + (fwdNormal * impactDist);
+	hitResult.m_rayStartPos = startPos;
+	hitResult.m_rayFwdNormal = fwdNormal;
+	hitResult.m_rayMaxLength = maxDist;
+
+	Vec2 impactNormal = segmentDisplacement.GetRotatedBy90Degrees().GetNormalized();
+	if (DotProduct2D(impactNormal, fwdNormal) > 0.f) {
+		impactNormal = -impactNormal;
+	}
+	hitResult.m_impactNormal = impactNormal;
+
+	return hitResult;
+}
+
+//-----------------------------------------------------------------------------------------------
+RaycastResult2D RaycastVsAABB2D(Vec2 startPos, Vec2 fwdNormal, float maxDist, AABB2 const& aabb)
+{
+	RaycastResult2D missResult;
+	missResult.m_didImpact = false;
+	missResult.m_impactDist = maxDist;
+	missResult.m_impactPos = startPos + (fwdNormal * maxDist);
+
+	if (IsPointInsideAABB2D(startPos, aabb)) {
+		RaycastResult2D immediateHit;
+		immediateHit.m_didImpact = true;
+		immediateHit.m_impactDist = 0.f;
+		immediateHit.m_impactPos = startPos;
+		immediateHit.m_impactNormal = -fwdNormal;
+		immediateHit.m_rayStartPos = startPos;
+		immediateHit.m_rayFwdNormal = fwdNormal;
+		immediateHit.m_rayMaxLength = maxDist;
+		return immediateHit;
+	}
+
+	float xEntry = -INFINITY;
+	float xExit = INFINITY;
+	if (fwdNormal.x == 0.f) {
+		if ((startPos.x <= aabb.m_mins.x) || (startPos.x >= aabb.m_maxs.x)) {
+			return missResult;
+		}
+	}
+	else {
+		float xToMin = (aabb.m_mins.x - startPos.x) / fwdNormal.x;
+		float xToMax = (aabb.m_maxs.x - startPos.x) / fwdNormal.x;
+		xEntry = xToMin < xToMax ? xToMin : xToMax;
+		xExit = xToMin > xToMax ? xToMin : xToMax;
+	}
+
+	float yEntry = -INFINITY;
+	float yExit = INFINITY;
+	if (fwdNormal.y == 0.f) {
+		if ((startPos.y <= aabb.m_mins.y) || (startPos.y >= aabb.m_maxs.y)) {
+			return missResult;
+		}
+	}
+	else {
+		float yToMin = (aabb.m_mins.y - startPos.y) / fwdNormal.y;
+		float yToMax = (aabb.m_maxs.y - startPos.y) / fwdNormal.y;
+		yEntry = yToMin < yToMax ? yToMin : yToMax;
+		yExit = yToMin > yToMax ? yToMin : yToMax;
+	}
+
+	float const impactDist = xEntry > yEntry ? xEntry : yEntry;
+	float const exitDist = xExit < yExit ? xExit : yExit;
+	if (impactDist >= exitDist) {
+		return missResult;
+	}
+	if ((impactDist <= 0.f) || (impactDist > maxDist)) {
+		return missResult;
+	}
+
+	RaycastResult2D hitResult;
+	hitResult.m_didImpact = true;
+	hitResult.m_impactDist = impactDist;
+	hitResult.m_impactPos = startPos + (fwdNormal * impactDist);
+	hitResult.m_rayStartPos = startPos;
+	hitResult.m_rayFwdNormal = fwdNormal;
+	hitResult.m_rayMaxLength = maxDist;
+
+	Vec2 impactNormal = Vec2::ZERO;
+	if (xEntry > yEntry) {
+		impactNormal = fwdNormal.x > 0.f ? Vec2(-1.f, 0.f) : Vec2(1.f, 0.f);
+	}
+	else if (yEntry > xEntry) {
+		impactNormal = fwdNormal.y > 0.f ? Vec2(0.f, -1.f) : Vec2(0.f, 1.f);
+	}
+	else {
+		if (fabsf(fwdNormal.x) >= fabsf(fwdNormal.y)) {
+			impactNormal = fwdNormal.x > 0.f ? Vec2(-1.f, 0.f) : Vec2(1.f, 0.f);
+		}
+		else {
+			impactNormal = fwdNormal.y > 0.f ? Vec2(0.f, -1.f) : Vec2(0.f, 1.f);
+		}
+	}
+	hitResult.m_impactNormal = impactNormal;
+
+	return hitResult;
+}
+
