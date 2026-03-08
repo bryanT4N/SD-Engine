@@ -8,6 +8,7 @@
 
 struct Vec2;
 struct Vec3;
+struct Mat44;
 struct Vertex;
 
 //-----------------------------------------------------------------------------------------------
@@ -27,6 +28,17 @@ void AddVertsForSphere3D(std::vector<Vertex>& verts,
 	AABB2 const& UVs = AABB2(0.f, 0.f, 1.f, 1.f),
 	int numSlices = 32,
 	int numStacks = 16);
+void TransformVertexArray3D(std::vector<Vertex>& verts, Mat44 const& transform);
+AABB2 GetVertexBounds2D(std::vector<Vertex> const& verts);
+void AddVertsForCylinder3D(std::vector<Vertex>& verts,
+	Vec3 const& start, Vec3 const& end, float radius,
+	Rgba8 const& color = Rgba8::WHITE, AABB2 const& UVs = AABB2(0.f, 0.f, 1.f, 1.f), int numSlices = 32);
+void AddVertsForCone3D(std::vector<Vertex>& verts,
+	Vec3 const& start, Vec3 const& end, float radius,
+	Rgba8 const& color = Rgba8::WHITE, AABB2 const& UVs = AABB2(0.f, 0.f, 1.f, 1.f), int numSlices = 32);
+void AddVertsForArrow3D(std::vector<Vertex>& verts,
+	Vec3 const& start, Vec3 const& end, float radius,
+	Rgba8 const& color = Rgba8::WHITE, int numSlices = 32);
 
 //-----------------------------------------------------------------------------------------------
 void AddvertsForDisc2D(std::vector<Vertex> &verts, Vec2 disCenter, float discRadius, Rgba8 color);

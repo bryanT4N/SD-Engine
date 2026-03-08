@@ -57,6 +57,65 @@ void BitmapFont::AddVertsForText2D( std::vector<Vertex>& vertexArray, Vec2 textM
 }
 
 //-----------------------------------------------------------------------------------------------
+void BitmapFont::AddVertsForText3DAtOriginXForward(
+	std::vector<Vertex>& vertexArray,
+	float cellHeight,
+	std::string const& text,
+	Rgba8 tint,
+	float cellAspectScale,
+	Vec2 const& alignment,
+	int maxGlyphsToDraw)
+{
+	if (cellHeight <= 0.0f || text.empty() || maxGlyphsToDraw <= 0) {
+		return;
+	}
+
+	int lineCount = 1;
+	for (char character : text) {
+		if (character == '\n') {
+			++lineCount;
+		}
+	}
+
+	float textWidth = GetTextWidth(cellHeight, text, cellAspectScale);
+	float textHeight = static_cast<float>(lineCount) * cellHeight;
+	AABB2 textBounds(Vec2(0.0f, 0.0f), Vec2(textWidth, textHeight));
+
+	std::vector<Vertex> textVerts2D;
+	AddVertsForTextInBox2D(
+		textVerts2D,
+		text,
+		textBounds,
+		cellHeight,
+		tint,
+		cellAspectScale,
+		Vec2::ZERO,
+		TextBoxMode::OVERRUN,
+		maxGlyphsToDraw);
+
+	if (textVerts2D.empty()) {
+		return;
+	}
+
+	AABB2 generatedBounds = GetVertexBounds2D(textVerts2D);
+	Vec2 generatedDimensions = generatedBounds.GetDimensions();
+	Vec2 alignmentPivot(
+		generatedBounds.m_mins.x + (alignment.x * generatedDimensions.x),
+		generatedBounds.m_mins.y + (alignment.y * generatedDimensions.y));
+
+	int const vertCount = static_cast<int>(textVerts2D.size());
+	for (int vertIndex = 0; vertIndex < vertCount; ++vertIndex) {
+		Vertex& vert = textVerts2D[vertIndex];
+		Vec2 shifted2D(
+			vert.m_position.x - alignmentPivot.x,
+			vert.m_position.y - alignmentPivot.y);
+		vert.m_position = Vec3(0.0f, shifted2D.x, shifted2D.y);
+	}
+
+	vertexArray.insert(vertexArray.end(), textVerts2D.begin(), textVerts2D.end());
+}
+
+//-----------------------------------------------------------------------------------------------
 float BitmapFont::GetTextWidth( float cellHeight, std::string const& text, float cellAspectScale )
 {
 	if( cellHeight <= 0.0f )

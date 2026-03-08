@@ -1,8 +1,38 @@
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Math/Vec3.hpp"
+#include "Engine/Math/Mat44.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Core/Vertex.hpp"
 #include "Engine/Core/VertexUtils.hpp"
+#include <cmath>
+#include <limits>
+
+namespace
+{
+	int GetValidNumSlices(int numSlices)
+	{
+		return numSlices < 3 ? 3 : numSlices;
+	}
+
+	void GetSurfaceTangentsForAxis(Vec3 const& axisNormal, Vec3& outIBasis, Vec3& outJBasis)
+	{
+		Vec3 referenceUp = fabsf(axisNormal.z) < 0.999f ? Vec3(0.f, 0.f, 1.f) : Vec3(0.f, 1.f, 0.f);
+		outIBasis = CrossProduct3D(referenceUp, axisNormal).GetNormalized();
+		if (outIBasis.GetLengthSquared() == 0.f) {
+			referenceUp = Vec3(1.f, 0.f, 0.f);
+			outIBasis = CrossProduct3D(referenceUp, axisNormal).GetNormalized();
+		}
+
+		outJBasis = CrossProduct3D(axisNormal, outIBasis).GetNormalized();
+	}
+
+	Vec2 GetRadialUV(AABB2 const& UVs, float cosTheta, float sinTheta)
+	{
+		float u = RangeMap(cosTheta, -1.f, 1.f, UVs.m_mins.x, UVs.m_maxs.x);
+		float v = RangeMap(sinTheta, -1.f, 1.f, UVs.m_mins.y, UVs.m_maxs.y);
+		return Vec2(u, v);
+	}
+}
 
 void TransformVertexArrayXY3D(int numVerts, Vertex* verts, float uniformScaleXY, float rotationDegreesAboutZ, Vec2 const& translationXY)
 {
@@ -153,6 +183,186 @@ void AddVertsForSphere3D(
 				quadUVs);
 		}
 	}
+}
+
+void TransformVertexArray3D(std::vector<Vertex>& verts, Mat44 const& transform)
+{
+	for (Vertex& vert : verts) {
+		vert.m_position = transform.TransformPosition3D(vert.m_position);
+	}
+}
+
+AABB2 GetVertexBounds2D(std::vector<Vertex> const& verts)
+{
+	if (verts.empty()) {
+		return AABB2(Vec2::ZERO, Vec2::ZERO);
+	}
+
+	Vec2 mins(verts[0].m_position.x, verts[0].m_position.y);
+	Vec2 maxs(verts[0].m_position.x, verts[0].m_position.y);
+	for (Vertex const& vert : verts) {
+		if (vert.m_position.x < mins.x) {
+			mins.x = vert.m_position.x;
+		}
+		if (vert.m_position.y < mins.y) {
+			mins.y = vert.m_position.y;
+		}
+		if (vert.m_position.x > maxs.x) {
+			maxs.x = vert.m_position.x;
+		}
+		if (vert.m_position.y > maxs.y) {
+			maxs.y = vert.m_position.y;
+		}
+	}
+
+	return AABB2(mins, maxs);
+}
+
+void AddVertsForCylinder3D(std::vector<Vertex>& verts,
+	Vec3 const& start, Vec3 const& end, float radius,
+	Rgba8 const& color, AABB2 const& UVs, int numSlices)
+{
+	if (radius <= 0.f) {
+		return;
+	}
+
+	Vec3 axis = end - start;
+	float axisLength = axis.GetLength();
+	if (axisLength <= 0.f) {
+		return;
+	}
+
+	int slices = GetValidNumSlices(numSlices);
+	Vec3 axisNormal = axis / axisLength;
+	Vec3 iBasis;
+	Vec3 jBasis;
+	GetSurfaceTangentsForAxis(axisNormal, iBasis, jBasis);
+
+	Vec2 centerUV = UVs.GetCenter();
+	for (int sliceIndex = 0; sliceIndex < slices; ++sliceIndex) {
+		float fraction0 = static_cast<float>(sliceIndex) / static_cast<float>(slices);
+		float fraction1 = static_cast<float>(sliceIndex + 1) / static_cast<float>(slices);
+		float theta0 = fraction0 * 360.f;
+		float theta1 = fraction1 * 360.f;
+
+		float cosTheta0 = CosDegrees(theta0);
+		float sinTheta0 = SinDegrees(theta0);
+		float cosTheta1 = CosDegrees(theta1);
+		float sinTheta1 = SinDegrees(theta1);
+
+		Vec3 radial0 = (cosTheta0 * iBasis) + (sinTheta0 * jBasis);
+		Vec3 radial1 = (cosTheta1 * iBasis) + (sinTheta1 * jBasis);
+
+		Vec3 start0 = start + (radius * radial0);
+		Vec3 start1 = start + (radius * radial1);
+		Vec3 end0 = end + (radius * radial0);
+		Vec3 end1 = end + (radius * radial1);
+
+		float uvU0 = Interpolate(UVs.m_mins.x, UVs.m_maxs.x, fraction0);
+		float uvU1 = Interpolate(UVs.m_mins.x, UVs.m_maxs.x, fraction1);
+		AABB2 sideUVs(uvU0, UVs.m_mins.y, uvU1, UVs.m_maxs.y);
+		AddVertsForQuad3D(verts, start0, start1, end1, end0, color, sideUVs);
+
+		Vec2 startUV0 = GetRadialUV(UVs, cosTheta0, sinTheta0);
+		Vec2 startUV1 = GetRadialUV(UVs, cosTheta1, sinTheta1);
+
+		verts.push_back(Vertex(start, color, centerUV));
+		verts.push_back(Vertex(start1, color, startUV1));
+		verts.push_back(Vertex(start0, color, startUV0));
+
+		verts.push_back(Vertex(end, color, centerUV));
+		verts.push_back(Vertex(end0, color, startUV0));
+		verts.push_back(Vertex(end1, color, startUV1));
+	}
+}
+
+void AddVertsForCone3D(std::vector<Vertex>& verts,
+	Vec3 const& start, Vec3 const& end, float radius,
+	Rgba8 const& color, AABB2 const& UVs, int numSlices)
+{
+	if (radius <= 0.f) {
+		return;
+	}
+
+	Vec3 axis = end - start;
+	float axisLength = axis.GetLength();
+	if (axisLength <= 0.f) {
+		return;
+	}
+
+	int slices = GetValidNumSlices(numSlices);
+	Vec3 axisNormal = axis / axisLength;
+	Vec3 iBasis;
+	Vec3 jBasis;
+	GetSurfaceTangentsForAxis(axisNormal, iBasis, jBasis);
+
+	Vec2 centerUV = UVs.GetCenter();
+	for (int sliceIndex = 0; sliceIndex < slices; ++sliceIndex) {
+		float fraction0 = static_cast<float>(sliceIndex) / static_cast<float>(slices);
+		float fraction1 = static_cast<float>(sliceIndex + 1) / static_cast<float>(slices);
+		float theta0 = fraction0 * 360.f;
+		float theta1 = fraction1 * 360.f;
+
+		float cosTheta0 = CosDegrees(theta0);
+		float sinTheta0 = SinDegrees(theta0);
+		float cosTheta1 = CosDegrees(theta1);
+		float sinTheta1 = SinDegrees(theta1);
+
+		Vec3 baseRadial0 = (cosTheta0 * iBasis) + (sinTheta0 * jBasis);
+		Vec3 baseRadial1 = (cosTheta1 * iBasis) + (sinTheta1 * jBasis);
+		Vec3 base0 = start + (radius * baseRadial0);
+		Vec3 base1 = start + (radius * baseRadial1);
+
+		float uvU0 = Interpolate(UVs.m_mins.x, UVs.m_maxs.x, fraction0);
+		float uvU1 = Interpolate(UVs.m_mins.x, UVs.m_maxs.x, fraction1);
+		float tipU = 0.5f * (uvU0 + uvU1);
+		verts.push_back(Vertex(base0, color, Vec2(uvU0, UVs.m_mins.y)));
+		verts.push_back(Vertex(base1, color, Vec2(uvU1, UVs.m_mins.y)));
+		verts.push_back(Vertex(end, color, Vec2(tipU, UVs.m_maxs.y)));
+
+		Vec2 baseUV0 = GetRadialUV(UVs, cosTheta0, sinTheta0);
+		Vec2 baseUV1 = GetRadialUV(UVs, cosTheta1, sinTheta1);
+		verts.push_back(Vertex(start, color, centerUV));
+		verts.push_back(Vertex(base1, color, baseUV1));
+		verts.push_back(Vertex(base0, color, baseUV0));
+	}
+}
+
+void AddVertsForArrow3D(std::vector<Vertex>& verts,
+	Vec3 const& start, Vec3 const& end, float radius,
+	Rgba8 const& color, int numSlices)
+{
+	if (radius <= 0.f) {
+		return;
+	}
+
+	Vec3 axis = end - start;
+	float axisLength = axis.GetLength();
+	if (axisLength <= 0.f) {
+		return;
+	}
+
+	int slices = GetValidNumSlices(numSlices);
+	float desiredHeadLength = radius * 4.f;
+	float minHeadLength = radius * 1.5f;
+	float maxHeadLength = axisLength - (radius * 0.25f);
+	if (maxHeadLength <= 0.f || axisLength <= minHeadLength) {
+		AddVertsForCone3D(verts, start, end, radius * 2.f, color, AABB2(0.f, 0.f, 1.f, 1.f), slices);
+		return;
+	}
+
+	float headLength = desiredHeadLength;
+	if (maxHeadLength < minHeadLength) {
+		headLength = maxHeadLength;
+	}
+	else {
+		headLength = GetClamped(desiredHeadLength, minHeadLength, maxHeadLength);
+	}
+
+	Vec3 axisNormal = axis.GetNormalized();
+	Vec3 coneStart = end - (axisNormal * headLength);
+	AddVertsForCylinder3D(verts, start, coneStart, radius, color, AABB2(0.f, 0.f, 1.f, 1.f), slices);
+	AddVertsForCone3D(verts, coneStart, end, radius * 2.f, color, AABB2(0.f, 0.f, 1.f, 1.f), slices);
 }
 
 //-----------------------------------------------------------------------------------------------

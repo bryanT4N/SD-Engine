@@ -8,6 +8,7 @@ struct Vec2;
 struct Vec3;
 struct Vec4;
 struct IntVec2;
+struct Mat44;
 class AABB2;
 class OBB2;
 
@@ -93,6 +94,22 @@ void	TransformPosition2D(Vec2& posToTransform, float uniformscale, float rotatio
 void	TransformPositionXY3D(Vec3& posToTransform, float xyScale, float zRotationDegrees, Vec2 const& xyTranslation);
 void	TransformPosition2D(Vec2& posToTransform, Vec2 const& iBasis, Vec2 const& jBasis, Vec2 const& translation);
 void	TransformPositionXY3D(Vec3& posToTransform, Vec2 const& iBasis, Vec2 const& jBasis, Vec2 const& translation);
+
+enum class BillboardType
+{
+	NONE = -1,
+	WORLD_UP_FACING,
+	WORLD_UP_OPPOSING,
+	FULL_FACING,
+	FULL_OPPOSING,
+	COUNT
+};
+
+Mat44 GetBillboardTransform(
+	BillboardType billboardType,
+	Mat44 const& targetTransform,
+	Vec3 const& billboardPosition,
+	Vec2 const& billboardScale = Vec2(1.0f, 1.0f));
 
 //-----------------------------------------------------------------------------------------------
 struct RaycastResult2D {

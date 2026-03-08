@@ -4,6 +4,7 @@
 #include "Engine/Core/VertexUtils.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
+#include "Engine/Renderer/DebugRenderSystem.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 #include "Engine/Window/Window.hpp"
 
@@ -802,6 +803,7 @@ bool DevConsole::Command_Clear([[maybe_unused]]EventArgs& args)
 	}
 
 	g_theDevConsole->m_lines.clear();
+	DebugRenderClear();
 	return true;
 }
 

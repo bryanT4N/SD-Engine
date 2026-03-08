@@ -1,4 +1,5 @@
 #include "Engine/Math/MathUtils.hpp"
+#include "Engine/Math/Mat44.hpp"
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Math/Vec3.hpp"
@@ -8,6 +9,20 @@
 
 #define _USE_MATH_DEFINES
 #include <cmath>
+
+//-----------------------------------------------------------------------------------------------
+namespace
+{
+Vec3 GetNormalizedOrFallback(Vec3 const& value, Vec3 const& fallback)
+{
+	Vec3 normalized = value.GetNormalized();
+	if (normalized.GetLengthSquared() == 0.f) {
+		return fallback;
+	}
+
+	return normalized;
+}
+}
 
 //-----------------------------------------------------------------------------------------------
 
@@ -515,6 +530,78 @@ void TransformPositionXY3D(Vec3& posToTransform, Vec2 const& iBasis, Vec2 const&
 {
 	Vec2 posToTransformVec2 = (posToTransform.x * iBasis) + (posToTransform.y * jBasis) + translation;
 	posToTransform = Vec3(posToTransformVec2.x, posToTransformVec2.y, posToTransform.z);
+}
+
+//-----------------------------------------------------------------------------------------------
+Mat44 GetBillboardTransform(
+	BillboardType billboardType,
+	Mat44 const& targetTransform,
+	Vec3 const& billboardPosition,
+	Vec2 const& billboardScale)
+{
+	Vec3 targetForward = GetNormalizedOrFallback(targetTransform.GetIBasis3D(), Vec3(1.f, 0.f, 0.f));
+	Vec3 targetLeft = GetNormalizedOrFallback(targetTransform.GetJBasis3D(), Vec3(0.f, 1.f, 0.f));
+	Vec3 targetUp = GetNormalizedOrFallback(targetTransform.GetKBasis3D(), Vec3(0.f, 0.f, 1.f));
+
+	Vec3 billboardForward = targetForward;
+	Vec3 billboardLeft = targetLeft;
+	Vec3 billboardUp = targetUp;
+
+	switch (billboardType)
+	{
+	case BillboardType::WORLD_UP_FACING:
+	case BillboardType::WORLD_UP_OPPOSING:
+	{
+		Vec3 flattenedForward = Vec3(targetForward.x, targetForward.y, 0.f);
+		if (flattenedForward.GetLengthSquared() == 0.f) {
+			flattenedForward = Vec3(targetLeft.y, -targetLeft.x, 0.f);
+		}
+		flattenedForward = GetNormalizedOrFallback(flattenedForward, Vec3(1.f, 0.f, 0.f));
+
+		if (billboardType == BillboardType::WORLD_UP_OPPOSING) {
+			flattenedForward = -flattenedForward;
+		}
+
+		billboardForward = flattenedForward;
+		billboardUp = Vec3(0.f, 0.f, 1.f);
+		billboardLeft = GetNormalizedOrFallback(
+			CrossProduct3D(billboardUp, billboardForward),
+			Vec3(0.f, 1.f, 0.f));
+		break;
+	}
+
+	case BillboardType::FULL_FACING:
+		billboardForward = targetForward;
+		billboardLeft = targetLeft;
+		billboardUp = targetUp;
+		break;
+
+	case BillboardType::FULL_OPPOSING:
+		billboardForward = -targetForward;
+		billboardLeft = -targetLeft;
+		billboardUp = targetUp;
+		break;
+
+	case BillboardType::COUNT:
+	case BillboardType::NONE:
+	default:
+		break;
+	}
+
+	Mat44 orientation;
+	orientation.SetIJK3D(billboardForward, billboardLeft, billboardUp);
+	orientation.Orthonormalize_XFwd_YLeft_ZUp();
+
+	Vec3 scaledLeft = orientation.GetJBasis3D() * billboardScale.x;
+	Vec3 scaledUp = orientation.GetKBasis3D() * billboardScale.y;
+
+	Mat44 billboardTransform;
+	billboardTransform.SetIJKT3D(
+		orientation.GetIBasis3D(),
+		scaledLeft,
+		scaledUp,
+		billboardPosition);
+	return billboardTransform;
 }
 
 //-----------------------------------------------------------------------------------------------
