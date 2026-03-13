@@ -173,14 +173,18 @@ void AddVertsForSphere3D(
 				uvV0,
 				uvU1,
 				uvV1);
-			AddVertsForQuad3D(
-				verts,
-				bottomLeft,
-				bottomRight,
-				topRight,
-				topLeft,
-				color,
-				quadUVs);
+			Vec2 uvBottomLeft(quadUVs.m_mins.x, quadUVs.m_mins.y);
+			Vec2 uvBottomRight(quadUVs.m_maxs.x, quadUVs.m_mins.y);
+			Vec2 uvTopRight(quadUVs.m_maxs.x, quadUVs.m_maxs.y);
+			Vec2 uvTopLeft(quadUVs.m_mins.x, quadUVs.m_maxs.y);
+
+			verts.push_back(Vertex(bottomLeft, color, uvBottomLeft));
+			verts.push_back(Vertex(topRight, color, uvTopRight));
+			verts.push_back(Vertex(bottomRight, color, uvBottomRight));
+
+			verts.push_back(Vertex(bottomLeft, color, uvBottomLeft));
+			verts.push_back(Vertex(topLeft, color, uvTopLeft));
+			verts.push_back(Vertex(topRight, color, uvTopRight));
 		}
 	}
 }

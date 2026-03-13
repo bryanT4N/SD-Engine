@@ -4,7 +4,6 @@
 #include "Engine/Core/VertexUtils.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
-#include "Engine/Renderer/DebugRenderSystem.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 #include "Engine/Window/Window.hpp"
 
@@ -121,6 +120,8 @@ static DevConsoleCommandSpec const g_devConsoleCommandSpecs[] = {
 	{ "help",				"Help",					false, false, 0, {} },
 	{ "clear",				"Clear",				false, false, 0, {} },
 	{ "quit",				"Quit",					false, false, 0, {} },
+	{ "debugrenderclear",	"DebugRenderClear",		false, false, 0, {} },
+	{ "debugrendertoggle",	"DebugRenderToggle",	false, false, 0, {} },
 	{ "setgameclockscale",	"SetGameClockScale",	true, false, 1, { { "scale", "scale", DevConsoleArgumentType::FLOAT, "0.25" } } },
 	{ "keypressed",			"KeyPressed",			true, true, 1, { { "KeyCode", "keycode", DevConsoleArgumentType::INTEGER, "65" } } },
 	{ "keyreleased",		"KeyReleased",			true, false, 1, { { "KeyCode", "keycode", DevConsoleArgumentType::INTEGER, "65" } } },
@@ -494,6 +495,8 @@ void DevConsole::Render(AABB2 const& bounds, BitmapFont& bitmapFont, float fontA
 
 	// DevConsole overlay must always use alpha blending regardless of previous draw state.
 	g_engine->m_render->SetBlendMode(BlendMode::ALPHA);
+	g_engine->m_render->SetRasterizerMode(RasterizerMode::SOLID_CULL_NONE);
+	g_engine->m_render->SetDepthMode(DepthMode::DISABLED);
 	AddVertsForAABB2D(bgVerts, bounds, Rgba8(0, 0, 0, 160));
 
 	int lineCount = m_config.m_linesOnScreen;
@@ -803,7 +806,6 @@ bool DevConsole::Command_Clear([[maybe_unused]]EventArgs& args)
 	}
 
 	g_theDevConsole->m_lines.clear();
-	DebugRenderClear();
 	return true;
 }
 

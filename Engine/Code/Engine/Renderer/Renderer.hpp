@@ -66,6 +66,15 @@ enum class DepthMode
 	COUNT
 };
 
+enum class RasterizerMode
+{
+	SOLID_CULL_NONE,
+	SOLID_CULL_BACK,
+	WIREFRAME_CULL_NONE,
+	WIREFRAME_CULL_BACK,
+	COUNT
+};
+
 //-----------------------------------------------------------------------------------------------
 struct RenderConfig {
 	bool m_isEnabled = true;
@@ -84,6 +93,8 @@ protected:
 	ID3D11DeviceContext*		m_deviceContext				= nullptr;
 	IDXGISwapChain*				m_swapChain					= nullptr;
 	ID3D11RasterizerState*		m_rasterizerState			= nullptr;
+	RasterizerMode				m_desiredRasterizerMode		= RasterizerMode::SOLID_CULL_BACK;
+	ID3D11RasterizerState*		m_rasterizerStates[(int)(RasterizerMode::COUNT)] = {};
 	ID3D11RenderTargetView*		m_renderTargetView			= nullptr;
 	ID3D11Texture2D*			m_depthStencilTexture		= nullptr;
 	ID3D11DepthStencilView*		m_depthStencilDSV			= nullptr;
@@ -140,6 +151,7 @@ public:
 	void		SetBlendMode(BlendMode blendMode);
 	void		SetSamplerMode(SamplerMode samplerMode);
 	void		SetDepthMode(DepthMode depthMode);
+	void		SetRasterizerMode(RasterizerMode rasterizerMode);
 	void		SetStatesIfChanged();
 
 	ConstantBuffer* CreateConstantBuffer(const unsigned int size);

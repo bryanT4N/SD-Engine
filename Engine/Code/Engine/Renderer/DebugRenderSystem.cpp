@@ -34,6 +34,7 @@ struct DebugObject
 {
 	DebugObjectType m_type = DebugObjectType::WORLD_GEOMETRY;
 	DebugRenderMode m_mode = DebugRenderMode::USE_DEPTH;
+	bool m_isWireframe = false;
 
 	float m_durationSeconds = 0.f;
 	float m_elapsedSeconds = 0.f;
@@ -64,34 +65,14 @@ struct DebugRenderSystemState
 	std::vector<DebugObject> m_objects;
 };
 
-constexpr float DEBUG_WIRE_SEGMENT_RADIUS_SCALE = 0.012f;
-constexpr float DEBUG_WIRE_SEGMENT_RADIUS_MIN = 0.0018f;
-constexpr int DEBUG_CIRCLE_SEGMENTS = 40;
-constexpr int DEBUG_CIRCLE_CYLINDER_SIDES = 6;
-constexpr int DEBUG_WIRE_SPHERE_SLICES = 18;
-constexpr int DEBUG_WIRE_SPHERE_STACKS = 10;
-constexpr int DEBUG_WIRE_CYLINDER_SIDE_LINES = 20;
-constexpr int DEBUG_WIRE_CYLINDER_CAP_RADIAL_LINES = 16;
 constexpr float DEBUG_MESSAGE_MARGIN = 8.f;
-constexpr float DEBUG_MESSAGE_LINE_HEIGHT = 18.f;
+constexpr float DEBUG_MESSAGE_LINE_HEIGHT = 10.f;
 constexpr float DEBUG_MESSAGE_LINE_SPACING = 2.f;
 
 constexpr char const* DEBUG_COMMAND_CLEAR = "DebugRenderClear";
 constexpr char const* DEBUG_COMMAND_TOGGLE = "DebugRenderToggle";
-constexpr char const* DEBUG_COMMAND_CLEAR_ALIAS = "Clear";
-constexpr char const* DEBUG_COMMAND_TOGGLE_ALIAS = "Toggle";
 
 DebugRenderSystemState* g_debugRenderState = nullptr;
-
-float GetWireSegmentRadius(float radius)
-{
-	float wireRadius = radius * DEBUG_WIRE_SEGMENT_RADIUS_SCALE;
-	if (wireRadius < DEBUG_WIRE_SEGMENT_RADIUS_MIN) {
-		wireRadius = DEBUG_WIRE_SEGMENT_RADIUS_MIN;
-	}
-
-	return wireRadius;
-}
 
 Vec3 GetNormalizedOrFallback(Vec3 const& value, Vec3 const& fallback)
 {
@@ -117,225 +98,6 @@ Rgba8 ScaleColor(Rgba8 const& color, float rgbScale, float alphaScale)
 		ScaleColorByte(color.g, rgbScale),
 		ScaleColorByte(color.b, rgbScale),
 		ScaleColorByte(color.a, alphaScale));
-}
-
-void GetPerpendicularBasis(Vec3 const& axisNormal, Vec3& out_jBasis, Vec3& out_kBasis)
-{
-	Vec3 reference = fabsf(axisNormal.z) < 0.999f ? Vec3(0.f, 0.f, 1.f) : Vec3(0.f, 1.f, 0.f);
-	out_jBasis = GetNormalizedOrFallback(CrossProduct3D(reference, axisNormal), Vec3(0.f, 1.f, 0.f));
-	out_kBasis = GetNormalizedOrFallback(CrossProduct3D(axisNormal, out_jBasis), Vec3(0.f, 0.f, 1.f));
-}
-
-void AddWireCircle3D(
-	std::vector<Vertex>& verts,
-	Vec3 const& center,
-	Vec3 const& jBasisNormal,
-	Vec3 const& kBasisNormal,
-	float radius,
-	float wireRadius,
-	Rgba8 const& color)
-{
-	if (radius <= 0.f) {
-		return;
-	}
-
-	for (int segmentIndex = 0; segmentIndex < DEBUG_CIRCLE_SEGMENTS; ++segmentIndex) {
-		float fractionA = static_cast<float>(segmentIndex) / static_cast<float>(DEBUG_CIRCLE_SEGMENTS);
-		float fractionB = static_cast<float>(segmentIndex + 1) / static_cast<float>(DEBUG_CIRCLE_SEGMENTS);
-		float angleDegreesA = 360.f * fractionA;
-		float angleDegreesB = 360.f * fractionB;
-
-		Vec3 pointA =
-			center +
-			(jBasisNormal * (radius * CosDegrees(angleDegreesA))) +
-			(kBasisNormal * (radius * SinDegrees(angleDegreesA)));
-		Vec3 pointB =
-			center +
-			(jBasisNormal * (radius * CosDegrees(angleDegreesB))) +
-			(kBasisNormal * (radius * SinDegrees(angleDegreesB)));
-
-		AddVertsForCylinder3D(verts, pointA, pointB, wireRadius, color, AABB2(0.f, 0.f, 1.f, 1.f), DEBUG_CIRCLE_CYLINDER_SIDES);
-	}
-}
-
-void AddWireSphere3D(std::vector<Vertex>& verts, Vec3 const& center, float radius, Rgba8 const& color)
-{
-	if (radius <= 0.f) {
-		return;
-	}
-
-	float wireRadius = GetWireSegmentRadius(radius);
-
-	// Latitude rings (parallel circles)
-	for (int stackIndex = 1; stackIndex < DEBUG_WIRE_SPHERE_STACKS; ++stackIndex) {
-		float stackFraction = static_cast<float>(stackIndex) / static_cast<float>(DEBUG_WIRE_SPHERE_STACKS);
-		float pitchDegrees = RangeMap(stackFraction, 0.f, 1.f, -90.f, 90.f);
-		float ringRadius = radius * CosDegrees(pitchDegrees);
-		float ringZ = radius * SinDegrees(pitchDegrees);
-		if (ringRadius <= 0.f) {
-			continue;
-		}
-
-		AddWireCircle3D(
-			verts,
-			center + Vec3(0.f, 0.f, ringZ),
-			Vec3(1.f, 0.f, 0.f),
-			Vec3(0.f, 1.f, 0.f),
-			ringRadius,
-			wireRadius,
-			color);
-	}
-
-	// Longitude rings (meridians)
-	for (int sliceIndex = 0; sliceIndex < DEBUG_WIRE_SPHERE_SLICES; ++sliceIndex) {
-		float sliceFraction = static_cast<float>(sliceIndex) / static_cast<float>(DEBUG_WIRE_SPHERE_SLICES);
-		float yawDegrees = 360.f * sliceFraction;
-		Vec3 meridianDir = Vec3(CosDegrees(yawDegrees), SinDegrees(yawDegrees), 0.f);
-
-		for (int stackSegment = 0; stackSegment < DEBUG_WIRE_SPHERE_STACKS; ++stackSegment) {
-			float segmentStartFraction = static_cast<float>(stackSegment) / static_cast<float>(DEBUG_WIRE_SPHERE_STACKS);
-			float segmentEndFraction = static_cast<float>(stackSegment + 1) / static_cast<float>(DEBUG_WIRE_SPHERE_STACKS);
-			float pitchA = RangeMap(segmentStartFraction, 0.f, 1.f, -90.f, 90.f);
-			float pitchB = RangeMap(segmentEndFraction, 0.f, 1.f, -90.f, 90.f);
-
-			float cosPitchA = CosDegrees(pitchA);
-			float cosPitchB = CosDegrees(pitchB);
-			Vec3 pointA = center + Vec3(
-				meridianDir.x * radius * cosPitchA,
-				meridianDir.y * radius * cosPitchA,
-				radius * SinDegrees(pitchA));
-			Vec3 pointB = center + Vec3(
-				meridianDir.x * radius * cosPitchB,
-				meridianDir.y * radius * cosPitchB,
-				radius * SinDegrees(pitchB));
-
-			AddVertsForCylinder3D(
-				verts,
-				pointA,
-				pointB,
-				wireRadius,
-				color,
-				AABB2(0.f, 0.f, 1.f, 1.f),
-				DEBUG_CIRCLE_CYLINDER_SIDES);
-		}
-	}
-}
-
-void AddWireCylinder3D(std::vector<Vertex>& verts, Vec3 const& start, Vec3 const& end, float radius, Rgba8 const& color)
-{
-	Vec3 axis = end - start;
-	float axisLength = axis.GetLength();
-	if (axisLength <= 0.f || radius <= 0.f) {
-		return;
-	}
-
-	Vec3 axisNormal = axis / axisLength;
-	Vec3 jBasis;
-	Vec3 kBasis;
-	GetPerpendicularBasis(axisNormal, jBasis, kBasis);
-
-	float wireRadius = GetWireSegmentRadius(radius);
-	AddWireCircle3D(verts, start, jBasis, kBasis, radius, wireRadius, color);
-	AddWireCircle3D(verts, end, jBasis, kBasis, radius, wireRadius, color);
-
-	for (int sideIndex = 0; sideIndex < DEBUG_WIRE_CYLINDER_SIDE_LINES; ++sideIndex) {
-		float sideFraction = static_cast<float>(sideIndex) / static_cast<float>(DEBUG_WIRE_CYLINDER_SIDE_LINES);
-		float sideAngleDegrees = 360.f * sideFraction;
-		Vec3 offset =
-			(jBasis * (radius * CosDegrees(sideAngleDegrees))) +
-			(kBasis * (radius * SinDegrees(sideAngleDegrees)));
-
-		AddVertsForCylinder3D(
-			verts,
-			start + offset,
-			end + offset,
-			wireRadius,
-			color,
-			AABB2(0.f, 0.f, 1.f, 1.f),
-			DEBUG_CIRCLE_CYLINDER_SIDES);
-	}
-
-	for (int radialIndex = 0; radialIndex < DEBUG_WIRE_CYLINDER_CAP_RADIAL_LINES; ++radialIndex) {
-		float radialFraction = static_cast<float>(radialIndex) / static_cast<float>(DEBUG_WIRE_CYLINDER_CAP_RADIAL_LINES);
-		float radialAngleDegrees = 360.f * radialFraction;
-		Vec3 radialOffset =
-			(jBasis * (radius * CosDegrees(radialAngleDegrees))) +
-			(kBasis * (radius * SinDegrees(radialAngleDegrees)));
-
-		AddVertsForCylinder3D(
-			verts,
-			start,
-			start + radialOffset,
-			wireRadius,
-			color,
-			AABB2(0.f, 0.f, 1.f, 1.f),
-			DEBUG_CIRCLE_CYLINDER_SIDES);
-		AddVertsForCylinder3D(
-			verts,
-			end,
-			end + radialOffset,
-			wireRadius,
-			color,
-			AABB2(0.f, 0.f, 1.f, 1.f),
-			DEBUG_CIRCLE_CYLINDER_SIDES);
-	}
-}
-
-void AddWireCone3D(std::vector<Vertex>& verts, Vec3 const& baseCenter, Vec3 const& tip, float baseRadius, Rgba8 const& color)
-{
-	Vec3 axis = tip - baseCenter;
-	float axisLength = axis.GetLength();
-	if (axisLength <= 0.f || baseRadius <= 0.f) {
-		return;
-	}
-
-	Vec3 axisNormal = axis / axisLength;
-	Vec3 jBasis;
-	Vec3 kBasis;
-	GetPerpendicularBasis(axisNormal, jBasis, kBasis);
-
-	float wireRadius = GetWireSegmentRadius(baseRadius);
-	AddWireCircle3D(verts, baseCenter, jBasis, kBasis, baseRadius, wireRadius, color);
-
-	const int spokeCount = 8;
-	for (int spokeIndex = 0; spokeIndex < spokeCount; ++spokeIndex) {
-		float spokeFraction = static_cast<float>(spokeIndex) / static_cast<float>(spokeCount);
-		float spokeAngleDegrees = 360.f * spokeFraction;
-		Vec3 ringPoint =
-			baseCenter +
-			(jBasis * (baseRadius * CosDegrees(spokeAngleDegrees))) +
-			(kBasis * (baseRadius * SinDegrees(spokeAngleDegrees)));
-		AddVertsForCylinder3D(
-			verts,
-			ringPoint,
-			tip,
-			wireRadius,
-			color,
-			AABB2(0.f, 0.f, 1.f, 1.f),
-			DEBUG_CIRCLE_CYLINDER_SIDES);
-	}
-}
-
-void AddWireArrow3D(std::vector<Vertex>& verts, Vec3 const& start, Vec3 const& end, float radius, Rgba8 const& color)
-{
-	Vec3 axis = end - start;
-	float axisLength = axis.GetLength();
-	if (axisLength <= 0.f || radius <= 0.f) {
-		return;
-	}
-
-	Vec3 axisNormal = axis / axisLength;
-	float headLength = radius * 2.5f;
-	if (headLength < axisLength * 0.25f) {
-		headLength = axisLength * 0.25f;
-	}
-	if (headLength > axisLength * 0.8f) {
-		headLength = axisLength * 0.8f;
-	}
-
-	Vec3 shaftEnd = end - (axisNormal * headLength);
-	AddWireCylinder3D(verts, start, shaftEnd, radius, color);
-	AddWireCone3D(verts, shaftEnd, end, radius * 2.f, color);
 }
 
 bool IsSystemReady()
@@ -457,7 +219,8 @@ void DrawWorldVertsByMode(
 	std::vector<Vertex> const& verts,
 	Mat44 const& modelTransform,
 	DebugRenderMode mode,
-	Texture const* texture)
+	Texture const* texture,
+	bool isWireframe)
 {
 	if (verts.empty()) {
 		return;
@@ -465,6 +228,8 @@ void DrawWorldVertsByMode(
 
 	renderer.SetModelConstants(modelTransform, Rgba8::WHITE);
 	renderer.BindTexture(texture);
+	renderer.SetRasterizerMode(
+		isWireframe ? RasterizerMode::WIREFRAME_CULL_BACK : RasterizerMode::SOLID_CULL_BACK);
 
 	switch (mode)
 	{
@@ -500,6 +265,8 @@ void DrawWorldVertsByMode(
 		renderer.DrawVertexArray(verts);
 		break;
 	}
+
+	renderer.SetRasterizerMode(RasterizerMode::SOLID_CULL_BACK);
 }
 
 void RenderWorldGeometryObject(DebugObject const& object)
@@ -512,7 +279,7 @@ void RenderWorldGeometryObject(DebugObject const& object)
 	Rgba8 tint = GetCurrentColor(object);
 	std::vector<Vertex> tintedVerts = object.m_geometryVerts;
 	ApplyColorToVerts(tintedVerts, tint);
-	DrawWorldVertsByMode(renderer, tintedVerts, Mat44(), object.m_mode, nullptr);
+	DrawWorldVertsByMode(renderer, tintedVerts, Mat44(), object.m_mode, nullptr, object.m_isWireframe);
 }
 
 void BuildTextVertsAtOrigin(std::vector<Vertex>& outVerts, DebugObject const& object, Rgba8 const& tint)
@@ -559,7 +326,46 @@ void RenderWorldTextObject(DebugObject const& object, Camera const& camera)
 	}
 
 	Renderer& renderer = *g_debugRenderState->m_config.m_renderer;
-	DrawWorldVertsByMode(renderer, textVerts, textTransform, object.m_mode, &font->GetTexture());
+	renderer.SetModelConstants(textTransform, Rgba8::WHITE);
+	renderer.BindTexture(&font->GetTexture());
+	renderer.SetRasterizerMode(RasterizerMode::SOLID_CULL_NONE);
+
+	switch (object.m_mode)
+	{
+	case DebugRenderMode::ALWAYS:
+		renderer.SetBlendMode(BlendMode::ALPHA);
+		renderer.SetDepthMode(DepthMode::DISABLED);
+		renderer.DrawVertexArray(textVerts);
+		break;
+
+	case DebugRenderMode::XRAY:
+	{
+		std::vector<Vertex> xrayVerts = textVerts;
+		for (Vertex& vert : xrayVerts) {
+			Rgba8 xrayColor = Interpolate(vert.m_color, Rgba8::WHITE, 0.5f);
+			xrayColor.ScaleAlpha(0.5f);
+			vert.m_color = xrayColor;
+		}
+
+		renderer.SetBlendMode(BlendMode::ALPHA);
+		renderer.SetDepthMode(DepthMode::READ_ONLY_LESS_EQUAL);
+		renderer.DrawVertexArray(xrayVerts);
+
+		renderer.SetBlendMode(BlendMode::OPAQUE);
+		renderer.SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
+		renderer.DrawVertexArray(textVerts);
+		break;
+	}
+
+	case DebugRenderMode::USE_DEPTH:
+	default:
+		renderer.SetBlendMode(BlendMode::ALPHA);
+		renderer.SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
+		renderer.DrawVertexArray(textVerts);
+		break;
+	}
+
+	renderer.SetRasterizerMode(RasterizerMode::SOLID_CULL_BACK);
 }
 
 void RenderScreenTextObject(DebugObject const& object)
@@ -583,7 +389,7 @@ void RenderScreenTextObject(DebugObject const& object)
 		tint,
 		1.f,
 		object.m_alignment,
-		TextBoxMode::SHRINK_TO_FIT,
+		TextBoxMode::OVERRUN,
 		999999);
 
 	if (verts.empty()) {
@@ -689,8 +495,6 @@ void DebugRenderSystemStartup(const DebugRenderConfig& config)
 
 	SubscribeEventCallbackFunction(DEBUG_COMMAND_CLEAR, Command_DebugRenderClear);
 	SubscribeEventCallbackFunction(DEBUG_COMMAND_TOGGLE, Command_DebugRenderToggle);
-	SubscribeEventCallbackFunction(DEBUG_COMMAND_CLEAR_ALIAS, Command_DebugRenderClear);
-	SubscribeEventCallbackFunction(DEBUG_COMMAND_TOGGLE_ALIAS, Command_DebugRenderToggle);
 }
 
 void DebugRenderSystemShutdown()
@@ -701,8 +505,6 @@ void DebugRenderSystemShutdown()
 
 	UnsubscribeEventCallbackFunction(DEBUG_COMMAND_CLEAR, Command_DebugRenderClear);
 	UnsubscribeEventCallbackFunction(DEBUG_COMMAND_TOGGLE, Command_DebugRenderToggle);
-	UnsubscribeEventCallbackFunction(DEBUG_COMMAND_CLEAR_ALIAS, Command_DebugRenderClear);
-	UnsubscribeEventCallbackFunction(DEBUG_COMMAND_TOGGLE_ALIAS, Command_DebugRenderToggle);
 
 	delete g_debugRenderState;
 	g_debugRenderState = nullptr;
@@ -798,7 +600,15 @@ void DebugAddWorldWireSphere(const Vec3& center, float radius, float duration,
 	const Rgba8& startColor, const Rgba8& endColor, DebugRenderMode mode)
 {
 	DebugObject object = CreateDebugObject(DebugObjectType::WORLD_GEOMETRY, duration, startColor, endColor, mode);
-	AddWireSphere3D(object.m_geometryVerts, center, radius, Rgba8::WHITE);
+	object.m_isWireframe = true;
+	AddVertsForSphere3D(
+		object.m_geometryVerts,
+		center,
+		radius,
+		Rgba8::WHITE,
+		AABB2(0.f, 0.f, 1.f, 1.f),
+		32,
+		16);
 	AddObject(std::move(object));
 }
 
@@ -814,7 +624,15 @@ void DebugAddWorldWireCylinder(const Vec3& start, const Vec3& end, float radius,
 	const Rgba8& startColor, const Rgba8& endColor, DebugRenderMode mode)
 {
 	DebugObject object = CreateDebugObject(DebugObjectType::WORLD_GEOMETRY, duration, startColor, endColor, mode);
-	AddWireCylinder3D(object.m_geometryVerts, start, end, radius, Rgba8::WHITE);
+	object.m_isWireframe = true;
+	AddVertsForCylinder3D(
+		object.m_geometryVerts,
+		start,
+		end,
+		radius,
+		Rgba8::WHITE,
+		AABB2(0.f, 0.f, 1.f, 1.f),
+		32);
 	AddObject(std::move(object));
 }
 
@@ -830,7 +648,8 @@ void DebugAddWorldWireArrow(const Vec3& start, const Vec3& end, float radius, fl
 	const Rgba8& startColor, const Rgba8& endColor, DebugRenderMode mode)
 {
 	DebugObject object = CreateDebugObject(DebugObjectType::WORLD_GEOMETRY, duration, startColor, endColor, mode);
-	AddWireArrow3D(object.m_geometryVerts, start, end, radius, Rgba8::WHITE);
+	object.m_isWireframe = true;
+	AddVertsForArrow3D(object.m_geometryVerts, start, end, radius, Rgba8::WHITE, 32);
 	AddObject(std::move(object));
 }
 

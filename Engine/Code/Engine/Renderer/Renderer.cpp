@@ -76,6 +76,59 @@ static bool DoesFileExist(char const* filepath)
 	return true;
 }
 
+// Winding is evaluated after CameraToRenderTransform.
+static constexpr bool FRONT_FACE_IS_COUNTER_CLOCKWISE_IN_RENDER_SPACE = true;
+
+static D3D11_FILL_MODE GetFillModeForRasterizerMode(RasterizerMode rasterizerMode)
+{
+	switch (rasterizerMode)
+	{
+	case RasterizerMode::SOLID_CULL_NONE:
+	case RasterizerMode::SOLID_CULL_BACK:
+		return D3D11_FILL_SOLID;
+	case RasterizerMode::WIREFRAME_CULL_NONE:
+	case RasterizerMode::WIREFRAME_CULL_BACK:
+		return D3D11_FILL_WIREFRAME;
+	case RasterizerMode::COUNT:
+	default:
+		return D3D11_FILL_SOLID;
+	}
+}
+
+static D3D11_CULL_MODE GetCullModeForRasterizerMode(RasterizerMode rasterizerMode)
+{
+	switch (rasterizerMode)
+	{
+	case RasterizerMode::SOLID_CULL_NONE:
+	case RasterizerMode::WIREFRAME_CULL_NONE:
+		return D3D11_CULL_NONE;
+	case RasterizerMode::SOLID_CULL_BACK:
+	case RasterizerMode::WIREFRAME_CULL_BACK:
+		return D3D11_CULL_BACK;
+	case RasterizerMode::COUNT:
+	default:
+		return D3D11_CULL_BACK;
+	}
+}
+
+static char const* GetRasterizerModeName(RasterizerMode rasterizerMode)
+{
+	switch (rasterizerMode)
+	{
+	case RasterizerMode::SOLID_CULL_NONE:
+		return "RasterizerMode::SOLID_CULL_NONE";
+	case RasterizerMode::SOLID_CULL_BACK:
+		return "RasterizerMode::SOLID_CULL_BACK";
+	case RasterizerMode::WIREFRAME_CULL_NONE:
+		return "RasterizerMode::WIREFRAME_CULL_NONE";
+	case RasterizerMode::WIREFRAME_CULL_BACK:
+		return "RasterizerMode::WIREFRAME_CULL_BACK";
+	case RasterizerMode::COUNT:
+	default:
+		return "RasterizerMode::COUNT";
+	}
+}
+
 //-----------------------------------------------------------------------------------------------
 Renderer::Renderer(RenderConfig const& config)
 	:m_config(config)
@@ -187,11 +240,9 @@ void Renderer::Startup()
 
 	m_deviceContext->RSSetViewports(1, &viewport);
 
-	// Set rasterizer state
+	// Rasterizer states
 	D3D11_RASTERIZER_DESC rasterizerDesc = { };
-	rasterizerDesc.FillMode = D3D11_FILL_SOLID;
-	rasterizerDesc.CullMode = D3D11_CULL_NONE;
-	rasterizerDesc.FrontCounterClockwise = false;
+	rasterizerDesc.FrontCounterClockwise = FRONT_FACE_IS_COUNTER_CLOCKWISE_IN_RENDER_SPACE;
 	rasterizerDesc.DepthBias = 0;
 	rasterizerDesc.DepthBiasClamp = 0.0f;
 	rasterizerDesc.SlopeScaledDepthBias = 0.0f;
@@ -200,11 +251,20 @@ void Renderer::Startup()
 	rasterizerDesc.MultisampleEnable = false;
 	rasterizerDesc.AntialiasedLineEnable = true;
 
-	hr = m_device->CreateRasterizerState(&rasterizerDesc, &m_rasterizerState);
-	if (!SUCCEEDED(hr)) {
-		ERROR_AND_DIE("Could not create rasterizer state.");
+	for (int modeIndex = 0; modeIndex < (int)RasterizerMode::COUNT; ++modeIndex) {
+		RasterizerMode mode = static_cast<RasterizerMode>(modeIndex);
+		rasterizerDesc.FillMode = GetFillModeForRasterizerMode(mode);
+		rasterizerDesc.CullMode = GetCullModeForRasterizerMode(mode);
+		hr = m_device->CreateRasterizerState(
+			&rasterizerDesc,
+			&m_rasterizerStates[modeIndex]);
+		if (!SUCCEEDED(hr)) {
+			ERROR_AND_DIE(Stringf("CreateRasterizerState failed for %s", GetRasterizerModeName(mode)));
+		}
 	}
 
+	m_desiredRasterizerMode = RasterizerMode::SOLID_CULL_BACK;
+	m_rasterizerState = m_rasterizerStates[(int)m_desiredRasterizerMode];
 	m_deviceContext->RSSetState(m_rasterizerState);
 
 	std::string defaultShaderPath = "Data/Shaders/Default.hlsl";
@@ -403,7 +463,11 @@ void Renderer::Shutdown()
 
 	DX_SAFE_RELEASE(m_depthStencilDSV);
 	DX_SAFE_RELEASE(m_depthStencilTexture);
-	DX_SAFE_RELEASE(m_rasterizerState);
+	for (int i = 0; i < (int)RasterizerMode::COUNT; ++i)
+	{
+		DX_SAFE_RELEASE(m_rasterizerStates[i]);
+	}
+	m_rasterizerState = nullptr;
 	DX_SAFE_RELEASE(m_renderTargetView);
 	DX_SAFE_RELEASE(m_swapChain);
 	DX_SAFE_RELEASE(m_deviceContext);
@@ -892,8 +956,21 @@ void Renderer::SetDepthMode(DepthMode depthMode)
 
 
 //-----------------------------------------------------------------------------------------------
+void Renderer::SetRasterizerMode(RasterizerMode rasterizerMode)
+{
+	m_desiredRasterizerMode = rasterizerMode;
+}
+
+
+//-----------------------------------------------------------------------------------------------
 void Renderer::SetStatesIfChanged()
 {
+	if (m_rasterizerState != m_rasterizerStates[(int)m_desiredRasterizerMode])
+	{
+		m_rasterizerState = m_rasterizerStates[(int)m_desiredRasterizerMode];
+		m_deviceContext->RSSetState(m_rasterizerState);
+	}
+
 	if (m_blendState != m_blendStates[(int)m_desiredBlendMode])
 	{
 		m_blendState = m_blendStates[(int)m_desiredBlendMode];
