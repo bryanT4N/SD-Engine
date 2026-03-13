@@ -63,8 +63,7 @@ void DebugAddWorldWireArrow(const Vec3& start, const Vec3& end, float radius, fl
 void DebugAddBasis(const Mat44& transform, float duration, float length, float radius,
 	float colorScale = 1.0f, float alphaScale = 1.0f,
 	DebugRenderMode mode = DebugRenderMode::USE_DEPTH);
-void DebugAddWorldBasis(const Mat44& transform, float duration,
-	DebugRenderMode mode = DebugRenderMode::USE_DEPTH);
+void DebugAddWorldBasis();
 void DebugAddWorldText(const std::string& text, const Mat44& transform, float textHeight,
 	const Vec2& alignment, float duration,
 	const Rgba8& startColor = Rgba8::WHITE, const Rgba8& endColor = Rgba8::WHITE,

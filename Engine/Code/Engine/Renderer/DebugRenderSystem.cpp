@@ -868,9 +868,21 @@ void DebugAddBasis(const Mat44& transform, float duration, float length, float r
 		mode);
 }
 
-void DebugAddWorldBasis(const Mat44& transform, float duration, DebugRenderMode mode)
+void DebugAddWorldBasis()
 {
-	DebugAddBasis(transform, duration, 4.f, 0.05f, 1.f, 1.f, mode);
+	DebugAddBasis(Mat44(), -1.f, 1.0f, 0.12f, 1.f, 1.f, DebugRenderMode::USE_DEPTH);
+
+	Mat44 xTextTransform;
+	xTextTransform.SetIJKT3D( Vec3(0.f, 1.f, 0.f), Vec3(1.f, 0.f, 0.f), Vec3(0.f, 0.f, 1.f), Vec3(0.24f, 0.f, 0.32f));
+	DebugAddWorldText( "x - forward", xTextTransform, 0.20f, Vec2(0.f, 0.5f), -1.f, Rgba8::RED, Rgba8::RED, DebugRenderMode::USE_DEPTH);
+
+	Mat44 yTextTransform;
+	yTextTransform.SetIJKT3D( Vec3(1.f, 0.f, 0.f), Vec3(0.f, -1.f, 0.f), Vec3(0.f, 0.f, 1.f), Vec3(0.f, 1.8f, 0.32f));
+	DebugAddWorldText( "y - left", yTextTransform, 0.20f, Vec2(0.f, 0.5f), -1.f, Rgba8::GREEN, Rgba8::GREEN, DebugRenderMode::USE_DEPTH);
+
+	Mat44 zTextTransform;
+	zTextTransform.SetIJKT3D( Vec3(1.f, 0.f, 0.f), Vec3(0.f, 0.f, 1.f), Vec3(0.f, 1.f, 0.f), Vec3(0.f, -0.32f, 0.24f));
+	DebugAddWorldText( "z - up", zTextTransform, 0.20f, Vec2(0.f, 0.5f), -1.f, Rgba8::BLUE, Rgba8::BLUE, DebugRenderMode::USE_DEPTH);
 }
 
 void DebugAddWorldText(const std::string& text, const Mat44& transform, float textHeight,
