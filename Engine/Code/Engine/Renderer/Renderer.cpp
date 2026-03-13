@@ -263,7 +263,7 @@ void Renderer::Startup()
 		}
 	}
 
-	m_desiredRasterizerMode = RasterizerMode::SOLID_CULL_BACK;
+	m_desiredRasterizerMode = RasterizerMode::SOLID_CULL_NONE;
 	m_rasterizerState = m_rasterizerStates[(int)m_desiredRasterizerMode];
 	m_deviceContext->RSSetState(m_rasterizerState);
 

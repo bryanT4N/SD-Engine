@@ -93,7 +93,7 @@ protected:
 	ID3D11DeviceContext*		m_deviceContext				= nullptr;
 	IDXGISwapChain*				m_swapChain					= nullptr;
 	ID3D11RasterizerState*		m_rasterizerState			= nullptr;
-	RasterizerMode				m_desiredRasterizerMode		= RasterizerMode::SOLID_CULL_BACK;
+	RasterizerMode				m_desiredRasterizerMode		= RasterizerMode::SOLID_CULL_NONE;
 	ID3D11RasterizerState*		m_rasterizerStates[(int)(RasterizerMode::COUNT)] = {};
 	ID3D11RenderTargetView*		m_renderTargetView			= nullptr;
 	ID3D11Texture2D*			m_depthStencilTexture		= nullptr;
