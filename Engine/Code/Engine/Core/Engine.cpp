@@ -25,9 +25,9 @@ Engine::Engine(EngineConfig const& config)
 	if (m_config.m_devConsoleConfig.m_isEnabled)		m_devConsole	= new DevConsole( m_config.m_devConsoleConfig );
 
 	// Start up existing engine subsystems
+	if(m_eventSystem)	m_eventSystem->Startup();
 	if(m_window)		m_window->Startup();
 	if(m_render)		m_render->Startup();
-	if(m_eventSystem)	m_eventSystem->Startup();
 	if(m_devConsole)	m_devConsole->Startup();
 	if(m_input)			m_input->Startup();
 	if(m_audio)			m_audio->Startup();
@@ -36,24 +36,21 @@ Engine::Engine(EngineConfig const& config)
 //-----------------------------------------------------------------------------------------------
 Engine::~Engine()
 {
-	if( m_devConsole != nullptr )	m_devConsole->Shutdown();
-	if( m_eventSystem != nullptr )	m_eventSystem->Shutdown();
-	if( m_render != nullptr )		m_render->Shutdown();
-	if( m_input != nullptr )		m_input->Shutdown();
 	if( m_audio != nullptr )		m_audio->Shutdown();
+	if( m_input != nullptr )		m_input->Shutdown();
+	if( m_devConsole != nullptr )	m_devConsole->Shutdown();
+	if( m_render != nullptr )		m_render->Shutdown();
 	if( m_window != nullptr )		m_window->Shutdown();
+	if( m_eventSystem != nullptr )	m_eventSystem->Shutdown();
 
-	delete m_devConsole;
-	m_devConsole = nullptr;
-
-	delete m_eventSystem;
-	m_eventSystem = nullptr;
+	delete m_audio;
+	m_audio = nullptr; 
 
 	delete m_input;
 	m_input = nullptr;
 
-	delete m_audio;
-	m_audio = nullptr; 
+	delete m_devConsole;
+	m_devConsole = nullptr;
 
 	delete m_render;
 	m_render = nullptr;
@@ -61,18 +58,19 @@ Engine::~Engine()
 	delete m_window;
 	m_window = nullptr;
 
+	delete m_eventSystem;
+	m_eventSystem = nullptr;
+
 	g_engine = nullptr;
 }
 
 //-----------------------------------------------------------------------------------------------
 void Engine::BeginFrame()
 {
+	if( m_eventSystem != nullptr )	m_eventSystem->BeginFrame();
 	if( m_window != nullptr )		m_window->BeginFrame();
 	if( m_render != nullptr )		m_render->BeginFrame();
-
-	if( m_eventSystem != nullptr )	m_eventSystem->BeginFrame();
 	if( m_devConsole != nullptr )	m_devConsole->BeginFrame();
-
 	if( m_input != nullptr )		m_input->BeginFrame();
 	if( m_audio != nullptr )		m_audio->BeginFrame();
 }
@@ -80,13 +78,12 @@ void Engine::BeginFrame()
 //-----------------------------------------------------------------------------------------------
 void Engine::EndFrame()
 {
-	if( m_eventSystem != nullptr )	m_eventSystem->EndFrame();
-	if( m_devConsole != nullptr )	m_devConsole->EndFrame();
-
-	if( m_window != nullptr )		m_window->EndFrame();
-	if( m_render != nullptr )		m_render->EndFrame();
-	if( m_input != nullptr )		m_input->EndFrame();
 	if( m_audio != nullptr )		m_audio->EndFrame();
+	if( m_input != nullptr )		m_input->EndFrame();
+	if( m_devConsole != nullptr )	m_devConsole->EndFrame();
+	if( m_render != nullptr )		m_render->EndFrame();
+	if( m_window != nullptr )		m_window->EndFrame();
+	if( m_eventSystem != nullptr )	m_eventSystem->EndFrame();
 }
 
 //-----------------------------------------------------------------------------------------------

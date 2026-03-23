@@ -5,11 +5,17 @@
 #include <cctype>
 
 //-----------------------------------------------------------------------------------------------
+static char ToLowerCharacter(unsigned char c)
+{
+	return static_cast<char>(std::tolower(c));
+}
+
+//-----------------------------------------------------------------------------------------------
 static std::string NormalizeEventName(std::string const& eventName)
 {
 	std::string normalized = eventName;
 	std::transform(normalized.begin(), normalized.end(), normalized.begin(),
-		[](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+		ToLowerCharacter);
 	return normalized;
 }
 

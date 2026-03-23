@@ -134,6 +134,15 @@ Rgba8 GetCurrentColor(DebugObject const& object)
 	return Interpolate(object.m_startColor, object.m_endColor, colorFraction);
 }
 
+bool CompareDebugMessageObjects(DebugObject const* a, DebugObject const* b)
+{
+	if (a->m_isInfinite != b->m_isInfinite) {
+		return a->m_isInfinite && !b->m_isInfinite;
+	}
+
+	return a->m_addOrder < b->m_addOrder;
+}
+
 void RemoveExpiredFiniteObjects()
 {
 	if (!IsSystemReady()) {
@@ -146,19 +155,21 @@ void RemoveExpiredFiniteObjects()
 	}
 
 	std::vector<DebugObject>& objects = g_debugRenderState->m_objects;
-	auto eraseBegin = std::remove_if(
-		objects.begin(),
-		objects.end(),
-		[deltaSeconds](DebugObject& object)
-		{
-			if (object.m_isInfinite || object.m_isOneFrame) {
-				return false;
-			}
+	for (size_t objectIndex = 0; objectIndex < objects.size(); ) {
+		DebugObject& object = objects[objectIndex];
+		if (object.m_isInfinite || object.m_isOneFrame) {
+			++objectIndex;
+			continue;
+		}
 
-			object.m_elapsedSeconds += deltaSeconds;
-			return object.m_elapsedSeconds >= object.m_durationSeconds;
-		});
-	objects.erase(eraseBegin, objects.end());
+		object.m_elapsedSeconds += deltaSeconds;
+		if (object.m_elapsedSeconds >= object.m_durationSeconds) {
+			objects.erase(objects.begin() + static_cast<long>(objectIndex));
+		}
+		else {
+			++objectIndex;
+		}
+	}
 }
 
 void RemoveOneFrameObjects()
@@ -168,14 +179,14 @@ void RemoveOneFrameObjects()
 	}
 
 	std::vector<DebugObject>& objects = g_debugRenderState->m_objects;
-	auto eraseBegin = std::remove_if(
-		objects.begin(),
-		objects.end(),
-		[](DebugObject const& object)
-		{
-			return object.m_isOneFrame;
-		});
-	objects.erase(eraseBegin, objects.end());
+	for (size_t objectIndex = 0; objectIndex < objects.size(); ) {
+		if (objects[objectIndex].m_isOneFrame) {
+			objects.erase(objects.begin() + static_cast<long>(objectIndex));
+		}
+		else {
+			++objectIndex;
+		}
+	}
 }
 
 DebugObject CreateDebugObject(
@@ -429,13 +440,7 @@ void RenderMessages(Camera const& camera)
 	std::stable_sort(
 		messageObjects.begin(),
 		messageObjects.end(),
-		[](DebugObject const* a, DebugObject const* b)
-		{
-			if (a->m_isInfinite != b->m_isInfinite) {
-				return a->m_isInfinite && !b->m_isInfinite;
-			}
-			return a->m_addOrder < b->m_addOrder;
-		});
+		CompareDebugMessageObjects);
 
 	Vec2 const screenMins = camera.GetOrthographicBottomLeft();
 	Vec2 const screenMaxs = camera.GetOrthographicTopRight();
