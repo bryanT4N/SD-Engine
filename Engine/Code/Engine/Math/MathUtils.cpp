@@ -5,6 +5,7 @@
 #include "Engine/Math/Vec3.hpp"
 #include "Engine/Math/Vec4.hpp"
 #include "Engine/Math/AABB2.hpp"
+#include "Engine/Math/AABB3.hpp"
 #include "Engine/Math/OBB2.hpp"
 
 #define _USE_MATH_DEFINES
@@ -21,6 +22,27 @@ Vec3 GetNormalizedOrFallback(Vec3 const& value, Vec3 const& fallback)
 	}
 
 	return normalized;
+}
+
+bool DoFloatRangesOverlap(float minA, float maxA, float minB, float maxB)
+{
+	return !(maxA < minB || maxB < minA);
+}
+
+Vec2 GetNearestPointOnDisc2DInternal(Vec2 const& referencePos, Vec2 const& discCenter, float discRadius)
+{
+	Vec2 displacement = referencePos - discCenter;
+	float displacementLengthSquared = displacement.GetLengthSquared();
+	float radiusSquared = discRadius * discRadius;
+	if (displacementLengthSquared <= radiusSquared) {
+		return referencePos;
+	}
+
+	if (displacementLengthSquared == 0.f) {
+		return discCenter + Vec2(discRadius, 0.f);
+	}
+
+	return discCenter + displacement.GetNormalized() * discRadius;
 }
 }
 
@@ -244,6 +266,55 @@ bool DoSpheresOverlap(Vec3 const& centerA, float radiusA, Vec3 const& centerB, f
 	return (radiusA + radiusB) * (radiusA + radiusB) > (centerA - centerB).GetLengthSquared();
 }
 
+bool DoAABB3sOverlap(AABB3 const& aabbA, AABB3 const& aabbB)
+{
+	return !(aabbA.m_maxs.x < aabbB.m_mins.x || aabbB.m_maxs.x < aabbA.m_mins.x ||
+		aabbA.m_maxs.y < aabbB.m_mins.y || aabbB.m_maxs.y < aabbA.m_mins.y ||
+		aabbA.m_maxs.z < aabbB.m_mins.z || aabbB.m_maxs.z < aabbA.m_mins.z);
+}
+
+bool DoZCylindersOverlap3D(Vec2 const& centerA, float radiusA, float minZA, float maxZA,
+	Vec2 const& centerB, float radiusB, float minZB, float maxZB)
+{
+	if (!DoFloatRangesOverlap(minZA, maxZA, minZB, maxZB)) {
+		return false;
+	}
+
+	float combinedRadius = radiusA + radiusB;
+	return (centerA - centerB).GetLengthSquared() <= (combinedRadius * combinedRadius);
+}
+
+bool DoSphereAndAABB3Overlap(Vec3 const& sphereCenter, float sphereRadius, AABB3 const& aabb)
+{
+	Vec3 nearestPoint = GetNearestPointOnAABB3D(sphereCenter, aabb);
+	return GetDistanceSquared3D(sphereCenter, nearestPoint) <= sphereRadius * sphereRadius;
+}
+
+bool DoSphereAndZCylinderOverlap3D(Vec3 const& sphereCenter, float sphereRadius,
+	Vec2 const& cylinderCenterXY, float cylinderRadius, float cylinderMinZ, float cylinderMaxZ)
+{
+	Vec3 nearestPoint = GetNearestPointOnZCylinder3D(
+		sphereCenter,
+		cylinderCenterXY,
+		cylinderRadius,
+		cylinderMinZ,
+		cylinderMaxZ);
+	return GetDistanceSquared3D(sphereCenter, nearestPoint) <= sphereRadius * sphereRadius;
+}
+
+bool DoAABB3AndZCylinderOverlap3D(AABB3 const& aabb, Vec2 const& cylinderCenterXY,
+	float cylinderRadius, float cylinderMinZ, float cylinderMaxZ)
+{
+	if (!DoFloatRangesOverlap(aabb.m_mins.z, aabb.m_maxs.z, cylinderMinZ, cylinderMaxZ)) {
+		return false;
+	}
+
+	Vec2 nearestPointOnAABBXY(
+		GetClamped(cylinderCenterXY.x, aabb.m_mins.x, aabb.m_maxs.x),
+		GetClamped(cylinderCenterXY.y, aabb.m_mins.y, aabb.m_maxs.y));
+	return (nearestPointOnAABBXY - cylinderCenterXY).GetLengthSquared() <= (cylinderRadius * cylinderRadius);
+}
+
 //-----------------------------------------------------------------------------------------------
 bool IsPointInsideAABB2D(Vec2 point, AABB2 const& alignedBox)
 {
@@ -340,14 +411,33 @@ bool IsPointInsideDirectedSector2D(Vec2 const& point, Vec2 const& sectorTip, Vec
 	return false;
 }
 
+bool IsPointInsideSphere3D(Vec3 const& point, Vec3 const& sphereCenter, float sphereRadius)
+{
+	return GetDistanceSquared3D(point, sphereCenter) <= sphereRadius * sphereRadius;
+}
+
+bool IsPointInsideAABB3D(Vec3 const& point, AABB3 const& aabb)
+{
+	return point.x >= aabb.m_mins.x && point.x <= aabb.m_maxs.x &&
+		point.y >= aabb.m_mins.y && point.y <= aabb.m_maxs.y &&
+		point.z >= aabb.m_mins.z && point.z <= aabb.m_maxs.z;
+}
+
+bool IsPointInsideZCylinder3D(Vec3 const& point, Vec2 const& cylinderCenterXY,
+	float cylinderRadius, float cylinderMinZ, float cylinderMaxZ)
+{
+	if (point.z < cylinderMinZ || point.z > cylinderMaxZ) {
+		return false;
+	}
+
+	Vec2 pointXY(point.x, point.y);
+	return GetDistanceSquared2D(pointXY, cylinderCenterXY) <= cylinderRadius * cylinderRadius;
+}
+
 //-----------------------------------------------------------------------------------------------
 Vec2 GetNearestPointOnDisc2D(Vec2 const& referencePos, Vec2 const& discCenter, float discRadius)
 {
-	if (IsPointInsideDisc2D(referencePos, discCenter, discRadius)) {
-		return referencePos;
-	}
-	float pointDirectionDegrees = (referencePos - discCenter).GetOrientationDegrees();
-	return (discCenter + Vec2::MakeFromPolarDegrees(pointDirectionDegrees, discRadius));
+	return GetNearestPointOnDisc2DInternal(referencePos, discCenter, discRadius);
 }
 
 //-----------------------------------------------------------------------------------------------
@@ -434,6 +524,43 @@ Vec2 GetNearestPointOnTriangle2D(Vec2 referencePos, Vec2 ccw0, Vec2 ccw1, Vec2 c
 		return GetNearestPointOnLineSegment2D(referencePos, ccw2, ccw0);
 
 	return referencePos;
+}
+
+Vec3 GetNearestPointOnSphere3D(Vec3 const& referencePos, Vec3 const& sphereCenter, float sphereRadius)
+{
+	Vec3 displacement = referencePos - sphereCenter;
+	float displacementLengthSquared = displacement.GetLengthSquared();
+	float radiusSquared = sphereRadius * sphereRadius;
+	if (displacementLengthSquared <= radiusSquared) {
+		return referencePos;
+	}
+
+	if (displacementLengthSquared == 0.f) {
+		return sphereCenter + Vec3(sphereRadius, 0.f, 0.f);
+	}
+
+	return sphereCenter + displacement.GetNormalized() * sphereRadius;
+}
+
+Vec3 GetNearestPointOnAABB3D(Vec3 const& referencePos, AABB3 const& aabb)
+{
+	return Vec3(
+		GetClamped(referencePos.x, aabb.m_mins.x, aabb.m_maxs.x),
+		GetClamped(referencePos.y, aabb.m_mins.y, aabb.m_maxs.y),
+		GetClamped(referencePos.z, aabb.m_mins.z, aabb.m_maxs.z));
+}
+
+Vec3 GetNearestPointOnZCylinder3D(Vec3 const& referencePos, Vec2 const& cylinderCenterXY,
+	float cylinderRadius, float cylinderMinZ, float cylinderMaxZ)
+{
+	if (IsPointInsideZCylinder3D(referencePos, cylinderCenterXY, cylinderRadius, cylinderMinZ, cylinderMaxZ)) {
+		return referencePos;
+	}
+
+	Vec2 pointXY(referencePos.x, referencePos.y);
+	Vec2 nearestXY = GetNearestPointOnDisc2DInternal(pointXY, cylinderCenterXY, cylinderRadius);
+	float nearestZ = GetClamped(referencePos.z, cylinderMinZ, cylinderMaxZ);
+	return Vec3(nearestXY.x, nearestXY.y, nearestZ);
 }
 
 //-----------------------------------------------------------------------------------------------
@@ -789,6 +916,216 @@ RaycastResult2D RaycastVsAABB2D(Vec2 startPos, Vec2 fwdNormal, float maxDist, AA
 	}
 	hitResult.m_impactNormal = impactNormal;
 
+	return hitResult;
+}
+
+RaycastResult3D RaycastVsSphere3D(Vec3 startPos, Vec3 fwdNormal, float maxDist,
+	Vec3 sphereCenter, float sphereRadius)
+{
+	RaycastResult3D missResult;
+	missResult.m_didImpact = false;
+	missResult.m_impactDist = maxDist;
+	missResult.m_impactPos = startPos + (fwdNormal * maxDist);
+	missResult.m_rayStartPos = startPos;
+	missResult.m_rayFwdNormal = fwdNormal;
+	missResult.m_rayMaxLength = maxDist;
+
+	if (IsPointInsideSphere3D(startPos, sphereCenter, sphereRadius)) {
+		RaycastResult3D immediateHit = missResult;
+		immediateHit.m_didImpact = true;
+		immediateHit.m_impactDist = 0.f;
+		immediateHit.m_impactPos = startPos;
+		immediateHit.m_impactNormal = -GetNormalizedOrFallback(fwdNormal, Vec3(1.f, 0.f, 0.f));
+		return immediateHit;
+	}
+
+	Vec3 toCenter = sphereCenter - startPos;
+	float projectionLength = DotProduct3D(toCenter, fwdNormal);
+	float toCenterLengthSquared = toCenter.GetLengthSquared();
+	float closestDistSquared = toCenterLengthSquared - projectionLength * projectionLength;
+	float radiusSquared = sphereRadius * sphereRadius;
+	if (closestDistSquared > radiusSquared) {
+		return missResult;
+	}
+
+	float hitOffset = sqrtf(radiusSquared - closestDistSquared);
+	float impactDist = projectionLength - hitOffset;
+	if (impactDist < 0.f || impactDist > maxDist) {
+		return missResult;
+	}
+
+	RaycastResult3D hitResult = missResult;
+	hitResult.m_didImpact = true;
+	hitResult.m_impactDist = impactDist;
+	hitResult.m_impactPos = startPos + (fwdNormal * impactDist);
+	hitResult.m_impactNormal = (hitResult.m_impactPos - sphereCenter).GetNormalized();
+	return hitResult;
+}
+
+RaycastResult3D RaycastVsAABB3D(Vec3 startPos, Vec3 fwdNormal, float maxDist,
+	AABB3 const& aabb)
+{
+	RaycastResult3D missResult;
+	missResult.m_didImpact = false;
+	missResult.m_impactDist = maxDist;
+	missResult.m_impactPos = startPos + (fwdNormal * maxDist);
+	missResult.m_rayStartPos = startPos;
+	missResult.m_rayFwdNormal = fwdNormal;
+	missResult.m_rayMaxLength = maxDist;
+
+	if (IsPointInsideAABB3D(startPos, aabb)) {
+		RaycastResult3D immediateHit = missResult;
+		immediateHit.m_didImpact = true;
+		immediateHit.m_impactDist = 0.f;
+		immediateHit.m_impactPos = startPos;
+		immediateHit.m_impactNormal = -GetNormalizedOrFallback(fwdNormal, Vec3(1.f, 0.f, 0.f));
+		return immediateHit;
+	}
+
+	float tMin = 0.f;
+	float tMax = maxDist;
+	Vec3 impactNormal;
+
+	for (int axisIndex = 0; axisIndex < 3; ++axisIndex) {
+		float axisOrigin = axisIndex == 0 ? startPos.x : (axisIndex == 1 ? startPos.y : startPos.z);
+		float axisDirection = axisIndex == 0 ? fwdNormal.x : (axisIndex == 1 ? fwdNormal.y : fwdNormal.z);
+		float axisMin = axisIndex == 0 ? aabb.m_mins.x : (axisIndex == 1 ? aabb.m_mins.y : aabb.m_mins.z);
+		float axisMax = axisIndex == 0 ? aabb.m_maxs.x : (axisIndex == 1 ? aabb.m_maxs.y : aabb.m_maxs.z);
+
+		if (fabsf(axisDirection) < 1e-6f) {
+			if (axisOrigin < axisMin || axisOrigin > axisMax) {
+				return missResult;
+			}
+			continue;
+		}
+
+		float t1 = (axisMin - axisOrigin) / axisDirection;
+		float t2 = (axisMax - axisOrigin) / axisDirection;
+		float tNear = t1 < t2 ? t1 : t2;
+		float tFar = t1 > t2 ? t1 : t2;
+
+		Vec3 nearNormal;
+		if (axisIndex == 0) nearNormal = axisDirection > 0.f ? Vec3(-1.f, 0.f, 0.f) : Vec3(1.f, 0.f, 0.f);
+		if (axisIndex == 1) nearNormal = axisDirection > 0.f ? Vec3(0.f, -1.f, 0.f) : Vec3(0.f, 1.f, 0.f);
+		if (axisIndex == 2) nearNormal = axisDirection > 0.f ? Vec3(0.f, 0.f, -1.f) : Vec3(0.f, 0.f, 1.f);
+
+		if (tNear > tMin) {
+			tMin = tNear;
+			impactNormal = nearNormal;
+		}
+		if (tFar < tMax) {
+			tMax = tFar;
+		}
+
+		if (tMin > tMax) {
+			return missResult;
+		}
+	}
+
+	if (tMin < 0.f || tMin > maxDist) {
+		return missResult;
+	}
+
+	RaycastResult3D hitResult = missResult;
+	hitResult.m_didImpact = true;
+	hitResult.m_impactDist = tMin;
+	hitResult.m_impactPos = startPos + (fwdNormal * tMin);
+	hitResult.m_impactNormal = impactNormal;
+	return hitResult;
+}
+
+RaycastResult3D RaycastVsZCylinder3D(Vec3 startPos, Vec3 fwdNormal, float maxDist,
+	Vec2 cylinderCenterXY, float cylinderRadius, float cylinderMinZ, float cylinderMaxZ)
+{
+	RaycastResult3D missResult;
+	missResult.m_didImpact = false;
+	missResult.m_impactDist = maxDist;
+	missResult.m_impactPos = startPos + (fwdNormal * maxDist);
+	missResult.m_rayStartPos = startPos;
+	missResult.m_rayFwdNormal = fwdNormal;
+	missResult.m_rayMaxLength = maxDist;
+
+	if (IsPointInsideZCylinder3D(startPos, cylinderCenterXY, cylinderRadius, cylinderMinZ, cylinderMaxZ)) {
+		RaycastResult3D immediateHit = missResult;
+		immediateHit.m_didImpact = true;
+		immediateHit.m_impactDist = 0.f;
+		immediateHit.m_impactPos = startPos;
+		immediateHit.m_impactNormal = -GetNormalizedOrFallback(fwdNormal, Vec3(1.f, 0.f, 0.f));
+		return immediateHit;
+	}
+
+	bool foundHit = false;
+	float bestImpactDist = maxDist;
+	Vec3 bestImpactPos;
+	Vec3 bestImpactNormal;
+
+	Vec2 startToCenter(startPos.x - cylinderCenterXY.x, startPos.y - cylinderCenterXY.y);
+	float a = fwdNormal.x * fwdNormal.x + fwdNormal.y * fwdNormal.y;
+	float b = 2.f * (startToCenter.x * fwdNormal.x + startToCenter.y * fwdNormal.y);
+	float c = startToCenter.GetLengthSquared() - cylinderRadius * cylinderRadius;
+
+	if (a > 0.f) {
+		float discriminant = b * b - 4.f * a * c;
+		if (discriminant >= 0.f) {
+			float sqrtDiscriminant = sqrtf(discriminant);
+			float inv2a = 0.5f / a;
+			float t0 = (-b - sqrtDiscriminant) * inv2a;
+			float t1 = (-b + sqrtDiscriminant) * inv2a;
+			if (t0 > t1) {
+				float temp = t0;
+				t0 = t1;
+				t1 = temp;
+			}
+
+			float sideCandidates[2] = { t0, t1 };
+			for (float sideT : sideCandidates) {
+				if (sideT < 0.f || sideT > bestImpactDist || sideT > maxDist) {
+					continue;
+				}
+
+				float hitZ = startPos.z + sideT * fwdNormal.z;
+				if (hitZ < cylinderMinZ || hitZ > cylinderMaxZ) {
+					continue;
+				}
+
+				foundHit = true;
+				bestImpactDist = sideT;
+				bestImpactPos = startPos + (fwdNormal * sideT);
+				bestImpactNormal = Vec3(bestImpactPos.x - cylinderCenterXY.x, bestImpactPos.y - cylinderCenterXY.y, 0.f).GetNormalized();
+			}
+		}
+	}
+
+	if (fabsf(fwdNormal.z) > 1e-6f) {
+		float capZ[2] = { cylinderMinZ, cylinderMaxZ };
+		for (float currentCapZ : capZ) {
+			float capT = (currentCapZ - startPos.z) / fwdNormal.z;
+			if (capT < 0.f || capT > bestImpactDist || capT > maxDist) {
+				continue;
+			}
+
+			Vec3 capHitPos = startPos + (fwdNormal * capT);
+			Vec2 capHitXY(capHitPos.x, capHitPos.y);
+			if (GetDistanceSquared2D(capHitXY, cylinderCenterXY) > cylinderRadius * cylinderRadius) {
+				continue;
+			}
+
+			foundHit = true;
+			bestImpactDist = capT;
+			bestImpactPos = capHitPos;
+			bestImpactNormal = currentCapZ == cylinderMaxZ ? Vec3(0.f, 0.f, 1.f) : Vec3(0.f, 0.f, -1.f);
+		}
+	}
+
+	if (!foundHit) {
+		return missResult;
+	}
+
+	RaycastResult3D hitResult = missResult;
+	hitResult.m_didImpact = true;
+	hitResult.m_impactDist = bestImpactDist;
+	hitResult.m_impactPos = bestImpactPos;
+	hitResult.m_impactNormal = bestImpactNormal;
 	return hitResult;
 }
 
