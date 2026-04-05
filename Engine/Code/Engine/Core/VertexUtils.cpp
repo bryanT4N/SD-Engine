@@ -68,6 +68,69 @@ void AddVertsForQuad3D(std::vector<Vertex>& verts,
 	verts.push_back(Vertex(topLeft, color, Vec2(UVs.m_mins.x, UVs.m_maxs.y)));
 }
 
+void AddVertsForQuad3D(std::vector<Vertex_PCUTBN>& verts,
+	std::vector<unsigned int>& indexes,
+	const Vec3& bottomLeft, const Vec3& bottomRight, const Vec3& topRight, const Vec3& topLeft,
+	const Rgba8& color, const AABB2& UVs)
+{
+	Vec3 edge1 = bottomRight - bottomLeft;
+	Vec3 edge2 = topLeft - bottomLeft;
+	Vec3 tangent = edge1.GetNormalized();
+	if (tangent.GetLengthSquared() == 0.f) {
+		tangent = Vec3(1.f, 0.f, 0.f);
+	}
+
+	Vec3 normal = CrossProduct3D(edge1, edge2).GetNormalized();
+	if (normal.GetLengthSquared() == 0.f) {
+		normal = Vec3(0.f, 0.f, 1.f);
+	}
+
+	Vec3 bitangent = CrossProduct3D(normal, tangent).GetNormalized();
+	if (bitangent.GetLengthSquared() == 0.f) {
+		bitangent = edge2.GetNormalized();
+	}
+	if (bitangent.GetLengthSquared() == 0.f) {
+		bitangent = Vec3(0.f, 1.f, 0.f);
+	}
+
+	unsigned int startIndex = static_cast<unsigned int>(verts.size());
+	verts.push_back(Vertex_PCUTBN(
+		bottomLeft,
+		color,
+		Vec2(UVs.m_mins.x, UVs.m_mins.y),
+		tangent,
+		bitangent,
+		normal));
+	verts.push_back(Vertex_PCUTBN(
+		bottomRight,
+		color,
+		Vec2(UVs.m_maxs.x, UVs.m_mins.y),
+		tangent,
+		bitangent,
+		normal));
+	verts.push_back(Vertex_PCUTBN(
+		topRight,
+		color,
+		Vec2(UVs.m_maxs.x, UVs.m_maxs.y),
+		tangent,
+		bitangent,
+		normal));
+	verts.push_back(Vertex_PCUTBN(
+		topLeft,
+		color,
+		Vec2(UVs.m_mins.x, UVs.m_maxs.y),
+		tangent,
+		bitangent,
+		normal));
+
+	indexes.push_back(startIndex + 0u);
+	indexes.push_back(startIndex + 1u);
+	indexes.push_back(startIndex + 2u);
+	indexes.push_back(startIndex + 0u);
+	indexes.push_back(startIndex + 2u);
+	indexes.push_back(startIndex + 3u);
+}
+
 
 void AddVertsForAABB3D(
 	std::vector<Vertex>& verts,

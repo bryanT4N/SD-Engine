@@ -11,6 +11,7 @@
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/Shader.hpp"
 #include "Engine/Renderer/VertexBuffer.hpp"
+#include "Engine/Renderer/IndexBuffer.hpp"
 #include "Engine/Renderer/ConstantBuffer.hpp"
 
 #include <string>
@@ -605,6 +606,13 @@ VertexBuffer* Renderer::CreateVertexBuffer(unsigned int size, unsigned int strid
 }
 
 //------------------------------------------------------------------------------------------------
+IndexBuffer* Renderer::CreateIndexBuffer(unsigned int size, unsigned int stride) const
+{
+	IndexBuffer* ibo = new IndexBuffer(m_device, size, stride);
+	return ibo;
+}
+
+//------------------------------------------------------------------------------------------------
 void Renderer::CopyCPUToGPU(const void* data, unsigned int size, VertexBuffer* vbo) const
 {
 	if (vbo == nullptr || data == nullptr || size == 0) {
@@ -622,6 +630,23 @@ void Renderer::CopyCPUToGPU(const void* data, unsigned int size, VertexBuffer* v
 }
 
 //------------------------------------------------------------------------------------------------
+void Renderer::CopyCPUToGPU(const void* data, unsigned int size, IndexBuffer* ibo) const
+{
+	if (ibo == nullptr || data == nullptr || size == 0) {
+		return;
+	}
+
+	if (ibo->GetSize() < size) {
+		ibo->Resize(size);
+	}
+
+	D3D11_MAPPED_SUBRESOURCE resource;
+	m_deviceContext->Map(ibo->m_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
+	memcpy(resource.pData, data, size);
+	m_deviceContext->Unmap(ibo->m_buffer, 0);
+}
+
+//------------------------------------------------------------------------------------------------
 void Renderer::BindVertexBuffer(VertexBuffer* vbo) const
 {
 	if (vbo == nullptr) {
@@ -635,6 +660,16 @@ void Renderer::BindVertexBuffer(VertexBuffer* vbo) const
 }
 
 //------------------------------------------------------------------------------------------------
+void Renderer::BindIndexBuffer(IndexBuffer* ibo) const
+{
+	if (ibo == nullptr) {
+		return;
+	}
+
+	m_deviceContext->IASetIndexBuffer(ibo->m_buffer, DXGI_FORMAT_R32_UINT, 0);
+}
+
+//------------------------------------------------------------------------------------------------
 void Renderer::DrawVertexBuffer(VertexBuffer* vbo, unsigned int vertexCount)
 {
 	if (vbo == nullptr || vertexCount == 0) {
@@ -644,6 +679,19 @@ void Renderer::DrawVertexBuffer(VertexBuffer* vbo, unsigned int vertexCount)
 	SetStatesIfChanged();
 	BindVertexBuffer(vbo);
 	m_deviceContext->Draw(vertexCount, 0);
+}
+
+//------------------------------------------------------------------------------------------------
+void Renderer::DrawIndexedVertexBuffer(VertexBuffer* vbo, IndexBuffer* ibo, unsigned int indexCount)
+{
+	if (vbo == nullptr || ibo == nullptr || indexCount == 0) {
+		return;
+	}
+
+	SetStatesIfChanged();
+	BindVertexBuffer(vbo);
+	BindIndexBuffer(ibo);
+	m_deviceContext->DrawIndexed(indexCount, 0, 0);
 }
 
 //------------------------------------------------------------------------------------------------
@@ -691,7 +739,7 @@ void Renderer::BindConstantBuffer(int slot, ConstantBuffer* cbo)
 
 
 //------------------------------------------------------------------------------------------------
-Shader* Renderer::CreateShader(char const* shaderName, char const* shaderSource)
+Shader* Renderer::CreateShader(char const* shaderName, char const* shaderSource, VertexType vertexType)
 {
 	if (shaderName == nullptr || shaderSource == nullptr) {
 		ERROR_AND_DIE("CreateShader received null input.");
@@ -699,13 +747,14 @@ Shader* Renderer::CreateShader(char const* shaderName, char const* shaderSource)
 
 	for (int shaderIndex = 0; shaderIndex < static_cast<int>(m_loadedShaders.size()); ++shaderIndex) {
 		Shader* shader = m_loadedShaders[shaderIndex];
-		if (shader && shader->GetName() == shaderName) {
+		if (shader && shader->GetName() == shaderName && shader->GetVertexType() == vertexType) {
 			return shader;
 		}
 	}
 
 	ShaderConfig config;
 	config.m_name = shaderName;
+	config.m_vertexType = vertexType;
 	Shader* newShader = new Shader(config);
 
 	std::vector<unsigned char> vertexByteCode;
@@ -744,17 +793,39 @@ Shader* Renderer::CreateShader(char const* shaderName, char const* shaderSource)
 		ERROR_AND_DIE("Could not create pixel shader.");
 	}
 
-	D3D11_INPUT_ELEMENT_DESC inputElementDesc[] = {
-		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,
-			0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-		{"COLOR", 0, DXGI_FORMAT_R8G8B8A8_UNORM,
-			0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
-		{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,
-			0, D3D11_APPEND_ALIGNED_ELEMENT,
-			D3D11_INPUT_PER_VERTEX_DATA, 0},
-	};
+	D3D11_INPUT_ELEMENT_DESC const* inputElementDesc = nullptr;
+	UINT numElements = 0;
+	if (vertexType == VertexType::VERTEX_PCUTBN) {
+		static D3D11_INPUT_ELEMENT_DESC const pcutbnInputElementDesc[] = {
+			{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,
+				0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+			{"COLOR", 0, DXGI_FORMAT_R8G8B8A8_UNORM,
+				0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+			{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,
+				0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+			{"TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT,
+				0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+			{"BITANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT,
+				0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+			{"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT,
+				0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		};
+		inputElementDesc = pcutbnInputElementDesc;
+		numElements = ARRAYSIZE(pcutbnInputElementDesc);
+	}
+	else {
+		static D3D11_INPUT_ELEMENT_DESC const pcuInputElementDesc[] = {
+			{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,
+				0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+			{"COLOR", 0, DXGI_FORMAT_R8G8B8A8_UNORM,
+				0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+			{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,
+				0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		};
+		inputElementDesc = pcuInputElementDesc;
+		numElements = ARRAYSIZE(pcuInputElementDesc);
+	}
 
-	UINT numElements = ARRAYSIZE(inputElementDesc);
 	hr = m_device->CreateInputLayout(
 		inputElementDesc, numElements,
 		vertexByteCode.data(),
@@ -770,7 +841,7 @@ Shader* Renderer::CreateShader(char const* shaderName, char const* shaderSource)
 }
 
 //------------------------------------------------------------------------------------------------
-Shader* Renderer::CreateShader(char const* shaderName)
+Shader* Renderer::CreateShader(char const* shaderName, VertexType vertexType)
 {
 	std::string filename = std::string("Data/Shaders/") + shaderName + ".hlsl";
 	std::string shaderSource;
@@ -779,7 +850,7 @@ Shader* Renderer::CreateShader(char const* shaderName)
 	{
 		ERROR_AND_DIE(Stringf("Could not read shader file: %s", filename.c_str()));
 	}
-	return CreateShader(shaderName, shaderSource.c_str());
+	return CreateShader(shaderName, shaderSource.c_str(), vertexType);
 }
 
 //------------------------------------------------------------------------------------------------

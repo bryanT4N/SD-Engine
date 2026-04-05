@@ -22,3 +22,9 @@ const std::string& Shader::GetName() const
 {
 	return m_config.m_name;
 }
+
+//-----------------------------------------------------------------------------------------------
+VertexType Shader::GetVertexType() const
+{
+	return m_config.m_vertexType;
+}

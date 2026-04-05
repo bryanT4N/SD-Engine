@@ -2,6 +2,7 @@
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Math/Mat44.hpp"
+#include "Engine/Renderer/Shader.hpp"
 #include "Game/EngineBuildPreferences.hpp"
 #include <vector>
 
@@ -20,9 +21,9 @@ struct Vertex;
 class Camera;
 class Texture;
 class BitmapFont;
-class Shader;
 class Image;
 class VertexBuffer;
+class IndexBuffer;
 class ConstantBuffer;
 
 //-----------------------------------------------------------------------------------------------
@@ -146,6 +147,10 @@ public:
 	void		CopyCPUToGPU(const void* data, unsigned int size, VertexBuffer* vbo) const;
 	void		BindVertexBuffer(VertexBuffer* vbo) const;
 	void		DrawVertexBuffer(VertexBuffer* vbo, unsigned int vertexCount);
+	IndexBuffer* CreateIndexBuffer(unsigned int size, unsigned int stride = sizeof(unsigned int)) const;
+	void		CopyCPUToGPU(const void* data, unsigned int size, IndexBuffer* ibo) const;
+	void		BindIndexBuffer(IndexBuffer* ibo) const;
+	void		DrawIndexedVertexBuffer(VertexBuffer* vbo, IndexBuffer* ibo, unsigned int indexCount);
 
 	void		BindTexture(const Texture* texture);
 	void		SetBlendMode(BlendMode blendMode);
@@ -157,8 +162,8 @@ public:
 	ConstantBuffer* CreateConstantBuffer(const unsigned int size);
 	void		CopyCPUToGPU(const void* data, unsigned int size, ConstantBuffer* cbo);
 	void		BindConstantBuffer(int slot, ConstantBuffer* cbo);
-	Shader*		CreateShader(char const* shaderName, char const* shaderSource);
-	Shader*		CreateShader(char const* shaderName);
+	Shader*		CreateShader(char const* shaderName, char const* shaderSource, VertexType vertexType = VertexType::VERTEX_PCU);
+	Shader*		CreateShader(char const* shaderName, VertexType vertexType = VertexType::VERTEX_PCU);
 	bool		CompileShaderToByteCode(std::vector<unsigned char>& outByteCode, char const* name,
 					char const* source, char const* entryPoint, char const* target);
 	void		BindShader(Shader* shader);

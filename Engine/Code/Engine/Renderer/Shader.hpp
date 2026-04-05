@@ -6,12 +6,19 @@ struct ID3D11VertexShader;
 struct ID3D11PixelShader;
 struct ID3D11InputLayout;
 
+enum class VertexType
+{
+	VERTEX_PCU,
+	VERTEX_PCUTBN,
+};
+
 
 //-----------------------------------------------------------------------------------------------
 struct ShaderConfig {
 	std::string			m_name; 
 	std::string			m_vertexEntryPoint = "VertexMain"; 
 	std::string			m_pixelEntryPoint = "PixelMain";
+	VertexType			m_vertexType = VertexType::VERTEX_PCU;
 };
 
 class Shader
@@ -24,6 +31,7 @@ public:
 	~Shader();
 
 	const std::string& GetName() const;
+	VertexType GetVertexType() const;
 
 private:
 	ShaderConfig m_config;

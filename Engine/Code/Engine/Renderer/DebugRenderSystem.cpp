@@ -260,7 +260,7 @@ void DrawWorldVertsByMode(
 		}
 
 		renderer.SetBlendMode(BlendMode::ALPHA);
-		renderer.SetDepthMode(DepthMode::READ_ONLY_LESS_EQUAL);
+		renderer.SetDepthMode(DepthMode::READ_ONLY_ALWAYS);
 		renderer.DrawVertexArray(xrayVerts);
 
 		renderer.SetBlendMode(BlendMode::OPAQUE);
@@ -359,7 +359,7 @@ void RenderWorldTextObject(DebugObject const& object, Camera const& camera)
 		}
 
 		renderer.SetBlendMode(BlendMode::ALPHA);
-		renderer.SetDepthMode(DepthMode::READ_ONLY_LESS_EQUAL);
+		renderer.SetDepthMode(DepthMode::READ_ONLY_ALWAYS);
 		renderer.DrawVertexArray(xrayVerts);
 
 		renderer.SetBlendMode(BlendMode::OPAQUE);
