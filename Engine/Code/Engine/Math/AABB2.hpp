@@ -23,6 +23,13 @@ public:
 	Vec2 const	GetNearestPoint(Vec2 const& referencePosition) const;
 	Vec2 const	GetPointAtUV(Vec2 const& uv) const;		// uv=(0,0) is at mins; uv=(1,1)is at maxs
 	Vec2 const	GetUVForPoint(Vec2 const& point )const;	// uv=(.5,.5) at center; u or v outside [0,1] extrapolated
+	AABB2 const	GetBoxAtUVs(Vec2 const& uvMins, Vec2 const& uvMaxs) const;
+	AABB2 const	GetPadded(float uniformPadding) const;
+	AABB2 const	GetPadded(float xPadding, float yPadding) const;
+	AABB2 const	GetBottomHalf() const;
+	AABB2 const	GetTopHalf() const;
+	AABB2 const	GetLeftHalf() const;
+	AABB2 const	GetRightHalf() const;
 
 	// Mutators(non-const methods)
 	void		Translate(Vec2 const& translationToApply);

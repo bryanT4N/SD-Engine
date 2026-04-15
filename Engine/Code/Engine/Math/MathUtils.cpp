@@ -105,6 +105,145 @@ int RoundDownToInt(float value)
 	return static_cast<int>(std::floor(value));
 }
 
+float ComputeCubicBezier1D(float A, float B, float C, float D, float t)
+{
+	float ab = Interpolate(A, B, t);
+	float bc = Interpolate(B, C, t);
+	float cd = Interpolate(C, D, t);
+
+	float abc = Interpolate(ab, bc, t);
+	float bcd = Interpolate(bc, cd, t);
+
+	return Interpolate(abc, bcd, t);
+}
+
+float ComputeQuinticBezier1D(float A, float B, float C, float D, float E, float F, float t)
+{
+	float ab = Interpolate(A, B, t);
+	float bc = Interpolate(B, C, t);
+	float cd = Interpolate(C, D, t);
+	float de = Interpolate(D, E, t);
+	float ef = Interpolate(E, F, t);
+
+	float abc = Interpolate(ab, bc, t);
+	float bcd = Interpolate(bc, cd, t);
+	float cde = Interpolate(cd, de, t);
+	float def = Interpolate(de, ef, t);
+
+	float abcd = Interpolate(abc, bcd, t);
+	float bcde = Interpolate(bcd, cde, t);
+	float cdef = Interpolate(cde, def, t);
+
+	float abcde = Interpolate(abcd, bcde, t);
+	float bcdef = Interpolate(bcde, cdef, t);
+
+	return Interpolate(abcde, bcdef, t);
+}
+
+float SmoothStart2(float t)
+{
+	return t * t;
+}
+
+float SmoothStart3(float t)
+{
+	float t2 = t * t;
+	return t2 * t;
+}
+
+float SmoothStart4(float t)
+{
+	float t2 = t * t;
+	return t2 * t2;
+}
+
+float SmoothStart5(float t)
+{
+	float t2 = t * t;
+	float t4 = t2 * t2;
+	return t4 * t;
+}
+
+float SmoothStart6(float t)
+{
+	float t2 = t * t;
+	float t4 = t2 * t2;
+	return t4 * t2;
+}
+
+float SmoothStop2(float t)
+{
+	float oneMinusT = 1.f - t;
+	float omt2 = oneMinusT * oneMinusT;
+	return 1.f - omt2;
+}
+
+float SmoothStop3(float t)
+{
+	float oneMinusT = 1.f - t;
+	float omt2 = oneMinusT * oneMinusT;
+	float omt3 = omt2 * oneMinusT;
+	return 1.f - omt3;
+}
+
+float SmoothStop4(float t)
+{
+	float oneMinusT = 1.f - t;
+	float omt2 = oneMinusT * oneMinusT;
+	float omt4 = omt2 * omt2;
+	return 1.f - omt4;
+}
+
+float SmoothStop5(float t)
+{
+	float oneMinusT = 1.f - t;
+	float omt2 = oneMinusT * oneMinusT;
+	float omt4 = omt2 * omt2;
+	float omt5 = omt4 * oneMinusT;
+	return 1.f - omt5;
+}
+
+float SmoothStop6(float t)
+{
+	float oneMinusT = 1.f - t;
+	float omt2 = oneMinusT * oneMinusT;
+	float omt4 = omt2 * omt2;
+	float omt6 = omt4 * omt2;
+	return 1.f - omt6;
+}
+
+float SmoothStep3(float t)
+{
+	float t2 = t * t;
+	return t2 * (3.f - 2.f * t);
+}
+
+float SmoothStep5(float t)
+{
+	float t2 = t * t;
+	float t3 = t2 * t;
+	return t3 * (10.f + t * (-15.f + 6.f * t));
+}
+
+float Hesitate3(float t)
+{
+	float t2 = t * t;
+	float t3 = t2 * t;
+	return (3.f * t) - (6.f * t2) + (4.f * t3);
+}
+
+float Hesitate5(float t)
+{
+	return ComputeQuinticBezier1D(0.f, 1.f, 0.f, 1.f, 0.f, 1.f, t);
+}
+
+float CustomFunkyEasingFunction(float t)
+{
+	float wobble = SinDegrees(360.f * t);
+	float blend = t * (1.f - t);
+	return GetClampedZeroToOne(t + 0.2f * wobble * blend);
+}
+
 float ConvertDegreesToRadians(float degrees)
 {
 	return degrees * static_cast<float>(M_PI) / 180.f;

@@ -76,6 +76,9 @@
     <ClCompile Include="Math\AABB3.cpp">
       <Filter>Math</Filter>
     </ClCompile>
+    <ClCompile Include="Math\Curves2D.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
     <ClCompile Include="Math\EulerAngles.cpp">
       <Filter>Math</Filter>
     </ClCompile>
@@ -223,6 +226,9 @@
       <Filter>Math</Filter>
     </ClInclude>
     <ClInclude Include="Math\AABB3.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Curves2D.hpp">
       <Filter>Math</Filter>
     </ClInclude>
     <ClInclude Include="Math\EulerAngles.hpp">

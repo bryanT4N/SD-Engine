@@ -53,6 +53,47 @@ Vec2 const AABB2::GetUVForPoint(Vec2 const& point) const
 	return Vec2(RangeMap(point.x, m_mins.x, m_maxs.x, 0.f, 1.f), RangeMap(point.y, m_mins.y, m_maxs.y, 0.f, 1.f));
 }
 
+AABB2 const AABB2::GetBoxAtUVs(Vec2 const& uvMins, Vec2 const& uvMaxs) const
+{
+	Vec2 mins = GetPointAtUV(uvMins);
+	Vec2 maxs = GetPointAtUV(uvMaxs);
+	return AABB2(mins, maxs);
+}
+
+AABB2 const AABB2::GetPadded(float uniformPadding) const
+{
+	return GetPadded(uniformPadding, uniformPadding);
+}
+
+AABB2 const AABB2::GetPadded(float xPadding, float yPadding) const
+{
+	Vec2 dimensions = GetDimensions();
+	float clampedXPadding = GetClamped(xPadding, 0.f, 0.5f * dimensions.x);
+	float clampedYPadding = GetClamped(yPadding, 0.f, 0.5f * dimensions.y);
+	Vec2 padding(clampedXPadding, clampedYPadding);
+	return AABB2(m_mins + padding, m_maxs - padding);
+}
+
+AABB2 const AABB2::GetBottomHalf() const
+{
+	return GetBoxAtUVs(Vec2(0.f, 0.f), Vec2(1.f, 0.5f));
+}
+
+AABB2 const AABB2::GetTopHalf() const
+{
+	return GetBoxAtUVs(Vec2(0.f, 0.5f), Vec2(1.f, 1.f));
+}
+
+AABB2 const AABB2::GetLeftHalf() const
+{
+	return GetBoxAtUVs(Vec2(0.f, 0.f), Vec2(0.5f, 1.f));
+}
+
+AABB2 const AABB2::GetRightHalf() const
+{
+	return GetBoxAtUVs(Vec2(0.5f, 0.f), Vec2(1.f, 1.f));
+}
+
 void AABB2::Translate(Vec2 const& translationToApply)
 {
 	m_mins.x += translationToApply.x;
