@@ -74,24 +74,44 @@ AABB2 const AABB2::GetPadded(float xPadding, float yPadding) const
 	return AABB2(m_mins + padding, m_maxs - padding);
 }
 
-AABB2 const AABB2::GetBottomHalf() const
+AABB2 AABB2::ChopLeft(float fractionOfWidth, float extraWidth)
 {
-	return GetBoxAtUVs(Vec2(0.f, 0.f), Vec2(1.f, 0.5f));
+	float width = m_maxs.x - m_mins.x;
+	float choppedWidth = GetClamped((width * fractionOfWidth) + extraWidth, 0.f, width);
+
+	AABB2 leftPiece(m_mins.x, m_mins.y, m_mins.x + choppedWidth, m_maxs.y);
+	m_mins.x += choppedWidth;
+	return leftPiece;
 }
 
-AABB2 const AABB2::GetTopHalf() const
+AABB2 AABB2::ChopRight(float fractionOfWidth, float extraWidth)
 {
-	return GetBoxAtUVs(Vec2(0.f, 0.5f), Vec2(1.f, 1.f));
+	float width = m_maxs.x - m_mins.x;
+	float choppedWidth = GetClamped((width * fractionOfWidth) + extraWidth, 0.f, width);
+
+	AABB2 rightPiece(m_maxs.x - choppedWidth, m_mins.y, m_maxs.x, m_maxs.y);
+	m_maxs.x -= choppedWidth;
+	return rightPiece;
 }
 
-AABB2 const AABB2::GetLeftHalf() const
+AABB2 AABB2::ChopBottom(float fractionOfHeight, float extraHeight)
 {
-	return GetBoxAtUVs(Vec2(0.f, 0.f), Vec2(0.5f, 1.f));
+	float height = m_maxs.y - m_mins.y;
+	float choppedHeight = GetClamped((height * fractionOfHeight) + extraHeight, 0.f, height);
+
+	AABB2 bottomPiece(m_mins.x, m_mins.y, m_maxs.x, m_mins.y + choppedHeight);
+	m_mins.y += choppedHeight;
+	return bottomPiece;
 }
 
-AABB2 const AABB2::GetRightHalf() const
+AABB2 AABB2::ChopTop(float fractionOfHeight, float extraHeight)
 {
-	return GetBoxAtUVs(Vec2(0.5f, 0.f), Vec2(1.f, 1.f));
+	float height = m_maxs.y - m_mins.y;
+	float choppedHeight = GetClamped((height * fractionOfHeight) + extraHeight, 0.f, height);
+
+	AABB2 topPiece(m_mins.x, m_maxs.y - choppedHeight, m_maxs.x, m_maxs.y);
+	m_maxs.y -= choppedHeight;
+	return topPiece;
 }
 
 void AABB2::Translate(Vec2 const& translationToApply)

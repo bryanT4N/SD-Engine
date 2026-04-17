@@ -12,9 +12,7 @@
 #include <cmath>
 
 //-----------------------------------------------------------------------------------------------
-namespace
-{
-Vec3 GetNormalizedOrFallback(Vec3 const& value, Vec3 const& fallback)
+static Vec3 GetNormalizedOrFallback(Vec3 const& value, Vec3 const& fallback)
 {
 	Vec3 normalized = value.GetNormalized();
 	if (normalized.GetLengthSquared() == 0.f) {
@@ -24,12 +22,12 @@ Vec3 GetNormalizedOrFallback(Vec3 const& value, Vec3 const& fallback)
 	return normalized;
 }
 
-bool DoFloatRangesOverlap(float minA, float maxA, float minB, float maxB)
+static bool DoFloatRangesOverlap(float minA, float maxA, float minB, float maxB)
 {
 	return !(maxA < minB || maxB < minA);
 }
 
-Vec2 GetNearestPointOnDisc2DInternal(Vec2 const& referencePos, Vec2 const& discCenter, float discRadius)
+static Vec2 GetNearestPointOnDisc2DInternal(Vec2 const& referencePos, Vec2 const& discCenter, float discRadius)
 {
 	Vec2 displacement = referencePos - discCenter;
 	float displacementLengthSquared = displacement.GetLengthSquared();
@@ -43,7 +41,6 @@ Vec2 GetNearestPointOnDisc2DInternal(Vec2 const& referencePos, Vec2 const& discC
 	}
 
 	return discCenter + displacement.GetNormalized() * discRadius;
-}
 }
 
 //-----------------------------------------------------------------------------------------------
@@ -237,11 +234,102 @@ float Hesitate5(float t)
 	return ComputeQuinticBezier1D(0.f, 1.f, 0.f, 1.f, 0.f, 1.f, t);
 }
 
+struct CustomFunkyFloatingTextProfile
+{
+	float m_introFraction = 0.24f;
+	float m_holdFraction = 0.41f;
+	float m_exitFraction = 0.35f;
+
+	float m_introDipSubFraction = 0.36f;
+	float m_introDipAmount = 0.045f;
+	float m_holdVerticalOffset = 0.04f;
+	float m_holdEndVerticalOffset = 0.08f;
+	float m_exitRiseAmount = 1.00f;
+
+	float (*m_introDipCurve)(float) = SmoothStep5;
+	float (*m_introRecoverCurve)(float) = SmoothStep5;
+	float (*m_holdRiseCurve)(float) = SmoothStep3;
+	float (*m_exitRiseCurve)(float) = SmoothStep5;
+};
+
+// Keep math-layer CustomFunky limited to easing-space vertical progression.
+static CustomFunkyFloatingTextProfile const s_customFunkyFloatingTextProfile;
+
+static void GetCustomFunkyPhaseBounds(float& introEnd, float& holdEnd)
+{
+	CustomFunkyFloatingTextProfile const& profile = s_customFunkyFloatingTextProfile;
+	float total = profile.m_introFraction + profile.m_holdFraction + profile.m_exitFraction;
+	if (total <= 0.f) {
+		introEnd = 1.f;
+		holdEnd = 1.f;
+		return;
+	}
+
+	float intro = profile.m_introFraction / total;
+	float hold = profile.m_holdFraction / total;
+	introEnd = GetClampedZeroToOne(intro);
+	holdEnd = GetClampedZeroToOne(intro + hold);
+}
+
+static float GetSubphaseT(float t, float start, float duration)
+{
+	if (duration <= 0.f) {
+		return t >= start ? 1.f : 0.f;
+	}
+
+	return GetClampedZeroToOne((t - start) / duration);
+}
+
+static float EvaluateCustomFunkyVerticalOffsetForEasing(float t)
+{
+	CustomFunkyFloatingTextProfile const& profile = s_customFunkyFloatingTextProfile;
+	float normalizedT = GetClampedZeroToOne(t);
+
+	float introEnd = 1.f;
+	float holdEnd = 1.f;
+	GetCustomFunkyPhaseBounds(introEnd, holdEnd);
+	float holdStartOffset = profile.m_holdVerticalOffset;
+	float maxHoldOffset = profile.m_exitRiseAmount;
+	if (maxHoldOffset < holdStartOffset) {
+		maxHoldOffset = holdStartOffset;
+	}
+	float holdEndVerticalOffset = GetClamped(profile.m_holdEndVerticalOffset, holdStartOffset, maxHoldOffset);
+
+	if (normalizedT < introEnd) {
+		float introDuration = introEnd;
+		float dipDuration = GetClamped(introDuration * profile.m_introDipSubFraction, 0.f, introDuration);
+		float dipEnd = dipDuration;
+
+		if (normalizedT < dipEnd) {
+			float dipT = GetSubphaseT(normalizedT, 0.f, dipDuration);
+			return -profile.m_introDipAmount * profile.m_introDipCurve(dipT);
+		}
+
+		float recoverDuration = introDuration - dipDuration;
+		float recoverT = GetSubphaseT(normalizedT, dipEnd, recoverDuration);
+		return Interpolate(-profile.m_introDipAmount, holdStartOffset, profile.m_introRecoverCurve(recoverT));
+	}
+
+	if (normalizedT < holdEnd) {
+		float holdDuration = holdEnd - introEnd;
+		float holdT = GetSubphaseT(normalizedT, introEnd, holdDuration);
+		return Interpolate(holdStartOffset, holdEndVerticalOffset, profile.m_holdRiseCurve(holdT));
+	}
+
+	float exitDuration = 1.f - holdEnd;
+	float exitT = GetSubphaseT(normalizedT, holdEnd, exitDuration);
+	return Interpolate(holdEndVerticalOffset, profile.m_exitRiseAmount, profile.m_exitRiseCurve(exitT));
+}
+
 float CustomFunkyEasingFunction(float t)
 {
-	float wobble = SinDegrees(360.f * t);
-	float blend = t * (1.f - t);
-	return GetClampedZeroToOne(t + 0.2f * wobble * blend);
+	CustomFunkyFloatingTextProfile const& profile = s_customFunkyFloatingTextProfile;
+	float verticalOffset = EvaluateCustomFunkyVerticalOffsetForEasing(t);
+	if (profile.m_exitRiseAmount <= 0.f) {
+		return GetClampedZeroToOne(t);
+	}
+
+	return verticalOffset / profile.m_exitRiseAmount;
 }
 
 float ConvertDegreesToRadians(float degrees)

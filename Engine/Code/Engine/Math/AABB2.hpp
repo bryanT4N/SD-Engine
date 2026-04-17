@@ -26,12 +26,12 @@ public:
 	AABB2 const	GetBoxAtUVs(Vec2 const& uvMins, Vec2 const& uvMaxs) const;
 	AABB2 const	GetPadded(float uniformPadding) const;
 	AABB2 const	GetPadded(float xPadding, float yPadding) const;
-	AABB2 const	GetBottomHalf() const;
-	AABB2 const	GetTopHalf() const;
-	AABB2 const	GetLeftHalf() const;
-	AABB2 const	GetRightHalf() const;
 
 	// Mutators(non-const methods)
+	AABB2		ChopLeft(float fractionOfWidth, float extraWidth = 0.f);
+	AABB2		ChopRight(float fractionOfWidth, float extraWidth = 0.f);
+	AABB2		ChopBottom(float fractionOfHeight, float extraHeight = 0.f);
+	AABB2		ChopTop(float fractionOfHeight, float extraHeight = 0.f);
 	void		Translate(Vec2 const& translationToApply);
 	void		SetCenter(Vec2 const& newCenter);
 	void		SetDimensions(Vec2 const& newDimensions);
