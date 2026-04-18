@@ -6,6 +6,7 @@ struct ID3D11VertexShader;
 struct ID3D11PixelShader;
 struct ID3D11InputLayout;
 
+// Describes which attributes a shader input layout reads from the shared Vertex payload.
 enum class VertexType
 {
 	VERTEX_PCU,

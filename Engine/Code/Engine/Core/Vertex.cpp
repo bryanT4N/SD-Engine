@@ -11,7 +11,7 @@ Vertex::Vertex(Vec3 const& position, Rgba8 const& color, Vec2 const& uvTexCoords
 {
 }
 
-Vertex_PCUTBN::Vertex_PCUTBN(
+Vertex::Vertex(
 	Vec3 const& position,
 	Rgba8 const& color,
 	Vec2 const& uvTexCoords,

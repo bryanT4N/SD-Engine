@@ -68,7 +68,7 @@ void AddVertsForQuad3D(std::vector<Vertex>& verts,
 	verts.push_back(Vertex(topLeft, color, Vec2(UVs.m_mins.x, UVs.m_maxs.y)));
 }
 
-void AddVertsForQuad3D(std::vector<Vertex_PCUTBN>& verts,
+void AddVertsForQuad3D(std::vector<Vertex>& verts,
 	std::vector<unsigned int>& indexes,
 	const Vec3& bottomLeft, const Vec3& bottomRight, const Vec3& topRight, const Vec3& topLeft,
 	const Rgba8& color, const AABB2& UVs)
@@ -94,28 +94,28 @@ void AddVertsForQuad3D(std::vector<Vertex_PCUTBN>& verts,
 	}
 
 	unsigned int startIndex = static_cast<unsigned int>(verts.size());
-	verts.push_back(Vertex_PCUTBN(
+	verts.push_back(Vertex(
 		bottomLeft,
 		color,
 		Vec2(UVs.m_mins.x, UVs.m_mins.y),
 		tangent,
 		bitangent,
 		normal));
-	verts.push_back(Vertex_PCUTBN(
+	verts.push_back(Vertex(
 		bottomRight,
 		color,
 		Vec2(UVs.m_maxs.x, UVs.m_mins.y),
 		tangent,
 		bitangent,
 		normal));
-	verts.push_back(Vertex_PCUTBN(
+	verts.push_back(Vertex(
 		topRight,
 		color,
 		Vec2(UVs.m_maxs.x, UVs.m_maxs.y),
 		tangent,
 		bitangent,
 		normal));
-	verts.push_back(Vertex_PCUTBN(
+	verts.push_back(Vertex(
 		topLeft,
 		color,
 		Vec2(UVs.m_mins.x, UVs.m_maxs.y),

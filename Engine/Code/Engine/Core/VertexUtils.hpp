@@ -5,12 +5,11 @@
 #include "Engine/Math/AABB3.hpp"
 #include "Engine/Math/OBB2.hpp"
 #include "Engine/Core/Rgba8.hpp"
+#include "Engine/Core/Vertex.hpp"
 
 struct Vec2;
 struct Vec3;
 struct Mat44;
-struct Vertex;
-struct Vertex_PCUTBN;
 
 //-----------------------------------------------------------------------------------------------
 void TransformVertexArrayXY3D(int numVerts, Vertex* verts, float uniformScaleXY, float rotationDegreesAboutZ, Vec2 const& translationXY);
@@ -18,7 +17,7 @@ void TransformVertexArrayXY3D(std::vector<Vertex> &verts, float uniformScaleXY, 
 void AddVertsForQuad3D(std::vector<Vertex>& verts,
 	const Vec3& bottomLeft, const Vec3& bottomRight, const Vec3& topRight, const Vec3& topLeft,
 	const Rgba8& color = Rgba8::WHITE, const AABB2& UVs = AABB2(0.f, 0.f, 1.f, 1.f));
-void AddVertsForQuad3D(std::vector<Vertex_PCUTBN>& verts,
+void AddVertsForQuad3D(std::vector<Vertex>& verts,
 	std::vector<unsigned int>& indexes,
 	const Vec3& bottomLeft, const Vec3& bottomRight, const Vec3& topRight, const Vec3& topLeft,
 	const Rgba8& color = Rgba8::WHITE, const AABB2& UVs = AABB2(0.f, 0.f, 1.f, 1.f));
