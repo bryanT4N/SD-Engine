@@ -7,6 +7,7 @@
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/AABB3.hpp"
 #include "Engine/Math/OBB2.hpp"
+#include "Engine/Math/Capsule2.hpp"
 
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -845,6 +846,76 @@ bool PushDiscOutOfFixedAABB2D(Vec2& mobileDiscCenter, float discRadius, AABB2 co
 		Vec2 nearestPoint = fixedBox.GetNearestPoint(mobileDiscCenter);
 		return PushDiscOutOfFixedPoint2D(mobileDiscCenter, discRadius, nearestPoint);
 	}
+}
+
+//-----------------------------------------------------------------------------------------------
+bool PushDiscOutOfFixedCapsule2D(Vec2& mobileDiscCenter, float discRadius, Capsule2 const& fixedCapsule)
+{
+	Vec2	nearestOnBone	= GetNearestPointOnLineSegment2D(mobileDiscCenter, fixedCapsule.m_boneStart, fixedCapsule.m_boneEnd);
+	Vec2	v				= mobileDiscCenter - nearestOnBone;
+	float	d				= v.GetLength();
+	float	combinedRadius	= discRadius + fixedCapsule.m_radius;
+
+	if (d > combinedRadius) {
+		return false;
+	}
+
+	Vec2 pushDir;
+	if (d > 0.f) {
+		pushDir = v / d;
+	}
+	else {
+		// Disc center exactly on bone — push perpendicular to bone (or +X if bone is degenerate)
+		Vec2 boneDir = fixedCapsule.m_boneEnd - fixedCapsule.m_boneStart;
+		if (boneDir.x == 0.f && boneDir.y == 0.f) {
+			pushDir = Vec2(1.f, 0.f);
+		}
+		else {
+			pushDir = boneDir.GetRotatedBy90Degrees().GetNormalized();
+		}
+	}
+	mobileDiscCenter = nearestOnBone + combinedRadius * pushDir;
+	return true;
+}
+
+//-----------------------------------------------------------------------------------------------
+bool PushDiscOutOfFixedOBB2D(Vec2& mobileDiscCenter, float discRadius, OBB2 const& fixedBox)
+{
+	if (fixedBox.IsPointInside(mobileDiscCenter)) {
+		// Disc center inside OBB — push out toward the closest face along its outward normal.
+		Vec2 jBasis = fixedBox.m_iBasisNormal.GetRotatedBy90Degrees();
+		Vec2 disp = mobileDiscCenter - fixedBox.m_center;
+		float localX = DotProduct2D(disp, fixedBox.m_iBasisNormal);
+		float localY = DotProduct2D(disp, jBasis);
+
+		float distToRight = fixedBox.m_halfDimensions.x - localX;
+		float distToLeft  = fixedBox.m_halfDimensions.x + localX;
+		float distToTop   = fixedBox.m_halfDimensions.y - localY;
+		float distToBot   = fixedBox.m_halfDimensions.y + localY;
+
+		float minDist = distToRight;
+		Vec2 pushNormal = fixedBox.m_iBasisNormal;
+		if (distToLeft < minDist) { minDist = distToLeft; pushNormal = -fixedBox.m_iBasisNormal; }
+		if (distToTop  < minDist) { minDist = distToTop;  pushNormal = jBasis; }
+		if (distToBot  < minDist) { minDist = distToBot;  pushNormal = -jBasis; }
+
+		mobileDiscCenter += (minDist + discRadius) * pushNormal;
+		return true;
+	}
+
+	Vec2 nearestPoint = fixedBox.GetNearestPoint(mobileDiscCenter);
+	return PushDiscOutOfFixedPoint2D(mobileDiscCenter, discRadius, nearestPoint);
+}
+
+//-----------------------------------------------------------------------------------------------
+Vec2 BounceVectorOffSurface(Vec2 const& incomingVelocity, Vec2 const& surfaceNormal, float elasticity)
+{
+	// Decompose incoming into normal-aligned and tangent components; reverse the normal part
+	// (scaled by elasticity), keep tangent unchanged. surfaceNormal is assumed (and works best when)
+	// normalized; GetProjectedVector2D handles non-unit input by normalizing internally.
+	Vec2 normalComponent  = GetProjectedVector2D(incomingVelocity, surfaceNormal);
+	Vec2 tangentComponent = incomingVelocity - normalComponent;
+	return tangentComponent - elasticity * normalComponent;
 }
 
 //-----------------------------------------------------------------------------------------------

@@ -2,24 +2,24 @@
 #include "Engine/Math/Vec2.hpp"
 
 //-----------------------------------------------------------------------------------------------
-class OBB2 
+class Capsule2
 {
 public:
-	Vec2 m_center;
-	Vec2 m_iBasisNormal;
-	Vec2 m_halfDimensions;
+	Vec2	m_boneStart;
+	Vec2	m_boneEnd;
+	float	m_radius		= 0.f;
 
 public:
 	// Construction/Destruction
-	OBB2() {}
-	OBB2(OBB2 const& copyFrom);
-	~OBB2() {}
-	explicit OBB2(Vec2 const& center, Vec2 const& iBasisNormal, Vec2 const& halfDimensions);
+	Capsule2() {}
+	Capsule2(Capsule2 const& copyFrom);
+	~Capsule2() {}
+	explicit Capsule2(Vec2 const& boneStart, Vec2 const& boneEnd, float radius);
 
 	// Accessors (const methods)
 	bool		IsPointInside(Vec2 const& point) const;
-	Vec2 const	GetCenter() const;
-	Vec2 const	GetDimensions() const;
+	Vec2 const	GetBoneCenter() const;
+	float		GetBoneLength() const;
 	Vec2 const	GetNearestPoint(Vec2 const& referencePosition) const;
 
 	// Bounding-disc accessors (Pachinko trivial-rejection use)

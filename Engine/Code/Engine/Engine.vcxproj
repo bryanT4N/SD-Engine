@@ -44,6 +44,7 @@
     <ClCompile Include="Input\XboxController.cpp" />
     <ClCompile Include="Math\AABB2.cpp" />
     <ClCompile Include="Math\AABB3.cpp" />
+    <ClCompile Include="Math\Capsule2.cpp" />
     <ClCompile Include="Math\Curves2D.cpp" />
     <ClCompile Include="Math\EulerAngles.cpp" />
     <ClCompile Include="Math\FloatRange.cpp" />
@@ -105,6 +106,7 @@
     <ClInclude Include="Input\XboxController.hpp" />
     <ClInclude Include="Math\AABB2.hpp" />
     <ClInclude Include="Math\AABB3.hpp" />
+    <ClInclude Include="Math\Capsule2.hpp" />
     <ClInclude Include="Math\Curves2D.hpp" />
     <ClInclude Include="Math\EulerAngles.hpp" />
     <ClInclude Include="Math\FloatRange.hpp" />

@@ -11,6 +11,7 @@ struct IntVec2;
 struct Mat44;
 class AABB2;
 class OBB2;
+class Capsule2;
 struct AABB3;
 
 //-----------------------------------------------------------------------------------------------
@@ -127,6 +128,11 @@ bool	PushDiscOutOfFixedPoint2D(Vec2& mobileDiscCenter, float discRadius, Vec2 co
 bool	PushDiscOutOfFixedDisc2D(Vec2& mobileDiscCenter, float discRadius, Vec2 const& fixedDiscCenter, float fixedDiscRadius);
 bool	PushDiscsOutOfEachOther2D(Vec2& aCenter,float aRadius, Vec2& bCenter, float bRadius);
 bool	PushDiscOutOfFixedAABB2D(Vec2& mobileDiscCenter, float discRadius, AABB2 const& fixedBox);
+bool	PushDiscOutOfFixedCapsule2D(Vec2& mobileDiscCenter, float discRadius, Capsule2 const& fixedCapsule);
+bool	PushDiscOutOfFixedOBB2D(Vec2& mobileDiscCenter, float discRadius, OBB2 const& fixedBox);
+
+// Reflection / bounce
+Vec2	BounceVectorOffSurface(Vec2 const& incomingVelocity, Vec2 const& surfaceNormal, float elasticity);
 
 //-----------------------------------------------------------------------------------------------
 // Transform utilities

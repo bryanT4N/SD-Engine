@@ -39,4 +39,14 @@ Vec2 const OBB2::GetNearestPoint(Vec2 const& referencePosition) const
 	return GetNearestPointOnOBB2D(referencePosition, *this);
 }
 
+Vec2 const OBB2::GetBoundingDiscCenter() const
+{
+	return m_center;
+}
+
+float OBB2::GetBoundingDiscRadius() const
+{
+	return std::sqrt(m_halfDimensions.x * m_halfDimensions.x + m_halfDimensions.y * m_halfDimensions.y);
+}
+
 
