@@ -31,7 +31,7 @@ Vec2 const OBB2::GetCenter() const
 
 Vec2 const OBB2::GetDimensions() const
 {
-	return 2.F * m_halfDimensions;
+	return 2.f * m_halfDimensions;
 }
 
 Vec2 const OBB2::GetNearestPoint(Vec2 const& referencePosition) const

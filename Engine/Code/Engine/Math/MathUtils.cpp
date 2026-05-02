@@ -865,7 +865,7 @@ bool PushDiscOutOfFixedCapsule2D(Vec2& mobileDiscCenter, float discRadius, Capsu
 		pushDir = v / d;
 	}
 	else {
-		// Disc center exactly on bone — push perpendicular to bone (or +X if bone is degenerate)
+		// On-bone fallback.
 		Vec2 boneDir = fixedCapsule.m_boneEnd - fixedCapsule.m_boneStart;
 		if (boneDir.x == 0.f && boneDir.y == 0.f) {
 			pushDir = Vec2(1.f, 0.f);
@@ -882,7 +882,7 @@ bool PushDiscOutOfFixedCapsule2D(Vec2& mobileDiscCenter, float discRadius, Capsu
 bool PushDiscOutOfFixedOBB2D(Vec2& mobileDiscCenter, float discRadius, OBB2 const& fixedBox)
 {
 	if (fixedBox.IsPointInside(mobileDiscCenter)) {
-		// Disc center inside OBB — push out toward the closest face along its outward normal.
+		// Inside-OBB push fallback.
 		Vec2 jBasis = fixedBox.m_iBasisNormal.GetRotatedBy90Degrees();
 		Vec2 disp = mobileDiscCenter - fixedBox.m_center;
 		float localX = DotProduct2D(disp, fixedBox.m_iBasisNormal);
@@ -910,9 +910,6 @@ bool PushDiscOutOfFixedOBB2D(Vec2& mobileDiscCenter, float discRadius, OBB2 cons
 //-----------------------------------------------------------------------------------------------
 Vec2 BounceVectorOffSurface(Vec2 const& incomingVelocity, Vec2 const& surfaceNormal, float elasticity)
 {
-	// Decompose incoming into normal-aligned and tangent components; reverse the normal part
-	// (scaled by elasticity), keep tangent unchanged. surfaceNormal is assumed (and works best when)
-	// normalized; GetProjectedVector2D handles non-unit input by normalizing internally.
 	Vec2 normalComponent  = GetProjectedVector2D(incomingVelocity, surfaceNormal);
 	Vec2 tangentComponent = incomingVelocity - normalComponent;
 	return tangentComponent - elasticity * normalComponent;

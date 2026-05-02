@@ -22,7 +22,6 @@ public:
 	float		GetBoneLength() const;
 	Vec2 const	GetNearestPoint(Vec2 const& referencePosition) const;
 
-	// Bounding-disc accessors (Pachinko trivial-rejection use)
 	Vec2 const	GetBoundingDiscCenter() const;
 	float		GetBoundingDiscRadius() const;
 };
