@@ -1,4 +1,5 @@
 #pragma once
+#include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Math/Vec3.hpp"
 #include "Engine/Math/EulerAngles.hpp"
@@ -49,6 +50,9 @@ public:
 	Vec2 GetOrthoBottomLeft() const;
 	Vec2 GetOrthoTopRight() const;
 
+	void SetNormalizedViewport(AABB2 const& normalizedViewport);
+	AABB2 GetNormalizedViewport() const;
+
 protected:
 	Mode m_mode = eMode_Orthographic;
 
@@ -66,4 +70,6 @@ protected:
 	float m_perspectiveFar = 100.f;
 
 	Mat44 m_cameraToRenderTransform;
+
+	AABB2 m_normalizedViewport = AABB2(0.f, 0.f, 1.f, 1.f);
 };

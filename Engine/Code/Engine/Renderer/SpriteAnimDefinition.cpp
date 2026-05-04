@@ -12,6 +12,24 @@ SpriteAnimDefinition::SpriteAnimDefinition( SpriteSheet const& spriteSheet, int 
 }
 
 //-----------------------------------------------------------------------------------------------
+float SpriteAnimDefinition::GetTotalDurationSeconds() const
+{
+	int frameCount = m_endSpriteIndex - m_startSpriteIndex + 1;
+	if ( frameCount <= 0 || m_framesPerSecond <= 0.f ) {
+		return 0.f;
+	}
+	return static_cast<float>( frameCount ) / m_framesPerSecond;
+}
+
+//-----------------------------------------------------------------------------------------------
+bool SpriteAnimDefinition::LoadFromXmlElement( XmlElement const& element )
+{
+	m_startSpriteIndex = ParseXmlAttribute( element, "startFrame", m_startSpriteIndex );
+	m_endSpriteIndex   = ParseXmlAttribute( element, "endFrame",   m_endSpriteIndex );
+	return true;
+}
+
+//-----------------------------------------------------------------------------------------------
 SpriteDefinition const& SpriteAnimDefinition::GetSpriteDefAtTime( float seconds ) const
 {
 	if( m_framesPerSecond <= 0.0f ) {

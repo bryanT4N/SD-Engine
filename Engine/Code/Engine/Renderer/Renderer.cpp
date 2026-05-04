@@ -532,11 +532,17 @@ void Renderer::ClearScreen(Rgba8 const& clearColor) const
 //-----------------------------------------------------------------------------------------------
 void Renderer::BeginCamera(Camera const& camera)
 {
+	IntVec2 windowDims = g_engine->m_window->GetClientDimensions();
+	AABB2 normalizedViewport = camera.GetNormalizedViewport();
+	int leftPx = static_cast<int>(normalizedViewport.m_mins.x * (float)windowDims.x + 0.5f);
+	int topPx = static_cast<int>((1.f - normalizedViewport.m_maxs.y) * (float)windowDims.y + 0.5f);
+	int rightPx = static_cast<int>(normalizedViewport.m_maxs.x * (float)windowDims.x + 0.5f);
+	int bottomPx = static_cast<int>((1.f - normalizedViewport.m_mins.y) * (float)windowDims.y + 0.5f);
 	D3D11_VIEWPORT viewport = { };
-	viewport.TopLeftX = 0.0f;
-	viewport.TopLeftY = 0.0f;
-	viewport.Width = (float)g_engine->m_window->GetClientDimensions().x;
-	viewport.Height = (float)g_engine->m_window->GetClientDimensions().y;
+	viewport.TopLeftX = (float)leftPx;
+	viewport.TopLeftY = (float)topPx;
+	viewport.Width = (float)(rightPx - leftPx);
+	viewport.Height = (float)(bottomPx - topPx);
 	viewport.MinDepth = 0.0f;
 	viewport.MaxDepth = 1.0f;
 

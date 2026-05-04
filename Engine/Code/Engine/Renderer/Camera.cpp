@@ -134,3 +134,13 @@ Vec2 Camera::GetOrthoTopRight() const
 {
 	return GetOrthographicTopRight();
 }
+
+void Camera::SetNormalizedViewport(AABB2 const& normalizedViewport)
+{
+	m_normalizedViewport = normalizedViewport;
+}
+
+AABB2 Camera::GetNormalizedViewport() const
+{
+	return m_normalizedViewport;
+}

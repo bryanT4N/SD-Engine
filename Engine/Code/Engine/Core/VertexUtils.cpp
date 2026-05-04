@@ -132,6 +132,55 @@ void AddVertsForQuad3D(std::vector<Vertex>& verts,
 }
 
 
+void AddVertsForRoundedQuad3D(std::vector<Vertex>& vertexes,
+	const Vec3& topLeft, const Vec3& bottomLeft, const Vec3& bottomRight, const Vec3& topRight,
+	const Rgba8& color, const AABB2& UVs)
+{
+	Vec3 tangent = (bottomRight - bottomLeft).GetNormalized();
+	if (tangent.GetLengthSquared() == 0.f) {
+		tangent = Vec3(1.f, 0.f, 0.f);
+	}
+
+	Vec3 bitangent = (topLeft - bottomLeft).GetNormalized();
+	if (bitangent.GetLengthSquared() == 0.f) {
+		bitangent = Vec3(0.f, 1.f, 0.f);
+	}
+
+	Vec3 trueNormal = CrossProduct3D(tangent, bitangent).GetNormalized();
+	if (trueNormal.GetLengthSquared() == 0.f) {
+		trueNormal = Vec3(0.f, 0.f, 1.f);
+	}
+
+	Vec3 midTop = (topLeft + topRight) * 0.5f;
+	Vec3 midBottom = (bottomLeft + bottomRight) * 0.5f;
+	float midU = (UVs.m_mins.x + UVs.m_maxs.x) * 0.5f;
+
+	Vec3 leftEdgeNormal = -tangent;
+	Vec3 rightEdgeNormal = tangent;
+
+	Vec2 uvBL(UVs.m_mins.x, UVs.m_mins.y);
+	Vec2 uvBM(midU, UVs.m_mins.y);
+	Vec2 uvBR(UVs.m_maxs.x, UVs.m_mins.y);
+	Vec2 uvTL(UVs.m_mins.x, UVs.m_maxs.y);
+	Vec2 uvTM(midU, UVs.m_maxs.y);
+	Vec2 uvTR(UVs.m_maxs.x, UVs.m_maxs.y);
+
+	vertexes.push_back(Vertex(bottomLeft, color, uvBL, tangent, bitangent, leftEdgeNormal));
+	vertexes.push_back(Vertex(midBottom, color, uvBM, tangent, bitangent, trueNormal));
+	vertexes.push_back(Vertex(midTop, color, uvTM, tangent, bitangent, trueNormal));
+	vertexes.push_back(Vertex(bottomLeft, color, uvBL, tangent, bitangent, leftEdgeNormal));
+	vertexes.push_back(Vertex(midTop, color, uvTM, tangent, bitangent, trueNormal));
+	vertexes.push_back(Vertex(topLeft, color, uvTL, tangent, bitangent, leftEdgeNormal));
+
+	vertexes.push_back(Vertex(midBottom, color, uvBM, tangent, bitangent, trueNormal));
+	vertexes.push_back(Vertex(bottomRight, color, uvBR, tangent, bitangent, rightEdgeNormal));
+	vertexes.push_back(Vertex(topRight, color, uvTR, tangent, bitangent, rightEdgeNormal));
+	vertexes.push_back(Vertex(midBottom, color, uvBM, tangent, bitangent, trueNormal));
+	vertexes.push_back(Vertex(topRight, color, uvTR, tangent, bitangent, rightEdgeNormal));
+	vertexes.push_back(Vertex(midTop, color, uvTM, tangent, bitangent, trueNormal));
+}
+
+
 void AddVertsForAABB3D(
 	std::vector<Vertex>& verts,
 	AABB3 const& bounds,

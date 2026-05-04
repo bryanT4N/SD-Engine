@@ -21,6 +21,9 @@ void AddVertsForQuad3D(std::vector<Vertex>& verts,
 	std::vector<unsigned int>& indexes,
 	const Vec3& bottomLeft, const Vec3& bottomRight, const Vec3& topRight, const Vec3& topLeft,
 	const Rgba8& color = Rgba8::WHITE, const AABB2& UVs = AABB2(0.f, 0.f, 1.f, 1.f));
+void AddVertsForRoundedQuad3D(std::vector<Vertex>& vertexes,
+	const Vec3& topLeft, const Vec3& bottomLeft, const Vec3& bottomRight, const Vec3& topRight,
+	const Rgba8& color = Rgba8::WHITE, const AABB2& UVs = AABB2(0.f, 0.f, 1.f, 1.f));
 void AddVertsForAABB3D(std::vector<Vertex>& verts,
 	AABB3 const& bounds,
 	Rgba8 const& color = Rgba8::WHITE,

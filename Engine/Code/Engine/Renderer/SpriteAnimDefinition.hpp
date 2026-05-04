@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Engine/Core/XmlUtils.hpp"
 #include "Engine/Renderer/SpriteSheet.hpp"
 
 //-----------------------------------------------------------------------------------------------
@@ -17,7 +18,10 @@ public:
 	SpriteAnimDefinition( SpriteSheet const& spriteSheet, int startSpriteIndex, int endSpriteIndex,
 		float framesPerSecond, SpriteAnimPlaybackType playbackType = SpriteAnimPlaybackType::LOOP );
 
+	bool LoadFromXmlElement( XmlElement const& element );
 	SpriteDefinition const&	GetSpriteDefAtTime( float seconds ) const; // Most of the logic for this class is done here!
+	float GetTotalDurationSeconds() const;
+	SpriteAnimPlaybackType GetPlaybackType() const { return m_playbackType; }
 
 private:
 	SpriteSheet const&		m_spriteSheet;
