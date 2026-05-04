@@ -10,6 +10,8 @@
 struct Vec2;
 struct Vec3;
 struct Mat44;
+struct OBB3;
+struct Plane3;
 
 //-----------------------------------------------------------------------------------------------
 void TransformVertexArrayXY3D(int numVerts, Vertex* verts, float uniformScaleXY, float rotationDegreesAboutZ, Vec2 const& translationXY);
@@ -46,6 +48,16 @@ void AddVertsForCone3D(std::vector<Vertex>& verts,
 void AddVertsForArrow3D(std::vector<Vertex>& verts,
 	Vec3 const& start, Vec3 const& end, float radius,
 	Rgba8 const& color = Rgba8::WHITE, int numSlices = 32);
+void AddVertsForOBB3(std::vector<Vertex>& verts,
+	OBB3 const& box,
+	Rgba8 const& color = Rgba8::WHITE,
+	AABB2 const& UVs = AABB2(0.f, 0.f, 1.f, 1.f));
+void AddVertsForPlane3(std::vector<Vertex>& verts,
+	Plane3 const& plane,
+	float gridHalfExtent,
+	float gridStepLength,
+	float lineThickness,
+	Rgba8 const& color);
 
 //-----------------------------------------------------------------------------------------------
 void AddvertsForDisc2D(std::vector<Vertex> &verts, Vec2 disCenter, float discRadius, Rgba8 color);

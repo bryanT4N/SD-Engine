@@ -130,6 +130,12 @@
     <ClCompile Include="Math\OBB2.cpp">
       <Filter>Math</Filter>
     </ClCompile>
+    <ClCompile Include="Math\OBB3.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\Plane3.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
     <ClCompile Include="Renderer\SpriteSheet.cpp">
       <Filter>Renderer</Filter>
     </ClCompile>
@@ -310,6 +316,12 @@
       <Filter>Math</Filter>
     </ClInclude>
     <ClInclude Include="Math\OBB2.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\OBB3.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Plane3.hpp">
       <Filter>Math</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\SpriteDefinition.hpp">

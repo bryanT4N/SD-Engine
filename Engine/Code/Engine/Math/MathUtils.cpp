@@ -7,6 +7,8 @@
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/AABB3.hpp"
 #include "Engine/Math/OBB2.hpp"
+#include "Engine/Math/OBB3.hpp"
+#include "Engine/Math/Plane3.hpp"
 #include "Engine/Math/Capsule2.hpp"
 
 #define _USE_MATH_DEFINES
@@ -1422,5 +1424,151 @@ RaycastResult3D RaycastVsZCylinder3D(Vec3 startPos, Vec3 fwdNormal, float maxDis
 	hitResult.m_impactPos = bestImpactPos;
 	hitResult.m_impactNormal = bestImpactNormal;
 	return hitResult;
+}
+
+//-----------------------------------------------------------------------------------------------
+// MP2-A07 — OBB3 + Plane3 queries
+
+bool IsPointInsideOBB3(Vec3 const& point, OBB3 const& box)
+{
+	Vec3 displacement = point - box.m_center;
+	float localI = DotProduct3D(displacement, box.m_iBasis);
+	float localJ = DotProduct3D(displacement, box.m_jBasis);
+	float localK = DotProduct3D(displacement, box.m_kBasis);
+	return fabsf(localI) <= box.m_halfDimensions.x
+		&& fabsf(localJ) <= box.m_halfDimensions.y
+		&& fabsf(localK) <= box.m_halfDimensions.z;
+}
+
+Vec3 GetNearestPointOnOBB3(Vec3 const& referencePos, OBB3 const& box)
+{
+	Vec3 displacement = referencePos - box.m_center;
+	float localI = GetClamped(DotProduct3D(displacement, box.m_iBasis), -box.m_halfDimensions.x, box.m_halfDimensions.x);
+	float localJ = GetClamped(DotProduct3D(displacement, box.m_jBasis), -box.m_halfDimensions.y, box.m_halfDimensions.y);
+	float localK = GetClamped(DotProduct3D(displacement, box.m_kBasis), -box.m_halfDimensions.z, box.m_halfDimensions.z);
+	return box.m_center + (box.m_iBasis * localI) + (box.m_jBasis * localJ) + (box.m_kBasis * localK);
+}
+
+RaycastResult3D RaycastVsOBB3(Vec3 startPos, Vec3 fwdNormal, float maxDist, OBB3 const& box)
+{
+	Vec3 displacement = startPos - box.m_center;
+	Vec3 localStart(
+		DotProduct3D(displacement, box.m_iBasis),
+		DotProduct3D(displacement, box.m_jBasis),
+		DotProduct3D(displacement, box.m_kBasis));
+	Vec3 localFwd(
+		DotProduct3D(fwdNormal, box.m_iBasis),
+		DotProduct3D(fwdNormal, box.m_jBasis),
+		DotProduct3D(fwdNormal, box.m_kBasis));
+
+	AABB3 localBox(-box.m_halfDimensions, box.m_halfDimensions);
+	RaycastResult3D localHit = RaycastVsAABB3D(localStart, localFwd, maxDist, localBox);
+
+	RaycastResult3D worldHit;
+	worldHit.m_didImpact = localHit.m_didImpact;
+	worldHit.m_impactDist = localHit.m_impactDist;
+	worldHit.m_rayStartPos = startPos;
+	worldHit.m_rayFwdNormal = fwdNormal;
+	worldHit.m_rayMaxLength = maxDist;
+	worldHit.m_impactPos = startPos + (fwdNormal * localHit.m_impactDist);
+	worldHit.m_impactNormal =
+		(box.m_iBasis * localHit.m_impactNormal.x) +
+		(box.m_jBasis * localHit.m_impactNormal.y) +
+		(box.m_kBasis * localHit.m_impactNormal.z);
+	return worldHit;
+}
+
+bool DoOBB3AndSphereOverlap(OBB3 const& box, Vec3 const& sphereCenter, float sphereRadius)
+{
+	Vec3 nearest = GetNearestPointOnOBB3(sphereCenter, box);
+	return GetDistanceSquared3D(nearest, sphereCenter) <= sphereRadius * sphereRadius;
+}
+
+bool DoOBB3AndPlane3Overlap(OBB3 const& box, Plane3 const& plane)
+{
+	Vec3 corners[8];
+	box.GetCornerPositions(corners);
+	bool hasFront = false;
+	bool hasBack = false;
+	for (int i = 0; i < 8; ++i) {
+		float altitude = DotProduct3D(corners[i], plane.m_normal) - plane.m_distanceFromOrigin;
+		if (altitude > 0.f) hasFront = true;
+		else if (altitude < 0.f) hasBack = true;
+		else return true;
+		if (hasFront && hasBack) return true;
+	}
+	return false;
+}
+
+Vec3 GetNearestPointOnPlane3(Vec3 const& referencePos, Plane3 const& plane)
+{
+	float altitude = DotProduct3D(referencePos, plane.m_normal) - plane.m_distanceFromOrigin;
+	return referencePos - (plane.m_normal * altitude);
+}
+
+bool IsPointInFrontOfPlane3(Vec3 const& point, Plane3 const& plane)
+{
+	return DotProduct3D(point, plane.m_normal) > plane.m_distanceFromOrigin;
+}
+
+RaycastResult3D RaycastVsPlane3(Vec3 startPos, Vec3 fwdNormal, float maxDist, Plane3 const& plane)
+{
+	RaycastResult3D missResult;
+	missResult.m_didImpact = false;
+	missResult.m_impactDist = maxDist;
+	missResult.m_impactPos = startPos + (fwdNormal * maxDist);
+	missResult.m_rayStartPos = startPos;
+	missResult.m_rayFwdNormal = fwdNormal;
+	missResult.m_rayMaxLength = maxDist;
+
+	float startAltitude = DotProduct3D(startPos, plane.m_normal) - plane.m_distanceFromOrigin;
+	float fwdDotN = DotProduct3D(fwdNormal, plane.m_normal);
+	if (fabsf(fwdDotN) < 1e-6f) {
+		return missResult;
+	}
+	if (startAltitude * fwdDotN > 0.f) {
+		return missResult;
+	}
+	float t = -startAltitude / fwdDotN;
+	if (t < 0.f || t > maxDist) {
+		return missResult;
+	}
+
+	RaycastResult3D hitResult = missResult;
+	hitResult.m_didImpact = true;
+	hitResult.m_impactDist = t;
+	hitResult.m_impactPos = startPos + (fwdNormal * t);
+	hitResult.m_impactNormal = (fwdDotN < 0.f) ? plane.m_normal : (plane.m_normal * -1.f);
+	return hitResult;
+}
+
+bool DoSphereAndPlane3Overlap(Vec3 const& sphereCenter, float sphereRadius, Plane3 const& plane)
+{
+	float altitude = DotProduct3D(sphereCenter, plane.m_normal) - plane.m_distanceFromOrigin;
+	return fabsf(altitude) <= sphereRadius;
+}
+
+bool DoAABB3AndPlane3Overlap(AABB3 const& aabb, Plane3 const& plane)
+{
+	Vec3 corners[8] = {
+		Vec3(aabb.m_mins.x, aabb.m_mins.y, aabb.m_mins.z),
+		Vec3(aabb.m_maxs.x, aabb.m_mins.y, aabb.m_mins.z),
+		Vec3(aabb.m_maxs.x, aabb.m_maxs.y, aabb.m_mins.z),
+		Vec3(aabb.m_mins.x, aabb.m_maxs.y, aabb.m_mins.z),
+		Vec3(aabb.m_mins.x, aabb.m_mins.y, aabb.m_maxs.z),
+		Vec3(aabb.m_maxs.x, aabb.m_mins.y, aabb.m_maxs.z),
+		Vec3(aabb.m_maxs.x, aabb.m_maxs.y, aabb.m_maxs.z),
+		Vec3(aabb.m_mins.x, aabb.m_maxs.y, aabb.m_maxs.z),
+	};
+	bool hasFront = false;
+	bool hasBack = false;
+	for (int i = 0; i < 8; ++i) {
+		float altitude = DotProduct3D(corners[i], plane.m_normal) - plane.m_distanceFromOrigin;
+		if (altitude > 0.f) hasFront = true;
+		else if (altitude < 0.f) hasBack = true;
+		else return true;
+		if (hasFront && hasBack) return true;
+	}
+	return false;
 }
 

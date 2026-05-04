@@ -2,6 +2,8 @@
 #include "Engine/Math/Vec3.hpp"
 #include "Engine/Math/Mat44.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include "Engine/Math/OBB3.hpp"
+#include "Engine/Math/Plane3.hpp"
 #include "Engine/Core/Vertex.hpp"
 #include "Engine/Core/VertexUtils.hpp"
 #include <cmath>
@@ -667,5 +669,52 @@ void AddVertsForArrow2D(std::vector<Vertex>& verts, Vec2 tailPos, Vec2 tipPos, f
 
 	AddVertsForLineSegment2D(verts, a1, tipPos, lineThickness, color);
 	AddVertsForLineSegment2D(verts, a2, tipPos, lineThickness, color);
+}
+
+//-----------------------------------------------------------------------------------------------
+// MP2-A07 — OBB3 + Plane3 vertex utilities
+
+void AddVertsForOBB3(std::vector<Vertex>& verts, OBB3 const& box, Rgba8 const& color, AABB2 const& UVs)
+{
+	Vec3 corners[8];
+	box.GetCornerPositions(corners);
+	// Corner index convention (set by OBB3::GetCornerPositions):
+	//   0 = -i -j -k     1 = +i -j -k     2 = +i +j -k     3 = -i +j -k
+	//   4 = -i -j +k     5 = +i -j +k     6 = +i +j +k     7 = -i +j +k
+	// 6 faces, CCW outward when viewed from outside the box.
+
+	AddVertsForQuad3D(verts, corners[1], corners[2], corners[6], corners[5], color, UVs); // +i face
+	AddVertsForQuad3D(verts, corners[3], corners[0], corners[4], corners[7], color, UVs); // -i face
+	AddVertsForQuad3D(verts, corners[2], corners[3], corners[7], corners[6], color, UVs); // +j face
+	AddVertsForQuad3D(verts, corners[0], corners[1], corners[5], corners[4], color, UVs); // -j face
+	AddVertsForQuad3D(verts, corners[4], corners[5], corners[6], corners[7], color, UVs); // +k face
+	AddVertsForQuad3D(verts, corners[3], corners[2], corners[1], corners[0], color, UVs); // -k face
+}
+
+void AddVertsForPlane3(std::vector<Vertex>& verts, Plane3 const& plane,
+	float gridHalfExtent, float gridStepLength, float lineThickness, Rgba8 const& color)
+{
+	Vec3 centerOnPlane = plane.m_normal * plane.m_distanceFromOrigin;
+
+	Vec3 reference = (fabsf(plane.m_normal.z) < 0.9f) ? Vec3(0.f, 0.f, 1.f) : Vec3(1.f, 0.f, 0.f);
+	Vec3 uAxis = CrossProduct3D(plane.m_normal, reference);
+	if (uAxis.GetLengthSquared() == 0.f) {
+		reference = Vec3(0.f, 1.f, 0.f);
+		uAxis = CrossProduct3D(plane.m_normal, reference);
+	}
+	uAxis = uAxis.GetNormalized();
+	Vec3 vAxis = CrossProduct3D(plane.m_normal, uAxis).GetNormalized();
+
+	int numLinesPerSide = static_cast<int>(gridHalfExtent / gridStepLength);
+	for (int i = -numLinesPerSide; i <= numLinesPerSide; ++i) {
+		float offset = static_cast<float>(i) * gridStepLength;
+		Vec3 alongU0 = centerOnPlane + (vAxis * offset) - (uAxis * gridHalfExtent);
+		Vec3 alongU1 = centerOnPlane + (vAxis * offset) + (uAxis * gridHalfExtent);
+		AddVertsForCylinder3D(verts, alongU0, alongU1, lineThickness, color, AABB2(0.f, 0.f, 1.f, 1.f), 6);
+
+		Vec3 alongV0 = centerOnPlane + (uAxis * offset) - (vAxis * gridHalfExtent);
+		Vec3 alongV1 = centerOnPlane + (uAxis * offset) + (vAxis * gridHalfExtent);
+		AddVertsForCylinder3D(verts, alongV0, alongV1, lineThickness, color, AABB2(0.f, 0.f, 1.f, 1.f), 6);
+	}
 }
 

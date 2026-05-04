@@ -13,6 +13,8 @@ class AABB2;
 class OBB2;
 class Capsule2;
 struct AABB3;
+struct OBB3;
+struct Plane3;
 
 //-----------------------------------------------------------------------------------------------
 // Clamp and lerp
@@ -92,6 +94,10 @@ bool	DoSphereAndZCylinderOverlap3D(Vec3 const& sphereCenter, float sphereRadius,
 	Vec2 const& cylinderCenterXY, float cylinderRadius, float cylinderMinZ, float cylinderMaxZ);
 bool	DoAABB3AndZCylinderOverlap3D(AABB3 const& aabb, Vec2 const& cylinderCenterXY,
 	float cylinderRadius, float cylinderMinZ, float cylinderMaxZ);
+bool	DoOBB3AndSphereOverlap(OBB3 const& box, Vec3 const& sphereCenter, float sphereRadius);
+bool	DoOBB3AndPlane3Overlap(OBB3 const& box, Plane3 const& plane);
+bool	DoSphereAndPlane3Overlap(Vec3 const& sphereCenter, float sphereRadius, Plane3 const& plane);
+bool	DoAABB3AndPlane3Overlap(AABB3 const& aabb, Plane3 const& plane);
 
 //-----------------------------------------------------------------------------------------------
 // Is point inside ?
@@ -108,6 +114,8 @@ bool	IsPointInsideSphere3D(Vec3 const& point, Vec3 const& sphereCenter, float sp
 bool	IsPointInsideAABB3D(Vec3 const& point, AABB3 const& aabb);
 bool	IsPointInsideZCylinder3D(Vec3 const& point, Vec2 const& cylinderCenterXY,
 	float cylinderRadius, float cylinderMinZ, float cylinderMaxZ);
+bool	IsPointInsideOBB3(Vec3 const& point, OBB3 const& box);
+bool	IsPointInFrontOfPlane3(Vec3 const& point, Plane3 const& plane);
 
 //-----------------------------------------------------------------------------------------------
 // Get nearest point on ?
@@ -122,6 +130,8 @@ Vec3	GetNearestPointOnSphere3D(Vec3 const& referencePos, Vec3 const& sphereCente
 Vec3	GetNearestPointOnAABB3D(Vec3 const& referencePos, AABB3 const& aabb);
 Vec3	GetNearestPointOnZCylinder3D(Vec3 const& referencePos, Vec2 const& cylinderCenterXY,
 	float cylinderRadius, float cylinderMinZ, float cylinderMaxZ);
+Vec3	GetNearestPointOnOBB3(Vec3 const& referencePos, OBB3 const& box);
+Vec3	GetNearestPointOnPlane3(Vec3 const& referencePos, Plane3 const& plane);
 
 //-----------------------------------------------------------------------------------------------
 bool	PushDiscOutOfFixedPoint2D(Vec2& mobileDiscCenter, float discRadius, Vec2 const& fixedPoint);
@@ -193,3 +203,5 @@ RaycastResult3D RaycastVsAABB3D(Vec3 startPos, Vec3 fwdNormal, float maxDist,
 	AABB3 const& aabb);
 RaycastResult3D RaycastVsZCylinder3D(Vec3 startPos, Vec3 fwdNormal, float maxDist,
 	Vec2 cylinderCenterXY, float cylinderRadius, float cylinderMinZ, float cylinderMaxZ);
+RaycastResult3D RaycastVsOBB3(Vec3 startPos, Vec3 fwdNormal, float maxDist, OBB3 const& box);
+RaycastResult3D RaycastVsPlane3(Vec3 startPos, Vec3 fwdNormal, float maxDist, Plane3 const& plane);
