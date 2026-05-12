@@ -1427,8 +1427,6 @@ RaycastResult3D RaycastVsZCylinder3D(Vec3 startPos, Vec3 fwdNormal, float maxDis
 }
 
 //-----------------------------------------------------------------------------------------------
-// MP2-A07 — OBB3 + Plane3 queries
-
 bool IsPointInsideOBB3(Vec3 const& point, OBB3 const& box)
 {
 	Vec3 displacement = point - box.m_center;

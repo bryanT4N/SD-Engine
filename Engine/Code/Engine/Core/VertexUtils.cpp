@@ -672,16 +672,10 @@ void AddVertsForArrow2D(std::vector<Vertex>& verts, Vec2 tailPos, Vec2 tipPos, f
 }
 
 //-----------------------------------------------------------------------------------------------
-// MP2-A07 — OBB3 + Plane3 vertex utilities
-
 void AddVertsForOBB3(std::vector<Vertex>& verts, OBB3 const& box, Rgba8 const& color, AABB2 const& UVs)
 {
 	Vec3 corners[8];
 	box.GetCornerPositions(corners);
-	// Corner index convention (set by OBB3::GetCornerPositions):
-	//   0 = -i -j -k     1 = +i -j -k     2 = +i +j -k     3 = -i +j -k
-	//   4 = -i -j +k     5 = +i -j +k     6 = +i +j +k     7 = -i +j +k
-	// 6 faces, CCW outward when viewed from outside the box.
 
 	AddVertsForQuad3D(verts, corners[1], corners[2], corners[6], corners[5], color, UVs); // +i face
 	AddVertsForQuad3D(verts, corners[3], corners[0], corners[4], corners[7], color, UVs); // -i face
