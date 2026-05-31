@@ -40,7 +40,7 @@
     <ProjectGuid>{2d5f9eed-9688-46fd-81ac-a91c140fe78f}</ProjectGuid>
     <RootNamespace>Game</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>Protogame3D</ProjectName>
+    <ProjectName>NetChess3D</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
