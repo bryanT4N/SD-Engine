@@ -42,7 +42,7 @@
 #include "Engine/Renderer/DefaultShader.hpp"
 
 //-----------------------------------------------------------------------------------------------
-struct CameraConstants
+struct CameraConstantsOnCPU
 {
 	Mat44 WorldToCameraTransform;		// View transform
 	Mat44 CameraToRenderTransform;		// Non-standard transform from game to DirectX conventions
@@ -52,7 +52,7 @@ struct CameraConstants
 static const int k_cameraConstantsSlot = 2;
 
 //-----------------------------------------------------------------------------------------------
-struct ModelConstants
+struct ModelConstantsOnCPU
 {
 	Mat44 ModelToWorldTransform;		// Model transform
 	float ModelColor[4];
@@ -285,8 +285,8 @@ void Renderer::Startup()
 	BindShader(m_defaultShader);
 
 	m_immediateVBO = CreateVertexBuffer(sizeof(Vertex_PCU), sizeof(Vertex_PCU));
-	m_cameraCBO = CreateConstantBuffer(sizeof(CameraConstants));
-	m_modelCBO = CreateConstantBuffer(sizeof(ModelConstants));
+	m_cameraCBO = CreateConstantBuffer(sizeof(CameraConstantsOnCPU));
+	m_modelCBO = CreateConstantBuffer(sizeof(ModelConstantsOnCPU));
 
 	// Blend states
 	D3D11_BLEND_DESC blendDesc = { };
@@ -548,11 +548,11 @@ void Renderer::BeginCamera(Camera const& camera)
 
 	m_deviceContext->RSSetViewports(1, &viewport);
 
-	CameraConstants cameraConstants;
-	cameraConstants.WorldToCameraTransform = camera.GetWorldToCameraTransform();
-	cameraConstants.CameraToRenderTransform = camera.GetCameraToRenderTransform();
-	cameraConstants.RenderToClipTransform = camera.GetRenderToClipTransform();
-	CopyCPUToGPU(&cameraConstants, sizeof(CameraConstants), m_cameraCBO);
+	CameraConstantsOnCPU cameraConstantsOnCPU;
+	cameraConstantsOnCPU.WorldToCameraTransform = camera.GetWorldToCameraTransform();
+	cameraConstantsOnCPU.CameraToRenderTransform = camera.GetCameraToRenderTransform();
+	cameraConstantsOnCPU.RenderToClipTransform = camera.GetRenderToClipTransform();
+	CopyCPUToGPU(&cameraConstantsOnCPU, sizeof(CameraConstantsOnCPU), m_cameraCBO);
 	BindConstantBuffer(k_cameraConstantsSlot, m_cameraCBO);
 
 	SetModelConstants();
@@ -573,17 +573,17 @@ void Renderer::SetModelConstants(
 		return;
 	}
 
-	ModelConstants modelConstants;
-	modelConstants.ModelToWorldTransform = modelToWorldTransform;
+	ModelConstantsOnCPU modelConstantsOnCPU;
+	modelConstantsOnCPU.ModelToWorldTransform = modelToWorldTransform;
 
 	float modelColorAsFloats[4];
 	modelColor.GetAsFloats(modelColorAsFloats);
-	modelConstants.ModelColor[0] = modelColorAsFloats[0];
-	modelConstants.ModelColor[1] = modelColorAsFloats[1];
-	modelConstants.ModelColor[2] = modelColorAsFloats[2];
-	modelConstants.ModelColor[3] = modelColorAsFloats[3];
+	modelConstantsOnCPU.ModelColor[0] = modelColorAsFloats[0];
+	modelConstantsOnCPU.ModelColor[1] = modelColorAsFloats[1];
+	modelConstantsOnCPU.ModelColor[2] = modelColorAsFloats[2];
+	modelConstantsOnCPU.ModelColor[3] = modelColorAsFloats[3];
 
-	CopyCPUToGPU(&modelConstants, sizeof(ModelConstants), m_modelCBO);
+	CopyCPUToGPU(&modelConstantsOnCPU, sizeof(ModelConstantsOnCPU), m_modelCBO);
 	BindConstantBuffer(k_modelConstantsSlot, m_modelCBO);
 }
 
