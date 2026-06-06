@@ -28,25 +28,25 @@ static void PrintStartupControlsToDevConsole()
 	}
 
 	DevConsole* devConsole = g_engine->m_devConsole;
-	devConsole->AddLine(DevConsole::LOG_COLOR_INFO_MAJOR, "Protogame3D Controls:");
+	devConsole->AddLine(DevConsole::LOG_COLOR_INFO_MAJOR, "NetChess3D Controls:");
 	std::string controlsBlockText =
-		"Mouse  - Aim\n"
-		"W / A  - Move\n"
-		"S / D  - Strafe\n"
-		"Q / E  - Roll\n"
-		"Z / C  - Elevate\n"
-		"Shift  - Sprint\n"
-		"H      - Set Camera to Origin\n"
-		"1      - Spawn Line\n"
-		"2      - Spawn Point\n"
-		"3      - Spawn Wireframe Sphere\n"
-		"4      - Spawn Basis\n"
-		"5      - Spawn Billboarded Text\n"
-		"6      - Spawn Wireframe Cylinder\n"
-		"7      - Add Message\n"
-		"`~`    - Open Dev Console\n"
-		"Escape - Exit Game\n"
-		"Space  - Start Game";
+		"`~`     - Open Dev Console\n"
+		"Space   - Start Game (in Attract)\n"
+		"F4      - Cycle Camera Mode (PoV / Overhead / Free-Spectator)\n"
+		"F8      - Restart Game\n"
+		"Escape  - Exit Game\n"
+		"\n"
+		"ChessMove Command Format (in DevConsole):\n"
+		"    ChessMove from=e2 to=e4\n"
+		"\n"
+		"Free-Spectator Camera Mode:\n"
+		"    Mouse   - Aim\n"
+		"    W / S   - Move forward/back\n"
+		"    A / D   - Strafe\n"
+		"    Q / E   - Roll\n"
+		"    Z / C   - Elevate down/up\n"
+		"    Shift   - Sprint\n"
+		"    H       - Reset Pose";
 	devConsole->AddLine(DevConsole::LOG_COLOR_INFO_MINOR, controlsBlockText);
 }
 
