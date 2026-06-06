@@ -2,6 +2,7 @@
 #include "Game/GameCommon.hpp"
 #include "Engine/Core/Vertex.hpp"
 #include "Engine/Core/Clock.hpp"
+#include "Engine/Core/EventSystem.hpp"
 #include "Engine/Math/RandomNumberGenerator.hpp"
 
 #include <vector>
@@ -50,4 +51,5 @@ public:
 	void UpdateAnimatedSceneProps();
 	float GetDeltaSeconds() const;
 
+	static bool ChessMove_Cmd(EventArgs& args);
 };

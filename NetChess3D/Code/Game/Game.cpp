@@ -480,4 +480,21 @@ void Game::UpdateAnimatedSceneProps()
 }
 
 
+//-----------------------------------------------------------------------------------------------
+bool Game::ChessMove_Cmd(EventArgs& args)
+{
+	std::string fromArg = args.GetValue("from", "");
+	std::string toArg = args.GetValue("to", "");
+
+	if (g_engine != nullptr && g_engine->m_devConsole != nullptr) {
+		g_engine->m_devConsole->AddLine(
+			DevConsole::LOG_COLOR_INFO_MINOR,
+			Stringf("ChessMove command received: from=%s to=%s",
+				fromArg.c_str(), toArg.c_str()));
+	}
+
+	return true;
+}
+
+
 

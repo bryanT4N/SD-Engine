@@ -1,6 +1,6 @@
 <GameConfig
 	windowAspect="2.0"
-	windowTitle="Protogame3D"
+	windowTitle="NetChess3D"
 	gameplaySlowMoTimeScale="0.1"
 	playerMoveSpeed="5.0"
 	playerSprintMultiplier="10.0"

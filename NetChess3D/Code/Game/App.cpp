@@ -74,6 +74,7 @@ App::App()
 	DebugRenderSystemStartup(debugRenderConfig);
 	m_game				= new Game;
 	SubscribeEventCallbackFunction("Quit", App::Command_Quit);
+	SubscribeEventCallbackFunction("ChessMove", Game::ChessMove_Cmd);
 	PrintStartupControlsToDevConsole();
 
 	timeCurrentFrame	= GetCurrentTimeSeconds();
