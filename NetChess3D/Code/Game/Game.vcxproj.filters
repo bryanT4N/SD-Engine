@@ -37,6 +37,9 @@
     <ClCompile Include="ChessPlayer.cpp">
       <Filter>Gameplay</Filter>
     </ClCompile>
+    <ClCompile Include="ChessPieceDefinition.cpp">
+      <Filter>Gameplay</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp">
@@ -64,6 +67,9 @@
       <Filter>Gameplay</Filter>
     </ClInclude>
     <ClInclude Include="ChessPlayer.hpp">
+      <Filter>Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="ChessPieceDefinition.hpp">
       <Filter>Gameplay</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,4 +1,5 @@
 #include "Game/GameCommon.hpp"
+#include "Game/ChessPieceDefinition.hpp"
 #include "Game/Entity.hpp"
 #include "Game/Game.hpp"
 #include "Game/Player.hpp"
@@ -132,6 +133,20 @@ void Game::Startup()
 	DebugAddWorldBasis();
 
 	m_tbnVizShader = g_engine->m_render->CreateShader("TBNViz", VertexType::VERTEX_PCUTBN);
+
+	ChessPieceDefinition::InitializeAllDefinitions();
+
+	if (g_engine != nullptr && g_engine->m_devConsole != nullptr) {
+		g_engine->m_devConsole->AddLine(
+			DevConsole::LOG_COLOR_INFO_MINOR,
+			Stringf("ChessPieceDefinition initialized: K=%c Q=%c R=%c B=%c N=%c P=%c",
+				ChessPieceDefinition::GetDefinition(PieceType::KING).GetLetter(),
+				ChessPieceDefinition::GetDefinition(PieceType::QUEEN).GetLetter(),
+				ChessPieceDefinition::GetDefinition(PieceType::ROOK).GetLetter(),
+				ChessPieceDefinition::GetDefinition(PieceType::BISHOP).GetLetter(),
+				ChessPieceDefinition::GetDefinition(PieceType::KNIGHT).GetLetter(),
+				ChessPieceDefinition::GetDefinition(PieceType::PAWN).GetLetter()));
+	}
 }
 
 void Game::Shutdown()

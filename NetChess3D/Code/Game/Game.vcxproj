@@ -362,6 +362,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="App.cpp" />
+    <ClCompile Include="ChessPieceDefinition.cpp" />
     <ClCompile Include="ChessPlayer.cpp" />
     <ClCompile Include="Entity.cpp" />
     <ClCompile Include="Game.cpp" />
@@ -373,6 +374,7 @@
   <ItemGroup>
     <ClInclude Include="App.hpp" />
     <ClInclude Include="ChessObject.hpp" />
+    <ClInclude Include="ChessPieceDefinition.hpp" />
     <ClInclude Include="ChessPlayer.hpp" />
     <ClInclude Include="EngineBuildPreferences.hpp" />
     <ClInclude Include="Entity.hpp" />
