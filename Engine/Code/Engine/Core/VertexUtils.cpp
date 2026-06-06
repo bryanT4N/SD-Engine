@@ -70,6 +70,22 @@ void AddVertsForQuad3D(std::vector<Vertex>& verts,
 	verts.push_back(Vertex(topLeft, color, Vec2(UVs.m_mins.x, UVs.m_maxs.y)));
 }
 
+
+//-----------------------------------------------------------------------------------------------
+static void PushQuadVertsWithTBN(std::vector<Vertex>& verts,
+	Vec3 const& bottomLeft, Vec3 const& bottomRight, Vec3 const& topRight, Vec3 const& topLeft,
+	Vec3 const& tangent, Vec3 const& bitangent, Vec3 const& normal,
+	Rgba8 const& color, AABB2 const& UVs)
+{
+	verts.push_back(Vertex(bottomLeft, color, Vec2(UVs.m_mins.x, UVs.m_mins.y), tangent, bitangent, normal));
+	verts.push_back(Vertex(bottomRight, color, Vec2(UVs.m_maxs.x, UVs.m_mins.y), tangent, bitangent, normal));
+	verts.push_back(Vertex(topRight, color, Vec2(UVs.m_maxs.x, UVs.m_maxs.y), tangent, bitangent, normal));
+
+	verts.push_back(Vertex(bottomLeft, color, Vec2(UVs.m_mins.x, UVs.m_mins.y), tangent, bitangent, normal));
+	verts.push_back(Vertex(topRight, color, Vec2(UVs.m_maxs.x, UVs.m_maxs.y), tangent, bitangent, normal));
+	verts.push_back(Vertex(topLeft, color, Vec2(UVs.m_mins.x, UVs.m_maxs.y), tangent, bitangent, normal));
+}
+
 void AddVertsForQuad3D(std::vector<Vertex>& verts,
 	std::vector<unsigned int>& indexes,
 	const Vec3& bottomLeft, const Vec3& bottomRight, const Vec3& topRight, const Vec3& topLeft,
@@ -197,53 +213,65 @@ void AddVertsForAABB3D(
 	float maxZ = bounds.m_maxs.z;
 
 	// +X
-	AddVertsForQuad3D(verts,
+	PushQuadVertsWithTBN(verts,
 		Vec3(maxX, minY, minZ),
 		Vec3(maxX, maxY, minZ),
 		Vec3(maxX, maxY, maxZ),
 		Vec3(maxX, minY, maxZ),
-		color,
-		UVs);
+		Vec3(0.f, 1.f, 0.f),
+		Vec3(0.f, 0.f, 1.f),
+		Vec3(1.f, 0.f, 0.f),
+		color, UVs);
 	// -X
-	AddVertsForQuad3D(verts,
+	PushQuadVertsWithTBN(verts,
 		Vec3(minX, minY, maxZ),
 		Vec3(minX, maxY, maxZ),
 		Vec3(minX, maxY, minZ),
 		Vec3(minX, minY, minZ),
-		color,
-		UVs);
+		Vec3(0.f, 1.f, 0.f),
+		Vec3(0.f, 0.f, -1.f),
+		Vec3(-1.f, 0.f, 0.f),
+		color, UVs);
 	// +Y
-	AddVertsForQuad3D(verts,
+	PushQuadVertsWithTBN(verts,
 		Vec3(minX, maxY, minZ),
 		Vec3(minX, maxY, maxZ),
 		Vec3(maxX, maxY, maxZ),
 		Vec3(maxX, maxY, minZ),
-		color,
-		UVs);
+		Vec3(0.f, 0.f, 1.f),
+		Vec3(1.f, 0.f, 0.f),
+		Vec3(0.f, 1.f, 0.f),
+		color, UVs);
 	// -Y
-	AddVertsForQuad3D(verts,
+	PushQuadVertsWithTBN(verts,
 		Vec3(minX, minY, maxZ),
 		Vec3(minX, minY, minZ),
 		Vec3(maxX, minY, minZ),
 		Vec3(maxX, minY, maxZ),
-		color,
-		UVs);
+		Vec3(0.f, 0.f, -1.f),
+		Vec3(1.f, 0.f, 0.f),
+		Vec3(0.f, -1.f, 0.f),
+		color, UVs);
 	// +Z
-	AddVertsForQuad3D(verts,
+	PushQuadVertsWithTBN(verts,
 		Vec3(minX, minY, maxZ),
 		Vec3(maxX, minY, maxZ),
 		Vec3(maxX, maxY, maxZ),
 		Vec3(minX, maxY, maxZ),
-		color,
-		UVs);
+		Vec3(1.f, 0.f, 0.f),
+		Vec3(0.f, 1.f, 0.f),
+		Vec3(0.f, 0.f, 1.f),
+		color, UVs);
 	// -Z
-	AddVertsForQuad3D(verts,
+	PushQuadVertsWithTBN(verts,
 		Vec3(maxX, minY, minZ),
 		Vec3(minX, minY, minZ),
 		Vec3(minX, maxY, minZ),
 		Vec3(maxX, maxY, minZ),
-		color,
-		UVs);
+		Vec3(-1.f, 0.f, 0.f),
+		Vec3(0.f, 1.f, 0.f),
+		Vec3(0.f, 0.f, -1.f),
+		color, UVs);
 }
 
 
@@ -266,39 +294,59 @@ void AddVertsForSphere3D(
 		float pitch0 = RangeMap(v0, 0.f, 1.f, -90.f, 90.f);
 		float pitch1 = RangeMap(v1, 0.f, 1.f, -90.f, 90.f);
 
+		float cosPitch0 = CosDegrees(pitch0);
+		float sinPitch0 = SinDegrees(pitch0);
+		float cosPitch1 = CosDegrees(pitch1);
+		float sinPitch1 = SinDegrees(pitch1);
+
 		for (int sliceIndex = 0; sliceIndex < numSlices; ++sliceIndex) {
 			float u0 = static_cast<float>(sliceIndex) / static_cast<float>(numSlices);
 			float u1 = static_cast<float>(sliceIndex + 1) / static_cast<float>(numSlices);
 			float yaw0 = RangeMap(u0, 0.f, 1.f, 0.f, 360.f);
 			float yaw1 = RangeMap(u1, 0.f, 1.f, 0.f, 360.f);
 
+			float cosYaw0 = CosDegrees(yaw0);
+			float sinYaw0 = SinDegrees(yaw0);
+			float cosYaw1 = CosDegrees(yaw1);
+			float sinYaw1 = SinDegrees(yaw1);
+
 			Vec3 bottomLeft = center + Vec3::MakeFromPolarDegrees(pitch0, yaw0, radius);
 			Vec3 bottomRight = center + Vec3::MakeFromPolarDegrees(pitch0, yaw1, radius);
 			Vec3 topRight = center + Vec3::MakeFromPolarDegrees(pitch1, yaw1, radius);
 			Vec3 topLeft = center + Vec3::MakeFromPolarDegrees(pitch1, yaw0, radius);
+
+			Vec3 bottomLeftNormal(cosPitch0 * cosYaw0, cosPitch0 * sinYaw0, sinPitch0);
+			Vec3 bottomRightNormal(cosPitch0 * cosYaw1, cosPitch0 * sinYaw1, sinPitch0);
+			Vec3 topRightNormal(cosPitch1 * cosYaw1, cosPitch1 * sinYaw1, sinPitch1);
+			Vec3 topLeftNormal(cosPitch1 * cosYaw0, cosPitch1 * sinYaw0, sinPitch1);
+
+			Vec3 bottomLeftTangent(-sinYaw0, cosYaw0, 0.f);
+			Vec3 bottomRightTangent(-sinYaw1, cosYaw1, 0.f);
+			Vec3 topRightTangent(-sinYaw1, cosYaw1, 0.f);
+			Vec3 topLeftTangent(-sinYaw0, cosYaw0, 0.f);
+
+			Vec3 bottomLeftBitangent(-sinPitch0 * cosYaw0, -sinPitch0 * sinYaw0, cosPitch0);
+			Vec3 bottomRightBitangent(-sinPitch0 * cosYaw1, -sinPitch0 * sinYaw1, cosPitch0);
+			Vec3 topRightBitangent(-sinPitch1 * cosYaw1, -sinPitch1 * sinYaw1, cosPitch1);
+			Vec3 topLeftBitangent(-sinPitch1 * cosYaw0, -sinPitch1 * sinYaw0, cosPitch1);
 
 			// Keep engine-wide UV convention; flip sphere V so +Z (north pole) maps to texture top.
 			float uvU0 = Interpolate(UVs.m_mins.x, UVs.m_maxs.x, u0);
 			float uvU1 = Interpolate(UVs.m_mins.x, UVs.m_maxs.x, u1);
 			float uvV0 = Interpolate(UVs.m_maxs.y, UVs.m_mins.y, v0);
 			float uvV1 = Interpolate(UVs.m_maxs.y, UVs.m_mins.y, v1);
-			AABB2 quadUVs(
-				uvU0,
-				uvV0,
-				uvU1,
-				uvV1);
-			Vec2 uvBottomLeft(quadUVs.m_mins.x, quadUVs.m_mins.y);
-			Vec2 uvBottomRight(quadUVs.m_maxs.x, quadUVs.m_mins.y);
-			Vec2 uvTopRight(quadUVs.m_maxs.x, quadUVs.m_maxs.y);
-			Vec2 uvTopLeft(quadUVs.m_mins.x, quadUVs.m_maxs.y);
+			Vec2 uvBottomLeft(uvU0, uvV0);
+			Vec2 uvBottomRight(uvU1, uvV0);
+			Vec2 uvTopRight(uvU1, uvV1);
+			Vec2 uvTopLeft(uvU0, uvV1);
 
-			verts.push_back(Vertex(bottomLeft, color, uvBottomLeft));
-			verts.push_back(Vertex(topRight, color, uvTopRight));
-			verts.push_back(Vertex(bottomRight, color, uvBottomRight));
+			verts.push_back(Vertex(bottomLeft, color, uvBottomLeft, bottomLeftTangent, bottomLeftBitangent, bottomLeftNormal));
+			verts.push_back(Vertex(topRight, color, uvTopRight, topRightTangent, topRightBitangent, topRightNormal));
+			verts.push_back(Vertex(bottomRight, color, uvBottomRight, bottomRightTangent, bottomRightBitangent, bottomRightNormal));
 
-			verts.push_back(Vertex(bottomLeft, color, uvBottomLeft));
-			verts.push_back(Vertex(topLeft, color, uvTopLeft));
-			verts.push_back(Vertex(topRight, color, uvTopRight));
+			verts.push_back(Vertex(bottomLeft, color, uvBottomLeft, bottomLeftTangent, bottomLeftBitangent, bottomLeftNormal));
+			verts.push_back(Vertex(topLeft, color, uvTopLeft, topLeftTangent, topLeftBitangent, topLeftNormal));
+			verts.push_back(Vertex(topRight, color, uvTopRight, topRightTangent, topRightBitangent, topRightNormal));
 		}
 	}
 }
@@ -356,6 +404,14 @@ void AddVertsForCylinder3D(std::vector<Vertex>& verts,
 	Vec3 jBasis;
 	GetSurfaceTangentsForAxis(axisNormal, iBasis, jBasis);
 
+	Vec3 startCapTangent = iBasis;
+	Vec3 startCapBitangent = -jBasis;
+	Vec3 startCapNormal = -axisNormal;
+
+	Vec3 endCapTangent = iBasis;
+	Vec3 endCapBitangent = jBasis;
+	Vec3 endCapNormal = axisNormal;
+
 	Vec2 centerUV = UVs.GetCenter();
 	for (int sliceIndex = 0; sliceIndex < slices; ++sliceIndex) {
 		float fraction0 = static_cast<float>(sliceIndex) / static_cast<float>(slices);
@@ -371,6 +427,9 @@ void AddVertsForCylinder3D(std::vector<Vertex>& verts,
 		Vec3 radial0 = (cosTheta0 * iBasis) + (sinTheta0 * jBasis);
 		Vec3 radial1 = (cosTheta1 * iBasis) + (sinTheta1 * jBasis);
 
+		Vec3 tangent0 = (-sinTheta0 * iBasis) + (cosTheta0 * jBasis);
+		Vec3 tangent1 = (-sinTheta1 * iBasis) + (cosTheta1 * jBasis);
+
 		Vec3 start0 = start + (radius * radial0);
 		Vec3 start1 = start + (radius * radial1);
 		Vec3 end0 = end + (radius * radial0);
@@ -378,19 +437,28 @@ void AddVertsForCylinder3D(std::vector<Vertex>& verts,
 
 		float uvU0 = Interpolate(UVs.m_mins.x, UVs.m_maxs.x, fraction0);
 		float uvU1 = Interpolate(UVs.m_mins.x, UVs.m_maxs.x, fraction1);
-		AABB2 sideUVs(uvU0, UVs.m_mins.y, uvU1, UVs.m_maxs.y);
-		AddVertsForQuad3D(verts, start0, start1, end1, end0, color, sideUVs);
+
+		// Side
+		verts.push_back(Vertex(start0, color, Vec2(uvU0, UVs.m_mins.y), tangent0, axisNormal, radial0));
+		verts.push_back(Vertex(start1, color, Vec2(uvU1, UVs.m_mins.y), tangent1, axisNormal, radial1));
+		verts.push_back(Vertex(end1, color, Vec2(uvU1, UVs.m_maxs.y), tangent1, axisNormal, radial1));
+
+		verts.push_back(Vertex(start0, color, Vec2(uvU0, UVs.m_mins.y), tangent0, axisNormal, radial0));
+		verts.push_back(Vertex(end1, color, Vec2(uvU1, UVs.m_maxs.y), tangent1, axisNormal, radial1));
+		verts.push_back(Vertex(end0, color, Vec2(uvU0, UVs.m_maxs.y), tangent0, axisNormal, radial0));
 
 		Vec2 startUV0 = GetRadialUV(UVs, cosTheta0, sinTheta0);
 		Vec2 startUV1 = GetRadialUV(UVs, cosTheta1, sinTheta1);
 
-		verts.push_back(Vertex(start, color, centerUV));
-		verts.push_back(Vertex(start1, color, startUV1));
-		verts.push_back(Vertex(start0, color, startUV0));
+		// Start cap
+		verts.push_back(Vertex(start, color, centerUV, startCapTangent, startCapBitangent, startCapNormal));
+		verts.push_back(Vertex(start1, color, startUV1, startCapTangent, startCapBitangent, startCapNormal));
+		verts.push_back(Vertex(start0, color, startUV0, startCapTangent, startCapBitangent, startCapNormal));
 
-		verts.push_back(Vertex(end, color, centerUV));
-		verts.push_back(Vertex(end0, color, startUV0));
-		verts.push_back(Vertex(end1, color, startUV1));
+		// End cap
+		verts.push_back(Vertex(end, color, centerUV, endCapTangent, endCapBitangent, endCapNormal));
+		verts.push_back(Vertex(end0, color, startUV0, endCapTangent, endCapBitangent, endCapNormal));
+		verts.push_back(Vertex(end1, color, startUV1, endCapTangent, endCapBitangent, endCapNormal));
 	}
 }
 
@@ -677,12 +745,22 @@ void AddVertsForOBB3(std::vector<Vertex>& verts, OBB3 const& box, Rgba8 const& c
 	Vec3 corners[8];
 	box.GetCornerPositions(corners);
 
-	AddVertsForQuad3D(verts, corners[1], corners[2], corners[6], corners[5], color, UVs); // +i face
-	AddVertsForQuad3D(verts, corners[3], corners[0], corners[4], corners[7], color, UVs); // -i face
-	AddVertsForQuad3D(verts, corners[2], corners[3], corners[7], corners[6], color, UVs); // +j face
-	AddVertsForQuad3D(verts, corners[0], corners[1], corners[5], corners[4], color, UVs); // -j face
-	AddVertsForQuad3D(verts, corners[4], corners[5], corners[6], corners[7], color, UVs); // +k face
-	AddVertsForQuad3D(verts, corners[3], corners[2], corners[1], corners[0], color, UVs); // -k face
+	Vec3 const& iBasis = box.m_iBasis;
+	Vec3 const& jBasis = box.m_jBasis;
+	Vec3 const& kBasis = box.m_kBasis;
+
+	PushQuadVertsWithTBN(verts, corners[1], corners[2], corners[6], corners[5],
+		jBasis, kBasis, iBasis, color, UVs); // +i
+	PushQuadVertsWithTBN(verts, corners[3], corners[0], corners[4], corners[7],
+		-jBasis, kBasis, -iBasis, color, UVs); // -i
+	PushQuadVertsWithTBN(verts, corners[2], corners[3], corners[7], corners[6],
+		-iBasis, kBasis, jBasis, color, UVs); // +j
+	PushQuadVertsWithTBN(verts, corners[0], corners[1], corners[5], corners[4],
+		iBasis, kBasis, -jBasis, color, UVs); // -j
+	PushQuadVertsWithTBN(verts, corners[4], corners[5], corners[6], corners[7],
+		iBasis, jBasis, kBasis, color, UVs); // +k
+	PushQuadVertsWithTBN(verts, corners[3], corners[2], corners[1], corners[0],
+		iBasis, -jBasis, -kBasis, color, UVs); // -k
 }
 
 void AddVertsForPlane3(std::vector<Vertex>& verts, Plane3 const& plane,

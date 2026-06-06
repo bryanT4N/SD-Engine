@@ -16,6 +16,7 @@
 #include "Engine/Renderer/Camera.hpp"
 #include "Engine/Renderer/DebugRenderSystem.hpp"
 #include "Engine/Renderer/Renderer.hpp"
+#include "Engine/Renderer/Shader.hpp"
 #include "Engine/Renderer/SimpleTriangleFont.hpp"
 #include "Engine/Window/Window.hpp"
 #include "Engine/Math/Vec2.hpp"
@@ -129,6 +130,8 @@ void Game::Startup()
 	AddEntity(grid);
 
 	DebugAddWorldBasis();
+
+	m_tbnVizShader = g_engine->m_render->CreateShader("TBNViz", VertexType::VERTEX_PCUTBN);
 }
 
 void Game::Shutdown()
@@ -401,6 +404,7 @@ void Game::Render_Playing() const
 	g_engine->m_render->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
 	g_engine->m_render->BeginCamera(worldCamera);
 	{
+		g_engine->m_render->BindShader(m_tbnVizShader);
 		const int entityCount = static_cast<int>(m_entities.size());
 		for (int entityIndex = 0; entityIndex < entityCount; ++entityIndex) {
 			Entity const* entity = m_entities[entityIndex];
@@ -411,11 +415,11 @@ void Game::Render_Playing() const
 				entity->Render();
 			}
 		}
+		g_engine->m_render->BindShader(nullptr);
 		DebugRenderWorld(worldCamera);
 	}
 	g_engine->m_render->EndCamera(worldCamera);
 
-	// TODO: Render ui screen
 	g_engine->m_render->SetRasterizerMode(RasterizerMode::SOLID_CULL_NONE);
 	g_engine->m_render->SetDepthMode(DepthMode::DISABLED);
 	g_engine->m_render->BeginCamera(*m_screenCamera);
@@ -483,14 +487,14 @@ void Game::UpdateAnimatedSceneProps()
 //-----------------------------------------------------------------------------------------------
 bool Game::ChessMove_Cmd(EventArgs& args)
 {
-	std::string fromArg = args.GetValue("from", "");
-	std::string toArg = args.GetValue("to", "");
+	std::string fromSquare = args.GetValue("from", "");
+	std::string toSquare = args.GetValue("to", "");
 
 	if (g_engine != nullptr && g_engine->m_devConsole != nullptr) {
 		g_engine->m_devConsole->AddLine(
 			DevConsole::LOG_COLOR_INFO_MINOR,
 			Stringf("ChessMove command received: from=%s to=%s",
-				fromArg.c_str(), toArg.c_str()));
+				fromSquare.c_str(), toSquare.c_str()));
 	}
 
 	return true;
