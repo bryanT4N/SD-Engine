@@ -57,20 +57,6 @@ void TransformVertexArrayXY3D(std::vector<Vertex> &verts, float uniformScaleXY, 
 	}
 }
 
-void AddVertsForQuad3D(std::vector<Vertex>& verts,
-	const Vec3& bottomLeft, const Vec3& bottomRight, const Vec3& topRight, const Vec3& topLeft,
-	const Rgba8& color, const AABB2& UVs)
-{
-	verts.push_back(Vertex(bottomLeft, color, Vec2(UVs.m_mins.x, UVs.m_mins.y)));
-	verts.push_back(Vertex(bottomRight, color, Vec2(UVs.m_maxs.x, UVs.m_mins.y)));
-	verts.push_back(Vertex(topRight, color, Vec2(UVs.m_maxs.x, UVs.m_maxs.y)));
-
-	verts.push_back(Vertex(bottomLeft, color, Vec2(UVs.m_mins.x, UVs.m_mins.y)));
-	verts.push_back(Vertex(topRight, color, Vec2(UVs.m_maxs.x, UVs.m_maxs.y)));
-	verts.push_back(Vertex(topLeft, color, Vec2(UVs.m_mins.x, UVs.m_maxs.y)));
-}
-
-
 //-----------------------------------------------------------------------------------------------
 static void PushQuadVertsWithTBN(std::vector<Vertex>& verts,
 	Vec3 const& bottomLeft, Vec3 const& bottomRight, Vec3 const& topRight, Vec3 const& topLeft,
@@ -84,6 +70,35 @@ static void PushQuadVertsWithTBN(std::vector<Vertex>& verts,
 	verts.push_back(Vertex(bottomLeft, color, Vec2(UVs.m_mins.x, UVs.m_mins.y), tangent, bitangent, normal));
 	verts.push_back(Vertex(topRight, color, Vec2(UVs.m_maxs.x, UVs.m_maxs.y), tangent, bitangent, normal));
 	verts.push_back(Vertex(topLeft, color, Vec2(UVs.m_mins.x, UVs.m_maxs.y), tangent, bitangent, normal));
+}
+
+void AddVertsForQuad3D(std::vector<Vertex>& verts,
+	const Vec3& bottomLeft, const Vec3& bottomRight, const Vec3& topRight, const Vec3& topLeft,
+	const Rgba8& color, const AABB2& UVs)
+{
+	Vec3 edgeBottom = bottomRight - bottomLeft;
+	Vec3 edgeLeft = topLeft - bottomLeft;
+
+	Vec3 tangent = edgeBottom.GetNormalized();
+	if (tangent.GetLengthSquared() == 0.f) {
+		tangent = Vec3(1.f, 0.f, 0.f);
+	}
+
+	Vec3 normal = CrossProduct3D(edgeBottom, edgeLeft).GetNormalized();
+	if (normal.GetLengthSquared() == 0.f) {
+		normal = Vec3(0.f, 0.f, 1.f);
+	}
+
+	Vec3 bitangent = CrossProduct3D(normal, tangent).GetNormalized();
+	if (bitangent.GetLengthSquared() == 0.f) {
+		bitangent = edgeLeft.GetNormalized();
+	}
+	if (bitangent.GetLengthSquared() == 0.f) {
+		bitangent = Vec3(0.f, 1.f, 0.f);
+	}
+
+	PushQuadVertsWithTBN(verts, bottomLeft, bottomRight, topRight, topLeft,
+		tangent, bitangent, normal, color, UVs);
 }
 
 void AddVertsForQuad3D(std::vector<Vertex>& verts,
@@ -315,20 +330,20 @@ void AddVertsForSphere3D(
 			Vec3 topRight = center + Vec3::MakeFromPolarDegrees(pitch1, yaw1, radius);
 			Vec3 topLeft = center + Vec3::MakeFromPolarDegrees(pitch1, yaw0, radius);
 
-			Vec3 bottomLeftNormal(cosPitch0 * cosYaw0, cosPitch0 * sinYaw0, sinPitch0);
-			Vec3 bottomRightNormal(cosPitch0 * cosYaw1, cosPitch0 * sinYaw1, sinPitch0);
-			Vec3 topRightNormal(cosPitch1 * cosYaw1, cosPitch1 * sinYaw1, sinPitch1);
-			Vec3 topLeftNormal(cosPitch1 * cosYaw0, cosPitch1 * sinYaw0, sinPitch1);
+			Vec3 bottomLeftNormal(cosPitch0 * cosYaw0, cosPitch0 * sinYaw0, -sinPitch0);
+			Vec3 bottomRightNormal(cosPitch0 * cosYaw1, cosPitch0 * sinYaw1, -sinPitch0);
+			Vec3 topRightNormal(cosPitch1 * cosYaw1, cosPitch1 * sinYaw1, -sinPitch1);
+			Vec3 topLeftNormal(cosPitch1 * cosYaw0, cosPitch1 * sinYaw0, -sinPitch1);
 
 			Vec3 bottomLeftTangent(-sinYaw0, cosYaw0, 0.f);
 			Vec3 bottomRightTangent(-sinYaw1, cosYaw1, 0.f);
 			Vec3 topRightTangent(-sinYaw1, cosYaw1, 0.f);
 			Vec3 topLeftTangent(-sinYaw0, cosYaw0, 0.f);
 
-			Vec3 bottomLeftBitangent(-sinPitch0 * cosYaw0, -sinPitch0 * sinYaw0, cosPitch0);
-			Vec3 bottomRightBitangent(-sinPitch0 * cosYaw1, -sinPitch0 * sinYaw1, cosPitch0);
-			Vec3 topRightBitangent(-sinPitch1 * cosYaw1, -sinPitch1 * sinYaw1, cosPitch1);
-			Vec3 topLeftBitangent(-sinPitch1 * cosYaw0, -sinPitch1 * sinYaw0, cosPitch1);
+			Vec3 bottomLeftBitangent(sinPitch0 * cosYaw0, sinPitch0 * sinYaw0, cosPitch0);
+			Vec3 bottomRightBitangent(sinPitch0 * cosYaw1, sinPitch0 * sinYaw1, cosPitch0);
+			Vec3 topRightBitangent(sinPitch1 * cosYaw1, sinPitch1 * sinYaw1, cosPitch1);
+			Vec3 topLeftBitangent(sinPitch1 * cosYaw0, sinPitch1 * sinYaw0, cosPitch1);
 
 			// Keep engine-wide UV convention; flip sphere V so +Z (north pole) maps to texture top.
 			float uvU0 = Interpolate(UVs.m_mins.x, UVs.m_maxs.x, u0);
