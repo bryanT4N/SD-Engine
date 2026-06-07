@@ -1,4 +1,5 @@
 #include "Game/GameCommon.hpp"
+#include "Game/App.hpp"
 #include "Game/ChessBoard.hpp"
 #include "Game/ChessMatch.hpp"
 #include "Game/ChessPieceDefinition.hpp"
@@ -497,16 +498,29 @@ void Game::UpdateAnimatedSceneProps()
 //-----------------------------------------------------------------------------------------------
 bool Game::ChessMove_Cmd(EventArgs& args)
 {
-	std::string fromSquare = args.GetValue("from", "");
-	std::string toSquare = args.GetValue("to", "");
+	std::string fromSquareArg = args.GetValue("from", "");
+	std::string toSquareArg = args.GetValue("to", "");
 
-	if (g_engine != nullptr && g_engine->m_devConsole != nullptr) {
-		g_engine->m_devConsole->AddLine(
-			DevConsole::LOG_COLOR_INFO_MINOR,
-			Stringf("ChessMove command received: from=%s to=%s",
-				fromSquare.c_str(), toSquare.c_str()));
+	if (g_theApp == nullptr || g_theApp->m_game == nullptr || g_theApp->m_game->m_chessMatch == nullptr) {
+		return true;
 	}
 
+	ChessMatch* match = g_theApp->m_game->m_chessMatch;
+	IntVec2 fromSquare = ChessMatch::ParseSquareNotation(fromSquareArg);
+	IntVec2 toSquare = ChessMatch::ParseSquareNotation(toSquareArg);
+
+	std::string errorMessage;
+	bool moveSucceeded = match->TryExecuteMove(fromSquare, toSquare, errorMessage);
+
+	if (!moveSucceeded) {
+		if (g_engine != nullptr && g_engine->m_devConsole != nullptr) {
+			g_engine->m_devConsole->AddLine(DevConsole::LOG_COLOR_ERROR, errorMessage);
+		}
+		return true;
+	}
+
+	match->PrintGameStateToDevConsole();
+	match->PrintBoardToDevConsole();
 	return true;
 }
 

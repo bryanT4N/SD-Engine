@@ -179,8 +179,8 @@ void App::UpdateFromKeyboard()
 			m_game = new Game();
 			m_game->m_nextGameState = GameStates::PLAYING;
 			if (m_game->m_chessMatch != nullptr) {
-				m_game->m_chessMatch->PrintBoardToDevConsole();
 				m_game->m_chessMatch->PrintGameStateToDevConsole();
+				m_game->m_chessMatch->PrintBoardToDevConsole();
 			}
 		}
 	}

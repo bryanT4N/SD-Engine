@@ -1,4 +1,7 @@
 #pragma once
+#include "Engine/Math/IntVec2.hpp"
+
+#include <string>
 
 class ChessBoard;
 class ChessPlayer;
@@ -19,6 +22,9 @@ public:
 
 	void PrintBoardToDevConsole() const;
 	void PrintGameStateToDevConsole() const;
+
+	bool TryExecuteMove(IntVec2 const& fromSquare, IntVec2 const& toSquare, std::string& out_errorMessage);
+	static IntVec2 ParseSquareNotation(std::string const& notation);
 
 	ChessBoard* GetBoard() const;
 	ChessGameState GetCurrentState() const;

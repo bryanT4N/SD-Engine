@@ -90,6 +90,64 @@ void ChessMatch::PrintBoardToDevConsole() const
 		DevConsole::LOG_COLOR_INFO_MINOR, boardBlock, boardCellAspectOverride);
 }
 
+IntVec2 ChessMatch::ParseSquareNotation(std::string const& notation)
+{
+	if (notation.length() != 2) {
+		return IntVec2(-1, -1);
+	}
+	char fileChar = notation[0];
+	char rankChar = notation[1];
+
+	int fileIndex = -1;
+	if (fileChar >= 'a' && fileChar <= 'h') {
+		fileIndex = fileChar - 'a';
+	}
+	int rankIndex = -1;
+	if (rankChar >= '1' && rankChar <= '8') {
+		rankIndex = rankChar - '1';
+	}
+
+	if (fileIndex < 0 || rankIndex < 0) {
+		return IntVec2(-1, -1);
+	}
+	return IntVec2(fileIndex, rankIndex);
+}
+
+bool ChessMatch::TryExecuteMove(IntVec2 const& fromSquare, IntVec2 const& toSquare, std::string& out_errorMessage)
+{
+	if (m_board == nullptr) {
+		out_errorMessage = "Internal error: board is null";
+		return false;
+	}
+
+	ChessPiece* movingPiece = m_board->GetPieceAt(fromSquare);
+	if (movingPiece == nullptr) {
+		out_errorMessage = Stringf("No piece at %c%c",
+			static_cast<char>('a' + fromSquare.x),
+			static_cast<char>('1' + fromSquare.y));
+		return false;
+	}
+
+	ChessPiece* capturedPiece = m_board->GetPieceAt(toSquare);
+	if (capturedPiece != nullptr) {
+		m_board->SetPieceAt(toSquare, nullptr);
+		delete capturedPiece;
+	}
+
+	m_board->SetPieceAt(fromSquare, nullptr);
+	movingPiece->SetSquare(toSquare);
+	m_board->SetPieceAt(toSquare, movingPiece);
+
+	if (m_currentState == ChessGameState::FIRST_PLAYER_TURN) {
+		m_currentState = ChessGameState::SECOND_PLAYER_TURN;
+	}
+	else if (m_currentState == ChessGameState::SECOND_PLAYER_TURN) {
+		m_currentState = ChessGameState::FIRST_PLAYER_TURN;
+	}
+
+	return true;
+}
+
 void ChessMatch::PrintGameStateToDevConsole() const
 {
 	if (g_engine == nullptr || g_engine->m_devConsole == nullptr) {
