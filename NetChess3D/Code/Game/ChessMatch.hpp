@@ -17,6 +17,10 @@ enum class ChessGameState
 class ChessMatch
 {
 public:
+	ChessPlayer* m_players[2] = { nullptr, nullptr };
+	ChessBoard* m_board = nullptr;
+	ChessGameState m_currentState = ChessGameState::FIRST_PLAYER_TURN;
+
 	ChessMatch();
 	~ChessMatch();
 
@@ -36,13 +40,5 @@ public:
 		std::string* out_victoryAnnouncement = nullptr);
 	static IntVec2 ParseSquareNotation(std::string const& notation);
 
-	ChessBoard* GetBoard() const;
-	ChessGameState GetCurrentState() const;
 	int GetCurrentPlayerIdx() const;
-	ChessPlayer* GetPlayer(int playerIdx) const;
-
-private:
-	ChessPlayer* m_players[2] = { nullptr, nullptr };
-	ChessBoard* m_board = nullptr;
-	ChessGameState m_currentState = ChessGameState::FIRST_PLAYER_TURN;
 };

@@ -2,7 +2,9 @@
 
 #include "Game/ChessBoard.hpp"
 #include "Game/ChessPiece.hpp"
+#include "Game/ChessPieceDefinition.hpp"
 #include "Game/ChessPlayer.hpp"
+#include "Game/GameCommon.hpp"
 #include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/Engine.hpp"
 #include "Engine/Core/Rgba8.hpp"
@@ -18,10 +20,8 @@ static char const* VICTORY_SEPARATOR =
 
 ChessMatch::ChessMatch()
 {
-	Rgba8 const firstPlayerTint(64, 255, 64, 255);
-	Rgba8 const secondPlayerTint(255, 64, 64, 255);
-	m_players[0] = new ChessPlayer(0, firstPlayerTint, "Green");
-	m_players[1] = new ChessPlayer(1, secondPlayerTint, "Red");
+	m_players[0] = new ChessPlayer(0, PLAYER_TINT_GREEN, "Green");
+	m_players[1] = new ChessPlayer(1, PLAYER_TINT_RED, "Red");
 
 	m_board = new ChessBoard();
 	m_board->PopulateInitialPieces();
@@ -37,16 +37,6 @@ ChessMatch::~ChessMatch()
 	m_players[1] = nullptr;
 }
 
-ChessBoard* ChessMatch::GetBoard() const
-{
-	return m_board;
-}
-
-ChessGameState ChessMatch::GetCurrentState() const
-{
-	return m_currentState;
-}
-
 int ChessMatch::GetCurrentPlayerIdx() const
 {
 	if (m_currentState == ChessGameState::FIRST_PLAYER_TURN) {
@@ -58,18 +48,20 @@ int ChessMatch::GetCurrentPlayerIdx() const
 	return -1;
 }
 
-ChessPlayer* ChessMatch::GetPlayer(int playerIdx) const
-{
-	if (playerIdx < 0 || playerIdx > 1) {
-		return nullptr;
-	}
-	return m_players[playerIdx];
-}
-
 void ChessMatch::Render() const
 {
-	if (m_board != nullptr) {
-		m_board->Render();
+	if (m_board == nullptr) {
+		return;
+	}
+	m_board->Render();
+
+	for (int file = 0; file < ChessBoard::BOARD_SIZE; ++file) {
+		for (int rank = 0; rank < ChessBoard::BOARD_SIZE; ++rank) {
+			ChessPiece* piece = m_board->GetPieceAt(IntVec2(file, rank));
+			if (piece != nullptr) {
+				piece->Render();
+			}
+		}
 	}
 }
 
@@ -160,38 +152,38 @@ bool ChessMatch::TryExecuteMove(
 	}
 
 	int currentPlayerIdx = GetCurrentPlayerIdx();
-	if (movingPiece->GetOwnerPlayerIdx() != currentPlayerIdx) {
+	if (movingPiece->m_ownerPlayerIdx != currentPlayerIdx) {
 		ChessPieceDefinition const& movingDef =
-			ChessPieceDefinition::GetDefinition(movingPiece->GetPieceType());
+			ChessPieceDefinition::GetDefinition(movingPiece->m_pieceType);
 		out_errorMessage = Stringf(
 			"Illegal move: the %s at %c%c belongs to player %d, but it is currently player %d's turn.",
-			movingDef.GetName().c_str(),
+			movingDef.m_name.c_str(),
 			static_cast<char>('A' + fromSquare.x),
 			static_cast<char>('1' + fromSquare.y),
-			movingPiece->GetOwnerPlayerIdx(),
+			movingPiece->m_ownerPlayerIdx,
 			currentPlayerIdx);
 		return false;
 	}
 
 	ChessPiece* destPiece = m_board->GetPieceAt(toSquare);
-	if (destPiece != nullptr && destPiece->GetOwnerPlayerIdx() == currentPlayerIdx) {
+	if (destPiece != nullptr && destPiece->m_ownerPlayerIdx == currentPlayerIdx) {
 		ChessPieceDefinition const& destDef =
-			ChessPieceDefinition::GetDefinition(destPiece->GetPieceType());
+			ChessPieceDefinition::GetDefinition(destPiece->m_pieceType);
 		out_errorMessage = Stringf(
 			"Illegal move: %c%c is occupied by your own %s.",
 			static_cast<char>('A' + toSquare.x),
 			static_cast<char>('1' + toSquare.y),
-			destDef.GetName().c_str());
+			destDef.m_name.c_str());
 		return false;
 	}
 
 	ChessPieceDefinition const& movingDef =
-		ChessPieceDefinition::GetDefinition(movingPiece->GetPieceType());
+		ChessPieceDefinition::GetDefinition(movingPiece->m_pieceType);
 	if (out_moveAnnouncement != nullptr) {
 		*out_moveAnnouncement = Stringf(
 			"Moved %s's %s from %c%c to %c%c",
 			m_players[currentPlayerIdx]->GetDisplayName().c_str(),
-			movingDef.GetName().c_str(),
+			movingDef.m_name.c_str(),
 			static_cast<char>('A' + fromSquare.x),
 			static_cast<char>('1' + fromSquare.y),
 			static_cast<char>('A' + toSquare.x),
@@ -200,26 +192,26 @@ bool ChessMatch::TryExecuteMove(
 
 	bool capturedKingThisMove = false;
 	if (destPiece != nullptr) {
-		int victimPlayerIdx = destPiece->GetOwnerPlayerIdx();
+		int victimPlayerIdx = destPiece->m_ownerPlayerIdx;
 		ChessPieceDefinition const& capturedDef =
-			ChessPieceDefinition::GetDefinition(destPiece->GetPieceType());
+			ChessPieceDefinition::GetDefinition(destPiece->m_pieceType);
 		if (out_captureAnnouncement != nullptr) {
 			*out_captureAnnouncement = Stringf(
 				"%s captured %s's %s at %c%c",
 				m_players[currentPlayerIdx]->GetDisplayName().c_str(),
 				m_players[victimPlayerIdx]->GetDisplayName().c_str(),
-				capturedDef.GetName().c_str(),
+				capturedDef.m_name.c_str(),
 				static_cast<char>('A' + toSquare.x),
 				static_cast<char>('1' + toSquare.y));
 		}
-		if (destPiece->GetPieceType() == PieceType::KING) {
+		if (destPiece->m_pieceType == PieceType::KING) {
 			capturedKingThisMove = true;
 		}
 		m_board->CapturePieceAt(toSquare);
 	}
 
 	m_board->SetPieceAt(fromSquare, nullptr);
-	movingPiece->SetSquare(toSquare);
+	movingPiece->m_square = toSquare;
 	m_board->SetPieceAt(toSquare, movingPiece);
 
 	if (capturedKingThisMove) {
@@ -276,11 +268,10 @@ void ChessMatch::PrintTurnHeaderToDevConsole() const
 	devConsole->AddLine(DevConsole::LOG_COLOR_WARNING, TURN_SEPARATOR);
 
 	int currentIdx = GetCurrentPlayerIdx();
-	ChessPlayer* currentPlayer = GetPlayer(currentIdx);
-	if (currentPlayer != nullptr) {
+	if (currentIdx >= 0 && currentIdx < 2 && m_players[currentIdx] != nullptr) {
 		devConsole->AddLine(
 			DevConsole::LOG_COLOR_WARNING,
-			Stringf("%s -- it's your move!", currentPlayer->GetDisplayName().c_str()));
+			Stringf("%s -- it's your move!", m_players[currentIdx]->GetDisplayName().c_str()));
 	}
 	PrintGameStateToDevConsole();
 	PrintBoardToDevConsole();

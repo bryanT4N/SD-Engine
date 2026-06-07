@@ -13,6 +13,10 @@ class ChessBoard : public ChessObject
 public:
 	static constexpr int BOARD_SIZE = 8;
 
+	ChessPiece* m_grid[BOARD_SIZE][BOARD_SIZE] = {};
+	VertexBuffer* m_vertexBuffer = nullptr;
+	int m_vertexCount = 0;
+
 	ChessBoard();
 	virtual ~ChessBoard() override;
 
@@ -32,9 +36,4 @@ private:
 
 	void CreateMeshOnCPU(std::vector<Vertex>& out_verts) const;
 	void UploadMeshToGPU();
-
-	ChessPiece* m_grid[BOARD_SIZE][BOARD_SIZE] = {};
-
-	VertexBuffer* m_vertexBuffer = nullptr;
-	int m_vertexCount = 0;
 };

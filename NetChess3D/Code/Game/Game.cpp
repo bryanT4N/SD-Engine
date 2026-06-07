@@ -102,6 +102,25 @@ void Game::Startup()
 	ChessPieceDefinition::InitializeAllDefinitions();
 
 	m_chessMatch = new ChessMatch();
+
+	float cameraAspect = 2.f;
+	if (g_engine != nullptr && g_engine->m_window != nullptr) {
+		IntVec2 clientDimensions = g_engine->m_window->GetClientDimensions();
+		if (clientDimensions.y > 0) {
+			cameraAspect =
+				static_cast<float>(clientDimensions.x) /
+				static_cast<float>(clientDimensions.y);
+		}
+	}
+	m_povCamera = new Camera();
+	m_povCamera->SetPerspectiveView(cameraAspect, 60.f, 0.1f, 100.f);
+	Mat44 cameraToRenderTransform(
+		Vec3(0.f, 0.f, 1.f),
+		Vec3(-1.f, 0.f, 0.f),
+		Vec3(0.f, 1.f, 0.f),
+		Vec3(0.f, 0.f, 0.f));
+	m_povCamera->SetCameraToRenderTransform(cameraToRenderTransform);
+	UpdatePoVCameraForCurrentPlayer();
 }
 
 void Game::Shutdown()
@@ -117,6 +136,9 @@ void Game::Shutdown()
 
 	delete m_chessMatch;
 	m_chessMatch = nullptr;
+
+	delete m_povCamera;
+	m_povCamera = nullptr;
 }
 
 void Game::AddEntity(Entity* entity)
@@ -369,7 +391,7 @@ void Game::Render_Playing() const
 		return;
 	}
 
-	Camera const& worldCamera = m_player->GetCamera();
+	Camera const& worldCamera = GetActiveWorldCamera();
 	g_engine->m_render->SetRasterizerMode(RasterizerMode::SOLID_CULL_BACK);
 	g_engine->m_render->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
 	g_engine->m_render->BeginCamera(worldCamera);
@@ -432,6 +454,45 @@ void Game::Render_Playing() const
 float Game::GetDeltaSeconds() const
 {
 	return static_cast<float>(m_gameClock.GetDeltaSeconds());
+}
+
+Camera const& Game::GetActiveWorldCamera() const
+{
+	if (m_currentCameraMode == CameraMode::POV && m_povCamera != nullptr) {
+		return *m_povCamera;
+	}
+	return m_player->GetCamera();
+}
+
+void Game::UpdatePoVCameraForCurrentPlayer()
+{
+	if (m_povCamera == nullptr) {
+		return;
+	}
+
+	ChessGameState gameState = (m_chessMatch != nullptr)
+		? m_chessMatch->m_currentState
+		: ChessGameState::FIRST_PLAYER_TURN;
+	bool isGameOver =
+		gameState == ChessGameState::GAME_OVER_PLAYER_0_WINS ||
+		gameState == ChessGameState::GAME_OVER_PLAYER_1_WINS;
+
+	Vec3 cameraPosition;
+	EulerAngles cameraOrientation;
+	if (isGameOver) {
+		cameraPosition = Vec3(4.f, 4.f, 13.f);
+		cameraOrientation = EulerAngles(90.f, 89.f, 0.f);
+	}
+	else if (gameState == ChessGameState::FIRST_PLAYER_TURN) {
+		cameraPosition = Vec3(4.f, -3.f, 5.f);
+		cameraOrientation = EulerAngles(90.f, 35.f, 0.f);
+	}
+	else {
+		cameraPosition = Vec3(4.f, 11.f, 5.f);
+		cameraOrientation = EulerAngles(270.f, 35.f, 0.f);
+	}
+
+	m_povCamera->SetPositionAndOrientation(cameraPosition, cameraOrientation);
 }
 
 
@@ -503,6 +564,8 @@ bool Game::ChessMove_Cmd(EventArgs& args)
 	if (!captureAnnouncement.empty()) {
 		devConsole->AddLine(DevConsole::LOG_COLOR_WARNING, captureAnnouncement);
 	}
+
+	g_theApp->m_game->UpdatePoVCameraForCurrentPlayer();
 
 	if (!victoryAnnouncement.empty()) {
 		match->PrintVictoryHeaderToDevConsole(victoryAnnouncement);

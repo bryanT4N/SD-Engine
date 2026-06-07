@@ -10,6 +10,13 @@ enum class GameStates {
 	NUM,
 };
 
+enum class CameraMode {
+	POV,
+	OVERHEAD,
+	FREE_SPECTATOR,
+	NUM
+};
+
 //-----------------------------------------------------------------------------------------------
 constexpr float WORLD_SIZE_X = 200.f;
 constexpr float WORLD_SIZE_Y = 100.f;
@@ -58,6 +65,8 @@ constexpr float BOARD_TILE_RECESS_DEPTH = 0.08f;
 inline Rgba8 const LIGHT_SQUARE_COLOR(240, 230, 210, 255);
 inline Rgba8 const DARK_SQUARE_COLOR(45, 35, 25, 255);
 inline Rgba8 const BOARD_FRAME_COLOR(70, 45, 25, 255);
+inline Rgba8 const PLAYER_TINT_GREEN(64, 255, 64, 255);
+inline Rgba8 const PLAYER_TINT_RED(255, 64, 64, 255);
 
 //-----------------------------------------------------------------------------------------------
 class Game;

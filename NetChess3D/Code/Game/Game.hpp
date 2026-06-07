@@ -26,10 +26,12 @@ public:
 
 	Camera*					m_screenCamera		= nullptr;
 	Camera*					m_attractCamera		= nullptr;
+	Camera*					m_povCamera			= nullptr;
 	Player*					m_player			= nullptr;
 	std::vector<Entity*>	m_entities;
 	Shader*					m_litShader			= nullptr;
 	ChessMatch*				m_chessMatch		= nullptr;
+	CameraMode				m_currentCameraMode	= CameraMode::FREE_SPECTATOR;
 
 
 public:
@@ -51,6 +53,9 @@ public:
 	void UpdateEntities();
 	void DeleteGarbageEntities();
 	float GetDeltaSeconds() const;
+
+	Camera const& GetActiveWorldCamera() const;
+	void UpdatePoVCameraForCurrentPlayer();
 
 	static bool ChessMove_Cmd(EventArgs& args);
 };

@@ -20,22 +20,19 @@ enum class PieceType
 class ChessPieceDefinition
 {
 public:
-	static void InitializeAllDefinitions();
-	static void DestroyAllDefinitions();
-	static ChessPieceDefinition const& GetDefinition(PieceType pieceType);
-
-	char GetLetter() const;
-	std::string GetName() const;
-	PieceType GetPieceType() const;
-
-private:
-	ChessPieceDefinition();
-
 	PieceType m_pieceType = PieceType::INVALID;
 	char m_letter = '?';
 	std::string m_name;
 	VertexBuffer* m_vertexBuffersPerSide[2] = { nullptr, nullptr };
 	IndexBuffer* m_indexBuffersPerSide[2] = { nullptr, nullptr };
+	int m_indexCountsPerSide[2] = { 0, 0 };
+
+	static void InitializeAllDefinitions();
+	static void DestroyAllDefinitions();
+	static ChessPieceDefinition const& GetDefinition(PieceType pieceType);
+
+private:
+	ChessPieceDefinition();
 
 	static ChessPieceDefinition s_definitions[(int)PieceType::NUM];
 };
