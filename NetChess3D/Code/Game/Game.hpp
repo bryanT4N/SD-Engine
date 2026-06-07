@@ -31,7 +31,7 @@ public:
 	std::vector<Entity*>	m_entities;
 	Shader*					m_litShader			= nullptr;
 	ChessMatch*				m_chessMatch		= nullptr;
-	CameraMode				m_currentCameraMode	= CameraMode::FREE_SPECTATOR;
+	CameraMode				m_currentCameraMode	= CameraMode::POV;
 
 
 public:
@@ -56,6 +56,7 @@ public:
 
 	Camera const& GetActiveWorldCamera() const;
 	void UpdatePoVCameraForCurrentPlayer();
+	void CycleCameraMode();
 
 	static bool ChessMove_Cmd(EventArgs& args);
 };

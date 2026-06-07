@@ -6,6 +6,8 @@
 class Player : public Entity
 {
 public:
+	bool m_isInputEnabled = true;
+
 	explicit Player(Game* owner);
 	virtual ~Player() override;
 

@@ -7,7 +7,6 @@
 #include "Game/Entity.hpp"
 #include "Game/Game.hpp"
 #include "Game/Player.hpp"
-#include "Game/Prop.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/Engine.hpp"
 #include "Engine/Core/Clock.hpp"
@@ -34,32 +33,6 @@ static float ComputeAttractRingOuterRadius()
 		ATTRACT_RING_PULSE_PERIOD_TICKS;
 	float pulseValue = static_cast<float>(pulseTicks) * ATTRACT_RING_PULSE_SCALE;
 	return ATTRACT_RING_BASE_OUTER_RADIUS + abs(pulseValue - ATTRACT_RING_HALF_PULSE_SPAN);
-}
-
-static Vec3 GetPlayerForwardDirection(Player const& player)
-{
-	Camera const& playerCamera = player.GetCamera();
-	EulerAngles const cameraOrientation = playerCamera.GetOrientation();
-	return cameraOrientation.GetForwardDir_IFwd_JLeft_KUp();
-}
-
-static std::string BuildPlayerPoseDebugText(Player const& player)
-{
-	Vec3 const playerPosition = player.m_position;
-	EulerAngles const orientation = player.GetCamera().GetOrientation();
-	return Stringf(
-		"Position: %.1f, %.1f, %.1f Orientation: %.1f %.1f %.1f",
-		playerPosition.x,
-		playerPosition.y,
-		playerPosition.z,
-		orientation.m_yawDegrees,
-		orientation.m_pitchDegrees,
-		orientation.m_rollDegrees);
-}
-
-static float GetDebugConfigFloat(char const* key, float defaultValue)
-{
-	return g_gameConfigBlackboard.GetValue(key, defaultValue);
 }
 
 Game::Game()
@@ -112,13 +85,14 @@ void Game::Startup()
 				static_cast<float>(clientDimensions.y);
 		}
 	}
-	m_povCamera = new Camera();
-	m_povCamera->SetPerspectiveView(cameraAspect, 60.f, 0.1f, 100.f);
 	Mat44 cameraToRenderTransform(
 		Vec3(0.f, 0.f, 1.f),
 		Vec3(-1.f, 0.f, 0.f),
 		Vec3(0.f, 1.f, 0.f),
 		Vec3(0.f, 0.f, 0.f));
+
+	m_povCamera = new Camera();
+	m_povCamera->SetPerspectiveView(cameraAspect, 60.f, 0.1f, 100.f);
 	m_povCamera->SetCameraToRenderTransform(cameraToRenderTransform);
 	UpdatePoVCameraForCurrentPlayer();
 }
@@ -137,6 +111,8 @@ void Game::Shutdown()
 	delete m_chessMatch;
 	m_chessMatch = nullptr;
 
+	ChessPieceDefinition::DestroyAllDefinitions();
+
 	delete m_povCamera;
 	m_povCamera = nullptr;
 }
@@ -152,6 +128,10 @@ void Game::AddEntity(Entity* entity)
 
 void Game::Update()
 {
+	if (m_player != nullptr) {
+		m_player->m_isInputEnabled = (m_currentCameraMode == CameraMode::FREE_SPECTATOR);
+	}
+
 	UpdateEntities();
 
 	UpdateFromKeyboard();
@@ -185,133 +165,8 @@ void Game::UpdateFromKeyboard()
 		m_nextGameState = GameStates::ATTRACT;
 	}
 
-	if (m_player == nullptr) {
-		return;
-	}
-
-	Vec3 const playerPosition = m_player->m_position;
-	Vec3 playerForward = GetPlayerForwardDirection(*m_player);
-	if (playerForward.GetLengthSquared() == 0.f) {
-		playerForward = Vec3(1.f, 0.f, 0.f);
-	}
-
-	if (inputSystem->WasKeyJustPressed('1')) {
-		float debugCylinderLength = GetDebugConfigFloat("debugCylinderLength", 20.f);
-		float debugCylinderRadius = GetDebugConfigFloat("debugCylinderRadius", 0.0625f);
-		float debugCylinderDuration = GetDebugConfigFloat("debugCylinderDuration", 10.f);
-		DebugAddWorldCylinder(
-			playerPosition,
-			playerPosition + (playerForward * debugCylinderLength),
-			debugCylinderRadius,
-			debugCylinderDuration,
-			Rgba8::YELLOW,
-			Rgba8::YELLOW,
-			DebugRenderMode::XRAY);
-	}
-
-	if (inputSystem->IsKeyDown('2')) {
-		float debugSphereRadius = GetDebugConfigFloat("debugWorldSphereRadius", 0.25f);
-		float debugSphereDuration = GetDebugConfigFloat("debugWorldSphereDuration", 60.f);
-		DebugAddWorldSphere(
-			Vec3(playerPosition.x, playerPosition.y, 0.f),
-			debugSphereRadius,
-			debugSphereDuration,
-			Rgba8(150, 75, 0, 255),
-			Rgba8(150, 75, 0, 255),
-			DebugRenderMode::USE_DEPTH);
-	}
-
-	if (inputSystem->WasKeyJustPressed('3')) {
-		float debugWireSphereForwardOffset =
-			GetDebugConfigFloat("debugWireSphereForwardOffset", 2.f);
-		float debugWireSphereRadius = GetDebugConfigFloat("debugWireSphereRadius", 1.f);
-		float debugWireSphereDuration = GetDebugConfigFloat("debugWireSphereDuration", 5.f);
-		DebugAddWorldWireSphere(
-			playerPosition + (playerForward * debugWireSphereForwardOffset),
-			debugWireSphereRadius,
-			debugWireSphereDuration,
-			Rgba8::GREEN,
-			Rgba8::RED,
-			DebugRenderMode::USE_DEPTH);
-	}
-
-	if (inputSystem->WasKeyJustPressed('4')) {
-		float debugBasisDuration = GetDebugConfigFloat("debugBasisDuration", 20.f);
-		float debugBasisAxisLength = GetDebugConfigFloat("debugBasisAxisLength", 1.f);
-		float debugBasisAxisThickness = GetDebugConfigFloat("debugBasisAxisThickness", 0.12f);
-		float debugBasisTextHeight = GetDebugConfigFloat("debugBasisTextHeight", 1.f);
-		float debugBasisTextDuration = GetDebugConfigFloat("debugBasisTextDuration", 1.f);
-		DebugAddBasis(
-			m_player->GetModelToWorldTransform(),
-			debugBasisDuration,
-			debugBasisAxisLength,
-			debugBasisAxisThickness,
-			debugBasisTextHeight,
-			debugBasisTextDuration,
-			DebugRenderMode::USE_DEPTH);
-	}
-
-	if (inputSystem->WasKeyJustPressed('5')) {
-		Camera const& playerCamera = m_player->GetCamera();
-		Vec3 cameraForward;
-		Vec3 cameraLeft;
-		Vec3 cameraUp;
-		playerCamera.GetOrientation().GetAsVectors_IFwd_JLeft_KUp(cameraForward, cameraLeft, cameraUp);
-		(void)cameraLeft;
-		cameraForward = cameraForward.GetNormalized();
-		cameraUp = cameraUp.GetNormalized();
-		if (cameraForward.GetLengthSquared() == 0.f) {
-			cameraForward = Vec3(1.f, 0.f, 0.f);
-		}
-		if (cameraUp.GetLengthSquared() == 0.f) {
-			cameraUp = Vec3(0.f, 0.f, 1.f);
-		}
-
-		float debugBillboardForwardOffset =
-			GetDebugConfigFloat("debugBillboardForwardOffset", 2.0f);
-		float debugBillboardUpOffset = GetDebugConfigFloat("debugBillboardUpOffset", 0.15f);
-		float debugBillboardTextHeight = GetDebugConfigFloat("debugBillboardTextHeight", 0.125f);
-		float debugBillboardDuration = GetDebugConfigFloat("debugBillboardDuration", 10.f);
-		Vec3 const textOrigin =
-			playerCamera.GetPosition() + (cameraForward * debugBillboardForwardOffset) +
-			(cameraUp * debugBillboardUpOffset);
-		DebugAddWorldBillboardText(
-			BuildPlayerPoseDebugText(*m_player),
-			textOrigin,
-			debugBillboardTextHeight,
-			Vec2(0.5f, 0.5f),
-			debugBillboardDuration,
-			Rgba8::WHITE,
-			Rgba8::RED,
-			DebugRenderMode::USE_DEPTH);
-	}
-
-	if (inputSystem->WasKeyJustPressed('6')) {
-		float debugWireCylinderHeight = GetDebugConfigFloat("debugWireCylinderHeight", 1.f);
-		float debugWireCylinderRadius = GetDebugConfigFloat("debugWireCylinderRadius", 0.5f);
-		float debugWireCylinderDuration = GetDebugConfigFloat("debugWireCylinderDuration", 10.f);
-		DebugAddWorldWireCylinder(
-			playerPosition,
-			playerPosition + Vec3(0.f, 0.f, debugWireCylinderHeight),
-			debugWireCylinderRadius,
-			debugWireCylinderDuration,
-			Rgba8::WHITE,
-			Rgba8::RED,
-			DebugRenderMode::USE_DEPTH);
-	}
-
-	if (inputSystem->WasKeyJustPressed('7')) {
-		float debugMessageDuration = GetDebugConfigFloat("debugMessageDuration", 5.f);
-		EulerAngles const cameraOrientation = m_player->GetCamera().GetOrientation();
-		DebugAddMessage(
-			Stringf(
-				"Camera orientation: %.1f %.1f %.1f",
-				cameraOrientation.m_yawDegrees,
-				cameraOrientation.m_pitchDegrees,
-				cameraOrientation.m_rollDegrees),
-			debugMessageDuration,
-			Rgba8::WHITE,
-			Rgba8::WHITE);
+	if (inputSystem->WasKeyJustPressed(KEYCODE_F4)) {
+		CycleCameraMode();
 	}
 }
 
@@ -421,22 +276,45 @@ void Game::Render_Playing() const
 		0.f,
 		Rgba8::WHITE,
 		Rgba8::WHITE);
-	if (m_player != nullptr) {
-		Vec3 const playerPosition = m_player->m_position;
-		std::string playerPositionMessage = Stringf(
-			"Player position: %.2f, %.2f, %.2f",
-			playerPosition.x,
-			playerPosition.y,
-			playerPosition.z);
-		DebugAddScreenText(
-			playerPositionMessage,
-			AABB2(10.f, SCREEN_SIZE_Y - 30.f, 780.f, SCREEN_SIZE_Y - 5.f),
-			10.f,
-			Vec2(0.f, 1.f),
-			0.f,
-			Rgba8::WHITE,
-			Rgba8::WHITE);
+	char const* cameraModeText =
+		(m_currentCameraMode == CameraMode::POV) ? "Auto" : "Free";
+	char const* gameStateText = "First Player's Turn";
+	if (m_chessMatch != nullptr) {
+		switch (m_chessMatch->m_currentState)
+		{
+		case ChessGameState::FIRST_PLAYER_TURN:
+			gameStateText = "First Player's Turn";
+			break;
+		case ChessGameState::SECOND_PLAYER_TURN:
+			gameStateText = "Second Player's Turn";
+			break;
+		case ChessGameState::GAME_OVER_PLAYER_0_WINS:
+		case ChessGameState::GAME_OVER_PLAYER_1_WINS:
+			gameStateText = "Match Completed";
+			break;
+		}
 	}
+
+	DebugAddScreenText(
+		"Use the DevConsole (~) to enter commands.",
+		AABB2(10.f, SCREEN_SIZE_Y - 30.f, 780.f, SCREEN_SIZE_Y - 5.f),
+		10.f,
+		Vec2(0.f, 1.f),
+		0.f,
+		Rgba8::YELLOW,
+		Rgba8::YELLOW);
+	std::string statusBarText = Stringf(
+		"CameraMode (F4): %s | GameState: %s",
+		cameraModeText,
+		gameStateText);
+	DebugAddScreenText(
+		statusBarText,
+		AABB2(10.f, SCREEN_SIZE_Y - 60.f, 780.f, SCREEN_SIZE_Y - 35.f),
+		10.f,
+		Vec2(0.f, 1.f),
+		0.f,
+		Rgba8::CYAN,
+		Rgba8::CYAN);
 
 	if (m_gameClock.IsPaused()) {
 		std::vector<Vertex> pausedBgVerts;
@@ -462,6 +340,20 @@ Camera const& Game::GetActiveWorldCamera() const
 		return *m_povCamera;
 	}
 	return m_player->GetCamera();
+}
+
+void Game::CycleCameraMode()
+{
+	if (m_currentCameraMode == CameraMode::POV) {
+		m_currentCameraMode = CameraMode::FREE_SPECTATOR;
+		if (m_player != nullptr && m_povCamera != nullptr) {
+			m_player->m_position = m_povCamera->GetPosition();
+			m_player->m_orientation = m_povCamera->GetOrientation();
+		}
+	}
+	else {
+		m_currentCameraMode = CameraMode::POV;
+	}
 }
 
 void Game::UpdatePoVCameraForCurrentPlayer()

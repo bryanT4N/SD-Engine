@@ -55,6 +55,11 @@ Player::~Player()
 
 void Player::Update([[maybe_unused]] float deltaSeconds)
 {
+	if (!m_isInputEnabled) {
+		UpdateCameraFromTransform();
+		return;
+	}
+
 	if (g_engine == nullptr || g_engine->m_input == nullptr) {
 		UpdateCameraFromTransform();
 		return;
