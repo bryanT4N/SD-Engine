@@ -95,6 +95,13 @@ void Game::Startup()
 	m_povCamera->SetPerspectiveView(cameraAspect, 60.f, 0.1f, 100.f);
 	m_povCamera->SetCameraToRenderTransform(cameraToRenderTransform);
 	UpdatePoVCameraForCurrentPlayer();
+
+	m_overheadCamera = new Camera();
+	m_overheadCamera->SetPerspectiveView(cameraAspect, 60.f, 0.1f, 100.f);
+	m_overheadCamera->SetCameraToRenderTransform(cameraToRenderTransform);
+	m_overheadCamera->SetPositionAndOrientation(
+		Vec3(4.f, 4.f, 13.f),
+		EulerAngles(90.f, 89.f, 0.f));
 }
 
 void Game::Shutdown()
@@ -115,6 +122,9 @@ void Game::Shutdown()
 
 	delete m_povCamera;
 	m_povCamera = nullptr;
+
+	delete m_overheadCamera;
+	m_overheadCamera = nullptr;
 }
 
 void Game::AddEntity(Entity* entity)
@@ -276,8 +286,14 @@ void Game::Render_Playing() const
 		0.f,
 		Rgba8::WHITE,
 		Rgba8::WHITE);
-	char const* cameraModeText =
-		(m_currentCameraMode == CameraMode::POV) ? "Auto" : "Free";
+	char const* cameraModeText = "Auto";
+	switch (m_currentCameraMode)
+	{
+	case CameraMode::POV:				cameraModeText = "Auto";		break;
+	case CameraMode::OVERHEAD:			cameraModeText = "Overhead";	break;
+	case CameraMode::FREE_SPECTATOR:	cameraModeText = "Free";		break;
+	default:														break;
+	}
 	char const* gameStateText = "First Player's Turn";
 	if (m_chessMatch != nullptr) {
 		switch (m_chessMatch->m_currentState)
@@ -339,20 +355,34 @@ Camera const& Game::GetActiveWorldCamera() const
 	if (m_currentCameraMode == CameraMode::POV && m_povCamera != nullptr) {
 		return *m_povCamera;
 	}
+	if (m_currentCameraMode == CameraMode::OVERHEAD && m_overheadCamera != nullptr) {
+		return *m_overheadCamera;
+	}
 	return m_player->GetCamera();
 }
 
 void Game::CycleCameraMode()
 {
+	Camera const* previousCamera = nullptr;
 	if (m_currentCameraMode == CameraMode::POV) {
-		m_currentCameraMode = CameraMode::FREE_SPECTATOR;
-		if (m_player != nullptr && m_povCamera != nullptr) {
-			m_player->m_position = m_povCamera->GetPosition();
-			m_player->m_orientation = m_povCamera->GetOrientation();
-		}
+		previousCamera = m_povCamera;
 	}
-	else {
-		m_currentCameraMode = CameraMode::POV;
+	else if (m_currentCameraMode == CameraMode::OVERHEAD) {
+		previousCamera = m_overheadCamera;
+	}
+
+	switch (m_currentCameraMode)
+	{
+	case CameraMode::POV:				m_currentCameraMode = CameraMode::OVERHEAD;			break;
+	case CameraMode::OVERHEAD:			m_currentCameraMode = CameraMode::FREE_SPECTATOR;	break;
+	case CameraMode::FREE_SPECTATOR:	m_currentCameraMode = CameraMode::POV;				break;
+	default:																				break;
+	}
+
+	if (m_currentCameraMode == CameraMode::FREE_SPECTATOR &&
+		m_player != nullptr && previousCamera != nullptr) {
+		m_player->m_position = previousCamera->GetPosition();
+		m_player->m_orientation = previousCamera->GetOrientation();
 	}
 }
 

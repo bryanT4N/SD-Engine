@@ -11,6 +11,7 @@ enum class GameStates {
 
 enum class CameraMode {
 	POV,
+	OVERHEAD,
 	FREE_SPECTATOR,
 	NUM
 };

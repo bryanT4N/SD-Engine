@@ -27,6 +27,7 @@ public:
 	Camera*					m_screenCamera		= nullptr;
 	Camera*					m_attractCamera		= nullptr;
 	Camera*					m_povCamera			= nullptr;
+	Camera*					m_overheadCamera	= nullptr;
 	Player*					m_player			= nullptr;
 	std::vector<Entity*>	m_entities;
 	Shader*					m_litShader			= nullptr;
