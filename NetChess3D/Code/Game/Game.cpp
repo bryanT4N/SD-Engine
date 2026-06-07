@@ -381,8 +381,9 @@ void Game::CycleCameraMode()
 
 	if (m_currentCameraMode == CameraMode::FREE_SPECTATOR &&
 		m_player != nullptr && previousCamera != nullptr) {
-		m_player->m_position = previousCamera->GetPosition();
-		m_player->m_orientation = previousCamera->GetOrientation();
+		m_player->SnapToPose(
+			previousCamera->GetPosition(),
+			previousCamera->GetOrientation());
 	}
 }
 

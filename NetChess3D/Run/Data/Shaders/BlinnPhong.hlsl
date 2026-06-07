@@ -83,11 +83,12 @@ float4 PixelMain(v2p_t input) : SV_Target0
 	float4 diffuseColor = diffuseTexel * surfaceColor * modelColor;
 
 	float3 lightDir = normalize(float3(3.0, 1.0, -2.0));
+	float3 sunlightColor = float3(1.0, 1.0, 1.0);
 	float3 worldNormal = normalize(input.worldNormal);
 	float diffuseLightDot = dot(-lightDir, worldNormal);
 	float lightStrength = clamp(diffuseLightDot, 0.2, 1.0);
 
-	float4 finalColor = float4(diffuseColor.rgb * lightStrength, diffuseColor.a);
+	float4 finalColor = float4(diffuseColor.rgb * sunlightColor * lightStrength, diffuseColor.a);
 	clip(finalColor.a - 0.01);
 
 //	finalColor.rgb = float3(uvCoords.xy, 0.0);

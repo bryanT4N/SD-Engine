@@ -211,6 +211,13 @@ void Player::ResetPose()
 	UpdateCameraFromTransform();
 }
 
+void Player::SnapToPose(Vec3 const& position, EulerAngles const& orientation)
+{
+	m_position = position;
+	m_orientation = orientation;
+	UpdateCameraFromTransform();
+}
+
 void Player::UpdateCameraFromTransform()
 {
 	m_camera.SetPositionAndOrientation(m_position, m_orientation);

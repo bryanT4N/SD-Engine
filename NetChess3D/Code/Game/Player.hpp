@@ -16,6 +16,7 @@ public:
 
 	Camera const& GetCamera() const;
 	void ResetPose();
+	void SnapToPose(Vec3 const& position, EulerAngles const& orientation);
 
 private:
 	void UpdateCameraFromTransform();
