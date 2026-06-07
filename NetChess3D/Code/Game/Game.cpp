@@ -3,6 +3,7 @@
 #include "Game/ChessBoard.hpp"
 #include "Game/ChessMatch.hpp"
 #include "Game/ChessPieceDefinition.hpp"
+#include "Game/ChessPlayer.hpp"
 #include "Game/Entity.hpp"
 #include "Game/Game.hpp"
 #include "Game/Player.hpp"
@@ -538,7 +539,12 @@ bool Game::ChessMove_Cmd(EventArgs& args)
 
 	ChessMatch* match = g_theApp->m_game->m_chessMatch;
 	std::string errorMessage;
-	bool moveSucceeded = match->TryExecuteMove(fromSquare, toSquare, errorMessage);
+	std::string moveAnnouncement;
+	std::string captureAnnouncement;
+	std::string victoryAnnouncement;
+	bool moveSucceeded = match->TryExecuteMove(
+		fromSquare, toSquare, errorMessage,
+		&moveAnnouncement, &captureAnnouncement, &victoryAnnouncement);
 
 	if (!moveSucceeded) {
 		if (g_engine != nullptr && g_engine->m_devConsole != nullptr) {
@@ -547,8 +553,24 @@ bool Game::ChessMove_Cmd(EventArgs& args)
 		return true;
 	}
 
-	match->PrintGameStateToDevConsole();
-	match->PrintBoardToDevConsole();
+	if (g_engine == nullptr || g_engine->m_devConsole == nullptr) {
+		return true;
+	}
+	DevConsole* devConsole = g_engine->m_devConsole;
+
+	if (!moveAnnouncement.empty()) {
+		devConsole->AddLine(DevConsole::LOG_COLOR_INFO_MAJOR, moveAnnouncement);
+	}
+	if (!captureAnnouncement.empty()) {
+		devConsole->AddLine(DevConsole::LOG_COLOR_WARNING, captureAnnouncement);
+	}
+
+	if (!victoryAnnouncement.empty()) {
+		match->PrintVictoryHeaderToDevConsole(victoryAnnouncement);
+		return true;
+	}
+
+	match->PrintTurnHeaderToDevConsole();
 	return true;
 }
 

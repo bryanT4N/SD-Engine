@@ -45,6 +45,18 @@ void ChessBoard::SetPieceAt(IntVec2 const& square, ChessPiece* piece)
 	m_grid[square.x][square.y] = piece;
 }
 
+void ChessBoard::CapturePieceAt(IntVec2 const& square)
+{
+	if (!IsSquareInsideBoard(square)) {
+		return;
+	}
+	ChessPiece* victim = m_grid[square.x][square.y];
+	if (victim != nullptr) {
+		delete victim;
+		m_grid[square.x][square.y] = nullptr;
+	}
+}
+
 int ChessBoard::CountOccupiedSquares() const
 {
 	int occupiedCount = 0;

@@ -22,8 +22,16 @@ public:
 
 	void PrintBoardToDevConsole() const;
 	void PrintGameStateToDevConsole() const;
+	void PrintTurnHeaderToDevConsole() const;
+	void PrintVictoryHeaderToDevConsole(std::string const& victoryAnnouncement) const;
 
-	bool TryExecuteMove(IntVec2 const& fromSquare, IntVec2 const& toSquare, std::string& out_errorMessage);
+	bool TryExecuteMove(
+		IntVec2 const& fromSquare,
+		IntVec2 const& toSquare,
+		std::string& out_errorMessage,
+		std::string* out_moveAnnouncement = nullptr,
+		std::string* out_captureAnnouncement = nullptr,
+		std::string* out_victoryAnnouncement = nullptr);
 	static IntVec2 ParseSquareNotation(std::string const& notation);
 
 	ChessBoard* GetBoard() const;

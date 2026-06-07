@@ -11,12 +11,17 @@
 
 #include <string>
 
+static char const* TURN_SEPARATOR =
+	"=================================================================";
+static char const* VICTORY_SEPARATOR =
+	"#################################################################";
+
 ChessMatch::ChessMatch()
 {
-	Rgba8 const whitePlayerTint(255, 64, 64, 255);
-	Rgba8 const blackPlayerTint(64, 255, 64, 255);
-	m_players[0] = new ChessPlayer(0, whitePlayerTint);
-	m_players[1] = new ChessPlayer(1, blackPlayerTint);
+	Rgba8 const firstPlayerTint(64, 255, 64, 255);
+	Rgba8 const secondPlayerTint(255, 64, 64, 255);
+	m_players[0] = new ChessPlayer(0, firstPlayerTint, "Green");
+	m_players[1] = new ChessPlayer(1, secondPlayerTint, "Red");
 
 	m_board = new ChessBoard();
 	m_board->PopulateInitialPieces();
@@ -113,10 +118,22 @@ IntVec2 ChessMatch::ParseSquareNotation(std::string const& notation)
 	return IntVec2(fileIndex, rankIndex);
 }
 
-bool ChessMatch::TryExecuteMove(IntVec2 const& fromSquare, IntVec2 const& toSquare, std::string& out_errorMessage)
+bool ChessMatch::TryExecuteMove(
+	IntVec2 const& fromSquare,
+	IntVec2 const& toSquare,
+	std::string& out_errorMessage,
+	std::string* out_moveAnnouncement,
+	std::string* out_captureAnnouncement,
+	std::string* out_victoryAnnouncement)
 {
 	if (m_board == nullptr) {
 		out_errorMessage = "Internal error: board is null";
+		return false;
+	}
+
+	if (m_currentState == ChessGameState::GAME_OVER_PLAYER_0_WINS
+		|| m_currentState == ChessGameState::GAME_OVER_PLAYER_1_WINS) {
+		out_errorMessage = "Illegal move: game is over, no moves allowed.";
 		return false;
 	}
 
@@ -161,16 +178,54 @@ bool ChessMatch::TryExecuteMove(IntVec2 const& fromSquare, IntVec2 const& toSqua
 		return false;
 	}
 
+	ChessPieceDefinition const& movingDef =
+		ChessPieceDefinition::GetDefinition(movingPiece->GetPieceType());
+	if (out_moveAnnouncement != nullptr) {
+		*out_moveAnnouncement = Stringf(
+			"Moved %s's %s from %c%c to %c%c",
+			m_players[currentPlayerIdx]->GetDisplayName().c_str(),
+			movingDef.GetName().c_str(),
+			static_cast<char>('A' + fromSquare.x),
+			static_cast<char>('1' + fromSquare.y),
+			static_cast<char>('A' + toSquare.x),
+			static_cast<char>('1' + toSquare.y));
+	}
+
+	bool capturedKingThisMove = false;
 	if (destPiece != nullptr) {
-		m_board->SetPieceAt(toSquare, nullptr);
-		delete destPiece;
+		int victimPlayerIdx = destPiece->GetOwnerPlayerIdx();
+		ChessPieceDefinition const& capturedDef =
+			ChessPieceDefinition::GetDefinition(destPiece->GetPieceType());
+		if (out_captureAnnouncement != nullptr) {
+			*out_captureAnnouncement = Stringf(
+				"%s captured %s's %s at %c%c",
+				m_players[currentPlayerIdx]->GetDisplayName().c_str(),
+				m_players[victimPlayerIdx]->GetDisplayName().c_str(),
+				capturedDef.GetName().c_str(),
+				static_cast<char>('A' + toSquare.x),
+				static_cast<char>('1' + toSquare.y));
+		}
+		if (destPiece->GetPieceType() == PieceType::KING) {
+			capturedKingThisMove = true;
+		}
+		m_board->CapturePieceAt(toSquare);
 	}
 
 	m_board->SetPieceAt(fromSquare, nullptr);
 	movingPiece->SetSquare(toSquare);
 	m_board->SetPieceAt(toSquare, movingPiece);
 
-	if (m_currentState == ChessGameState::FIRST_PLAYER_TURN) {
+	if (capturedKingThisMove) {
+		m_currentState = (currentPlayerIdx == 0)
+			? ChessGameState::GAME_OVER_PLAYER_0_WINS
+			: ChessGameState::GAME_OVER_PLAYER_1_WINS;
+		if (out_victoryAnnouncement != nullptr) {
+			*out_victoryAnnouncement = Stringf(
+				"%s has won the match!",
+				m_players[currentPlayerIdx]->GetDisplayName().c_str());
+		}
+	}
+	else if (m_currentState == ChessGameState::FIRST_PLAYER_TURN) {
 		m_currentState = ChessGameState::SECOND_PLAYER_TURN;
 	}
 	else if (m_currentState == ChessGameState::SECOND_PLAYER_TURN) {
@@ -195,13 +250,43 @@ void ChessMatch::PrintGameStateToDevConsole() const
 		stateText = "Second Player's Turn";
 		break;
 	case ChessGameState::GAME_OVER_PLAYER_0_WINS:
-		stateText = "Game Over - First Player Wins";
-		break;
 	case ChessGameState::GAME_OVER_PLAYER_1_WINS:
-		stateText = "Game Over - Second Player Wins";
+		stateText = "Match Completed";
 		break;
 	}
 	g_engine->m_devConsole->AddLine(
-		DevConsole::LOG_COLOR_INFO_MINOR,
-		Stringf("GameState: %s", stateText));
+		DevConsole::LOG_COLOR_INFO_MAJOR,
+		Stringf("Game state is: %s", stateText));
+}
+
+void ChessMatch::PrintTurnHeaderToDevConsole() const
+{
+	if (g_engine == nullptr || g_engine->m_devConsole == nullptr) {
+		return;
+	}
+	DevConsole* devConsole = g_engine->m_devConsole;
+
+	devConsole->AddLine(DevConsole::LOG_COLOR_WARNING, TURN_SEPARATOR);
+
+	int currentIdx = GetCurrentPlayerIdx();
+	ChessPlayer* currentPlayer = GetPlayer(currentIdx);
+	if (currentPlayer != nullptr) {
+		devConsole->AddLine(
+			DevConsole::LOG_COLOR_WARNING,
+			Stringf("%s -- it's your move!", currentPlayer->GetDisplayName().c_str()));
+	}
+	PrintGameStateToDevConsole();
+	PrintBoardToDevConsole();
+}
+
+void ChessMatch::PrintVictoryHeaderToDevConsole(std::string const& victoryAnnouncement) const
+{
+	if (g_engine == nullptr || g_engine->m_devConsole == nullptr) {
+		return;
+	}
+	DevConsole* devConsole = g_engine->m_devConsole;
+
+	devConsole->AddLine(DevConsole::LOG_COLOR_WARNING, VICTORY_SEPARATOR);
+	devConsole->AddLine(DevConsole::LOG_COLOR_WARNING, victoryAnnouncement);
+	devConsole->AddLine(DevConsole::LOG_COLOR_WARNING, VICTORY_SEPARATOR);
 }

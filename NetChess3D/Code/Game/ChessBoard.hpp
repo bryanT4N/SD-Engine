@@ -19,6 +19,7 @@ public:
 
 	ChessPiece* GetPieceAt(IntVec2 const& square) const;
 	void SetPieceAt(IntVec2 const& square, ChessPiece* piece);
+	void CapturePieceAt(IntVec2 const& square);
 
 	int CountOccupiedSquares() const;
 
