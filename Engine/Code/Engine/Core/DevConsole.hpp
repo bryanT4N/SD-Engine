@@ -22,6 +22,7 @@ struct DevConsoleLine
 {
 	Rgba8 m_color;
 	std::string m_text;
+	float m_cellAspectOverride = -1.0f;
 };
 
 //-----------------------------------------------------------------------------------------------
@@ -67,8 +68,9 @@ public:
 	void Execute(std::string const& consoleCommandText, bool echoCommand = true);
 
 	// Adds a line of text to the current list of lines being shown. Individual lines are delimited
-	// with the newline ('\n') character.
-	void AddLine(Rgba8 const& color, std::string const& text);
+	// with the newline ('\n') character. Optional cellAspectOverride (>0) overrides the global
+	// font aspect for the message portion of these lines (timestamp column stays uniform).
+	void AddLine(Rgba8 const& color, std::string const& text, float cellAspectOverride = -1.0f);
 
 	// Renders just visible text lines within the bounds specified. Bounds are in terms of the
 	// lines rendered above it, with the most recent lines at the bottom.

@@ -1,4 +1,6 @@
 #include "Game/GameCommon.hpp"
+#include "Game/ChessBoard.hpp"
+#include "Game/ChessMatch.hpp"
 #include "Game/ChessPieceDefinition.hpp"
 #include "Game/Entity.hpp"
 #include "Game/Game.hpp"
@@ -136,17 +138,7 @@ void Game::Startup()
 
 	ChessPieceDefinition::InitializeAllDefinitions();
 
-	if (g_engine != nullptr && g_engine->m_devConsole != nullptr) {
-		g_engine->m_devConsole->AddLine(
-			DevConsole::LOG_COLOR_INFO_MINOR,
-			Stringf("ChessPieceDefinition initialized: K=%c Q=%c R=%c B=%c N=%c P=%c",
-				ChessPieceDefinition::GetDefinition(PieceType::KING).GetLetter(),
-				ChessPieceDefinition::GetDefinition(PieceType::QUEEN).GetLetter(),
-				ChessPieceDefinition::GetDefinition(PieceType::ROOK).GetLetter(),
-				ChessPieceDefinition::GetDefinition(PieceType::BISHOP).GetLetter(),
-				ChessPieceDefinition::GetDefinition(PieceType::KNIGHT).GetLetter(),
-				ChessPieceDefinition::GetDefinition(PieceType::PAWN).GetLetter()));
-	}
+	m_chessMatch = new ChessMatch();
 }
 
 void Game::Shutdown()
@@ -161,6 +153,9 @@ void Game::Shutdown()
 	m_player = nullptr;
 	m_primaryCube = nullptr;
 	m_secondaryCube = nullptr;
+
+	delete m_chessMatch;
+	m_chessMatch = nullptr;
 }
 
 void Game::AddEntity(Entity* entity)

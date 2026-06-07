@@ -9,6 +9,7 @@
 
 //-----------------------------------------------------------------------------------------------
 class Camera;
+class ChessMatch;
 class Entity;
 class Player;
 class Prop;
@@ -30,6 +31,7 @@ public:
 	Prop*					m_secondaryCube		= nullptr;
 	std::vector<Entity*>	m_entities;
 	Shader*					m_tbnVizShader		= nullptr;
+	ChessMatch*				m_chessMatch		= nullptr;
 
 
 public:

@@ -438,7 +438,7 @@ void DevConsole::Execute(std::string const& consoleCommandText, bool echoCommand
 }
 
 //-----------------------------------------------------------------------------------------------
-void DevConsole::AddLine(Rgba8 const& color, std::string const& text)
+void DevConsole::AddLine(Rgba8 const& color, std::string const& text, float cellAspectOverride)
 {
 	Strings splitLines = SplitStringOnDelimiter(text, '\n');
 	int frameNumber = Clock::GetSystemClock().GetFrameCount();
@@ -453,6 +453,7 @@ void DevConsole::AddLine(Rgba8 const& color, std::string const& text)
 	for (std::string const& piece : splitLines) {
 		DevConsoleLine line;
 		line.m_color = color;
+		line.m_cellAspectOverride = cellAspectOverride;
 		if (isFirstLine) {
 			line.m_text = timestampPrefix + piece;
 			isFirstLine = false;
@@ -572,6 +573,7 @@ void DevConsole::Render(AABB2 const& bounds, BitmapFont& bitmapFont, float fontA
 			lineBounds.m_maxs.x,
 			lineBounds.m_maxs.y);
 
+		float messageAspect = (line.m_cellAspectOverride > 0.0f) ? line.m_cellAspectOverride : fontAspect;
 		bitmapFont.AddVertsForTextInBox2D(
 			textVerts,
 			timestampText,
@@ -587,7 +589,7 @@ void DevConsole::Render(AABB2 const& bounds, BitmapFont& bitmapFont, float fontA
 			messageBounds,
 			textCellHeight,
 			line.m_color,
-			fontAspect,
+			messageAspect,
 			Vec2(0.0f, 0.5f),
 			TextBoxMode::OVERRUN);
 	}
