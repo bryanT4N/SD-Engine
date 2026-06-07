@@ -120,18 +120,50 @@ bool ChessMatch::TryExecuteMove(IntVec2 const& fromSquare, IntVec2 const& toSqua
 		return false;
 	}
 
-	ChessPiece* movingPiece = m_board->GetPieceAt(fromSquare);
-	if (movingPiece == nullptr) {
-		out_errorMessage = Stringf("No piece at %c%c",
+	if (fromSquare.x == toSquare.x && fromSquare.y == toSquare.y) {
+		out_errorMessage = Stringf("Illegal move: 'from' and 'to' are the same square (%c%c).",
 			static_cast<char>('a' + fromSquare.x),
 			static_cast<char>('1' + fromSquare.y));
 		return false;
 	}
 
-	ChessPiece* capturedPiece = m_board->GetPieceAt(toSquare);
-	if (capturedPiece != nullptr) {
+	ChessPiece* movingPiece = m_board->GetPieceAt(fromSquare);
+	if (movingPiece == nullptr) {
+		out_errorMessage = Stringf("Illegal move: there is no piece at %c%c.",
+			static_cast<char>('A' + fromSquare.x),
+			static_cast<char>('1' + fromSquare.y));
+		return false;
+	}
+
+	int currentPlayerIdx = GetCurrentPlayerIdx();
+	if (movingPiece->GetOwnerPlayerIdx() != currentPlayerIdx) {
+		ChessPieceDefinition const& movingDef =
+			ChessPieceDefinition::GetDefinition(movingPiece->GetPieceType());
+		out_errorMessage = Stringf(
+			"Illegal move: the %s at %c%c belongs to player %d, but it is currently player %d's turn.",
+			movingDef.GetName().c_str(),
+			static_cast<char>('A' + fromSquare.x),
+			static_cast<char>('1' + fromSquare.y),
+			movingPiece->GetOwnerPlayerIdx(),
+			currentPlayerIdx);
+		return false;
+	}
+
+	ChessPiece* destPiece = m_board->GetPieceAt(toSquare);
+	if (destPiece != nullptr && destPiece->GetOwnerPlayerIdx() == currentPlayerIdx) {
+		ChessPieceDefinition const& destDef =
+			ChessPieceDefinition::GetDefinition(destPiece->GetPieceType());
+		out_errorMessage = Stringf(
+			"Illegal move: %c%c is occupied by your own %s.",
+			static_cast<char>('A' + toSquare.x),
+			static_cast<char>('1' + toSquare.y),
+			destDef.GetName().c_str());
+		return false;
+	}
+
+	if (destPiece != nullptr) {
 		m_board->SetPieceAt(toSquare, nullptr);
-		delete capturedPiece;
+		delete destPiece;
 	}
 
 	m_board->SetPieceAt(fromSquare, nullptr);

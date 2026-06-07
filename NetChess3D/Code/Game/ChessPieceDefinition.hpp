@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 class VertexBuffer;
 class IndexBuffer;
 
@@ -23,6 +25,7 @@ public:
 	static ChessPieceDefinition const& GetDefinition(PieceType pieceType);
 
 	char GetLetter() const;
+	std::string GetName() const;
 	PieceType GetPieceType() const;
 
 private:
@@ -30,6 +33,7 @@ private:
 
 	PieceType m_pieceType = PieceType::INVALID;
 	char m_letter = '?';
+	std::string m_name;
 	VertexBuffer* m_vertexBuffersPerSide[2] = { nullptr, nullptr };
 	IndexBuffer* m_indexBuffersPerSide[2] = { nullptr, nullptr };
 

@@ -501,14 +501,42 @@ bool Game::ChessMove_Cmd(EventArgs& args)
 	std::string fromSquareArg = args.GetValue("from", "");
 	std::string toSquareArg = args.GetValue("to", "");
 
+	if (fromSquareArg.empty() || toSquareArg.empty()) {
+		if (g_engine != nullptr && g_engine->m_devConsole != nullptr) {
+			g_engine->m_devConsole->AddLine(
+				DevConsole::LOG_COLOR_ERROR,
+				"Illegal move: 'from=' and 'to=' arguments are required. Example: ChessMove from=e2 to=e4");
+		}
+		return true;
+	}
+
+	IntVec2 fromSquare = ChessMatch::ParseSquareNotation(fromSquareArg);
+	if (fromSquare.x < 0) {
+		if (g_engine != nullptr && g_engine->m_devConsole != nullptr) {
+			g_engine->m_devConsole->AddLine(
+				DevConsole::LOG_COLOR_ERROR,
+				Stringf("Illegal move: 'from=%s' is not a valid square (squares are a-h x 1-8).",
+					fromSquareArg.c_str()));
+		}
+		return true;
+	}
+
+	IntVec2 toSquare = ChessMatch::ParseSquareNotation(toSquareArg);
+	if (toSquare.x < 0) {
+		if (g_engine != nullptr && g_engine->m_devConsole != nullptr) {
+			g_engine->m_devConsole->AddLine(
+				DevConsole::LOG_COLOR_ERROR,
+				Stringf("Illegal move: 'to=%s' is not a valid square (squares are a-h x 1-8).",
+					toSquareArg.c_str()));
+		}
+		return true;
+	}
+
 	if (g_theApp == nullptr || g_theApp->m_game == nullptr || g_theApp->m_game->m_chessMatch == nullptr) {
 		return true;
 	}
 
 	ChessMatch* match = g_theApp->m_game->m_chessMatch;
-	IntVec2 fromSquare = ChessMatch::ParseSquareNotation(fromSquareArg);
-	IntVec2 toSquare = ChessMatch::ParseSquareNotation(toSquareArg);
-
 	std::string errorMessage;
 	bool moveSucceeded = match->TryExecuteMove(fromSquare, toSquare, errorMessage);
 
