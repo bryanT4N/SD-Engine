@@ -20,6 +20,8 @@ public:
 	ChessMatch();
 	~ChessMatch();
 
+	void Render() const;
+
 	void PrintBoardToDevConsole() const;
 	void PrintGameStateToDevConsole() const;
 	void PrintTurnHeaderToDevConsole() const;

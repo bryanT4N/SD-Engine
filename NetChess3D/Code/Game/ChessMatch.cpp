@@ -66,6 +66,13 @@ ChessPlayer* ChessMatch::GetPlayer(int playerIdx) const
 	return m_players[playerIdx];
 }
 
+void ChessMatch::Render() const
+{
+	if (m_board != nullptr) {
+		m_board->Render();
+	}
+}
+
 void ChessMatch::PrintBoardToDevConsole() const
 {
 	if (g_engine == nullptr || g_engine->m_devConsole == nullptr || m_board == nullptr) {

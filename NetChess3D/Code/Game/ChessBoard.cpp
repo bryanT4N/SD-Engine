@@ -1,16 +1,38 @@
 #include "Game/ChessBoard.hpp"
 #include "Game/ChessPiece.hpp"
 #include "Game/ChessPieceDefinition.hpp"
+#include "Game/GameCommon.hpp"
+#include "Engine/Core/Engine.hpp"
+#include "Engine/Core/VertexUtils.hpp"
+#include "Engine/Math/AABB3.hpp"
+#include "Engine/Math/Mat44.hpp"
+#include "Engine/Renderer/Renderer.hpp"
+#include "Engine/Renderer/VertexBuffer.hpp"
 
-ChessBoard::ChessBoard() = default;
+ChessBoard::ChessBoard()
+{
+	UploadMeshToGPU();
+}
 
 ChessBoard::~ChessBoard()
 {
 	Clear();
+	delete m_vertexBuffer;
+	m_vertexBuffer = nullptr;
 }
 
 void ChessBoard::Render() const
 {
+	if (g_engine == nullptr || g_engine->m_render == nullptr) {
+		return;
+	}
+	if (m_vertexBuffer == nullptr || m_vertexCount == 0) {
+		return;
+	}
+	Renderer* renderer = g_engine->m_render;
+	renderer->SetModelConstants(Mat44(), Rgba8::WHITE);
+	renderer->BindTexture(nullptr);
+	renderer->DrawVertexBuffer(m_vertexBuffer, static_cast<unsigned int>(m_vertexCount));
 }
 
 void ChessBoard::Clear()
@@ -102,4 +124,54 @@ void ChessBoard::PopulateInitialPieces()
 		m_grid[file][blackBackRank] = new ChessPiece(
 			backRankOrder[file], blackPlayerIdx, IntVec2(file, blackBackRank));
 	}
+}
+
+void ChessBoard::CreateMeshOnCPU(std::vector<Vertex>& out_verts) const
+{
+	float const boardMinXY = -BOARD_MARGIN_SIZE;
+	float const boardMaxXY = static_cast<float>(BOARD_SIZE) * BOARD_SQUARE_SIZE + BOARD_MARGIN_SIZE;
+	float const topZ = 0.f;
+	float const marginTopZ = -BOARD_TILE_RECESS_DEPTH;
+	float const bottomZ = -BOARD_THICKNESS;
+
+	int const tileQuadVertCount = 36;
+	int const totalAABBCount = 64 + 1;
+	out_verts.reserve(totalAABBCount * tileQuadVertCount);
+
+	for (int rank = 0; rank < BOARD_SIZE; ++rank) {
+		for (int file = 0; file < BOARD_SIZE; ++file) {
+			float fileMin = static_cast<float>(file) * BOARD_SQUARE_SIZE;
+			float fileMax = fileMin + BOARD_SQUARE_SIZE;
+			float rankMin = static_cast<float>(rank) * BOARD_SQUARE_SIZE;
+			float rankMax = rankMin + BOARD_SQUARE_SIZE;
+			bool isLightSquare = ((file + rank) % 2 == 1);
+			Rgba8 tileColor = isLightSquare ? LIGHT_SQUARE_COLOR : DARK_SQUARE_COLOR;
+
+			AABB3 tileBounds(fileMin, rankMin, marginTopZ, fileMax, rankMax, topZ);
+			AddVertsForAABB3D(out_verts, tileBounds, tileColor);
+		}
+	}
+
+	AABB3 frameBounds(boardMinXY, boardMinXY, bottomZ, boardMaxXY, boardMaxXY, marginTopZ);
+	AddVertsForAABB3D(out_verts, frameBounds, BOARD_FRAME_COLOR);
+}
+
+void ChessBoard::UploadMeshToGPU()
+{
+	if (g_engine == nullptr || g_engine->m_render == nullptr) {
+		return;
+	}
+	Renderer* renderer = g_engine->m_render;
+
+	std::vector<Vertex> verts;
+	CreateMeshOnCPU(verts);
+	if (verts.empty()) {
+		return;
+	}
+
+	unsigned int vertexBytes = static_cast<unsigned int>(verts.size() * sizeof(Vertex));
+	m_vertexBuffer = renderer->CreateVertexBuffer(vertexBytes, sizeof(Vertex));
+	renderer->CopyCPUToGPU(verts.data(), vertexBytes, m_vertexBuffer);
+
+	m_vertexCount = static_cast<int>(verts.size());
 }

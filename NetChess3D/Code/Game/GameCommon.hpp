@@ -51,6 +51,15 @@ constexpr double ATTRACT_RING_PULSE_TIME_SCALE = 100.0;
 constexpr int ATTRACT_RING_PULSE_PERIOD_TICKS = 100;
 
 //-----------------------------------------------------------------------------------------------
+constexpr float BOARD_SQUARE_SIZE = 1.0f;
+constexpr float BOARD_MARGIN_SIZE = 0.333f;
+constexpr float BOARD_THICKNESS = 0.333f;
+constexpr float BOARD_TILE_RECESS_DEPTH = 0.08f;
+inline Rgba8 const LIGHT_SQUARE_COLOR(240, 230, 210, 255);
+inline Rgba8 const DARK_SQUARE_COLOR(45, 35, 25, 255);
+inline Rgba8 const BOARD_FRAME_COLOR(70, 45, 25, 255);
+
+//-----------------------------------------------------------------------------------------------
 class Game;
 class Prop;
 class Texture;

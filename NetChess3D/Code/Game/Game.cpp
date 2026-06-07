@@ -27,15 +27,6 @@
 #include "Engine/Math/Vec2.hpp"
 
 
-static Texture* GetTexture(char const* texturePath)
-{
-	if (g_engine == nullptr || g_engine->m_render == nullptr) {
-		return nullptr;
-	}
-
-	return g_engine->m_render->CreateOrGetTextureFromFile(texturePath);
-}
-
 static float ComputeAttractRingOuterRadius()
 {
 	double timeSeconds = GetCurrentTimeSeconds();
@@ -100,43 +91,13 @@ Game::~Game()
 
 void Game::Startup()
 {
-	Texture* cubeTexture = nullptr;
-	Texture* sphereTexture = GetTexture(SCENE_SPHERE_TEXTURE_PATH);
-
 	m_player = new Player(this);
 	m_player->m_position = Vec3(-2.f, 0.f, 1.f);
 	AddEntity(m_player);
 
-	Prop* firstCube = CreateCubeProp(this, SCENE_CUBE_SIDE_LENGTH, cubeTexture);
-	firstCube->m_position = Vec3(2.f, 2.f, 0.f);
-	firstCube->m_angularVelocity = EulerAngles(
-		0.f,
-		SCENE_PRIMARY_CUBE_ROTATE_SPEED_DEGREES,
-		SCENE_PRIMARY_CUBE_ROTATE_SPEED_DEGREES);
-	m_primaryCube = firstCube;
-	AddEntity(firstCube);
-
-	Prop* secondCube = CreateCubeProp(this, SCENE_CUBE_SIDE_LENGTH, cubeTexture);
-	secondCube->m_position = Vec3(-2.f, -2.f, 0.f);
-	m_secondaryCube = secondCube;
-	AddEntity(secondCube);
-
-	Prop* sphere = CreateSphereProp(
-		this,
-		SCENE_SPHERE_RADIUS,
-		SCENE_SPHERE_NUM_SLICES,
-		SCENE_SPHERE_NUM_STACKS,
-		sphereTexture);
-	sphere->m_position = Vec3(10.f, -5.f, 1.f);
-	sphere->m_angularVelocity = EulerAngles(SCENE_SPHERE_ROTATE_Z_SPEED_DEGREES, 0.f, 0.f);
-	AddEntity(sphere);
-
-	Prop* grid = CreateGridProp(this, GridPropConfig());
-	AddEntity(grid);
-
 	DebugAddWorldBasis();
 
-	m_tbnVizShader = g_engine->m_render->CreateShader("TBNViz", VertexType::VERTEX_PCUTBN);
+	m_litShader = g_engine->m_render->CreateShader("BlinnPhong", VertexType::VERTEX_PCUTBN);
 
 	ChessPieceDefinition::InitializeAllDefinitions();
 
@@ -153,8 +114,6 @@ void Game::Shutdown()
 
 	m_entities.clear();
 	m_player = nullptr;
-	m_primaryCube = nullptr;
-	m_secondaryCube = nullptr;
 
 	delete m_chessMatch;
 	m_chessMatch = nullptr;
@@ -172,7 +131,6 @@ void Game::AddEntity(Entity* entity)
 void Game::Update()
 {
 	UpdateEntities();
-	UpdateAnimatedSceneProps();
 
 	UpdateFromKeyboard();
 	UpdateFromController();
@@ -416,16 +374,9 @@ void Game::Render_Playing() const
 	g_engine->m_render->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
 	g_engine->m_render->BeginCamera(worldCamera);
 	{
-		g_engine->m_render->BindShader(m_tbnVizShader);
-		const int entityCount = static_cast<int>(m_entities.size());
-		for (int entityIndex = 0; entityIndex < entityCount; ++entityIndex) {
-			Entity const* entity = m_entities[entityIndex];
-			if (entity != nullptr) {
-				g_engine->m_render->SetModelConstants(
-					entity->GetModelToWorldTransform(),
-					entity->m_color);
-				entity->Render();
-			}
+		if (m_chessMatch != nullptr) {
+			g_engine->m_render->BindShader(m_litShader);
+			m_chessMatch->Render();
 		}
 		g_engine->m_render->BindShader(nullptr);
 		DebugRenderWorld(worldCamera);
@@ -481,18 +432,6 @@ void Game::Render_Playing() const
 float Game::GetDeltaSeconds() const
 {
 	return static_cast<float>(m_gameClock.GetDeltaSeconds());
-}
-
-
-void Game::UpdateAnimatedSceneProps()
-{
-	if (m_secondaryCube == nullptr) {
-		return;
-	}
-
-	float elapsedSeconds = static_cast<float>(m_gameClock.GetTotalSeconds());
-	float brightness = 0.5f * (SinDegrees(elapsedSeconds * 90.f) + 1.f);
-	m_secondaryCube->m_color = Interpolate(Rgba8::BLACK, Rgba8::WHITE, brightness);
 }
 
 

@@ -1,8 +1,12 @@
 #pragma once
 #include "Game/ChessObject.hpp"
+#include "Engine/Core/Vertex.hpp"
 #include "Engine/Math/IntVec2.hpp"
 
+#include <vector>
+
 class ChessPiece;
+class VertexBuffer;
 
 class ChessBoard : public ChessObject
 {
@@ -26,5 +30,11 @@ public:
 private:
 	bool IsSquareInsideBoard(IntVec2 const& square) const;
 
+	void CreateMeshOnCPU(std::vector<Vertex>& out_verts) const;
+	void UploadMeshToGPU();
+
 	ChessPiece* m_grid[BOARD_SIZE][BOARD_SIZE] = {};
+
+	VertexBuffer* m_vertexBuffer = nullptr;
+	int m_vertexCount = 0;
 };

@@ -27,10 +27,8 @@ public:
 	Camera*					m_screenCamera		= nullptr;
 	Camera*					m_attractCamera		= nullptr;
 	Player*					m_player			= nullptr;
-	Prop*					m_primaryCube		= nullptr;
-	Prop*					m_secondaryCube		= nullptr;
 	std::vector<Entity*>	m_entities;
-	Shader*					m_tbnVizShader		= nullptr;
+	Shader*					m_litShader			= nullptr;
 	ChessMatch*				m_chessMatch		= nullptr;
 
 
@@ -52,7 +50,6 @@ public:
 
 	void UpdateEntities();
 	void DeleteGarbageEntities();
-	void UpdateAnimatedSceneProps();
 	float GetDeltaSeconds() const;
 
 	static bool ChessMove_Cmd(EventArgs& args);
