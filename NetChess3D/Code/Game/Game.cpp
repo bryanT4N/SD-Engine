@@ -309,7 +309,7 @@ void Game::Render_Playing() const
 		gameStateText);
 	DebugAddScreenText(
 		statusBarText,
-		AABB2(10.f, SCREEN_SIZE_Y - 60.f, 780.f, SCREEN_SIZE_Y - 35.f),
+		AABB2(10.f, SCREEN_SIZE_Y - 44.f, 780.f, SCREEN_SIZE_Y - 19.f),
 		10.f,
 		Vec2(0.f, 1.f),
 		0.f,

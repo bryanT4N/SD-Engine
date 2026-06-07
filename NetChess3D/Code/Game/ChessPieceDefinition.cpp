@@ -125,17 +125,18 @@ namespace
 			Vec3(0.24f, 0.15f, 0.12f));
 
 		float const earBackOffset = -0.10f * facingSign;
-		Vec3 earCenter(0.f, earBackOffset, bodyTopZ + 0.14f);
+		float const earHalfHeight = 0.15f;
+		Vec3 earCenter(0.f, earBackOffset, bodyTopZ + earHalfHeight);
 		EulerAngles earOrientation(0.f, 0.f, 0.f);
 		EmitOrientedBox(out_verts, earCenter, earOrientation,
-			Vec3(0.09f, 0.09f, 0.12f));
+			Vec3(0.08f, 0.08f, earHalfHeight));
 	}
 
 	void CreateMeshForRook(std::vector<Vertex>& out_verts, int playerSide)
 	{
 		EmitBase(out_verts, playerSide);
 
-		float const bodyHalfWidth = 0.20f;
+		float const bodyHalfWidth = 0.18f;
 		float const bodyHeight = 0.70f;
 		float const bodyTopZ = BASE_HEIGHT + bodyHeight;
 		AABB3 body(
