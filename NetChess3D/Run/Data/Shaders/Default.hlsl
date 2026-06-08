@@ -15,7 +15,7 @@ struct v2p_t
 };
 
 //------------------------------------------------------------------------------------------------
-cbuffer CameraConstantsOnGPU : register(b2)
+cbuffer CameraCBOonGPU : register(b2)
 {
 	float4x4 WorldToCameraTransform;   // View transform
 	float4x4 CameraToRenderTransform;  // Non-standard transform from game to DirectX conventions
@@ -23,7 +23,7 @@ cbuffer CameraConstantsOnGPU : register(b2)
 };
 
 //------------------------------------------------------------------------------------------------
-cbuffer ModelConstantsOnGPU : register(b3)
+cbuffer ModelCBOonGPU : register(b3)
 {
 	float4x4 ModelToWorldTransform;    // Model transform
 	float4 ModelColor;

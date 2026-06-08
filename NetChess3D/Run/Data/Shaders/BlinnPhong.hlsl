@@ -26,7 +26,7 @@ struct v2p_t
 };
 
 //------------------------------------------------------------------------------------------------
-cbuffer CameraConstantsOnGPU : register(b2)
+cbuffer CameraCBOonGPU : register(b2)
 {
 	float4x4 WorldToCameraTransform;
 	float4x4 CameraToRenderTransform;
@@ -34,7 +34,7 @@ cbuffer CameraConstantsOnGPU : register(b2)
 };
 
 //------------------------------------------------------------------------------------------------
-cbuffer ModelConstantsOnGPU : register(b3)
+cbuffer ModelCBOonGPU : register(b3)
 {
 	float4x4 ModelToWorldTransform;
 	float4 ModelColor;

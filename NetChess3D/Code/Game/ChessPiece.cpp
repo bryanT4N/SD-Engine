@@ -41,7 +41,7 @@ void ChessPiece::Render() const
 		0.f);
 	Mat44 modelToWorld = Mat44::MakeTranslation3D(piecePosition);
 
-	renderer->SetModelConstants(modelToWorld, tint);
+	renderer->SetModelCBO(modelToWorld, tint);
 	renderer->BindTexture(nullptr);
 	renderer->DrawIndexedVertexBuffer(vbo, ibo, static_cast<unsigned int>(indexCount));
 }

@@ -107,8 +107,8 @@ protected:
 	Shader*						m_currentShader				= nullptr;
 	Shader*						m_defaultShader				= nullptr;
 	VertexBuffer*				m_immediateVBO				= nullptr;
-	ConstantBuffer*				m_cameraCBO					= nullptr;
-	ConstantBuffer*				m_modelCBO					= nullptr;
+	ConstantBuffer*				m_cameraCBOonGPU			= nullptr;
+	ConstantBuffer*				m_modelCBOonGPU				= nullptr;
 
 	ID3D11BlendState*			m_blendState				= nullptr;
 	BlendMode					m_desiredBlendMode			= BlendMode::ALPHA;
@@ -137,7 +137,7 @@ public:
 
 	void		BeginCamera(Camera const& camera);
 	void		EndCamera(Camera const& camera) const;
-	void		SetModelConstants(
+	void		SetModelCBO(
 					Mat44 const& modelToWorldTransform = Mat44(),
 					Rgba8 const& modelColor = Rgba8::WHITE);
 

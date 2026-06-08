@@ -42,23 +42,23 @@
 #include "Engine/Renderer/DefaultShader.hpp"
 
 //-----------------------------------------------------------------------------------------------
-struct CameraConstantsOnCPU
+struct CameraCBOonCPU
 {
 	Mat44 WorldToCameraTransform;		// View transform
 	Mat44 CameraToRenderTransform;		// Non-standard transform from game to DirectX conventions
 	Mat44 RenderToClipTransform;		// Projection transform
 };
 
-static const int k_cameraConstantsSlot = 2;
+static const int k_cameraCBOSlot = 2;
 
 //-----------------------------------------------------------------------------------------------
-struct ModelConstantsOnCPU
+struct ModelCBOonCPU
 {
 	Mat44 ModelToWorldTransform;		// Model transform
 	float ModelColor[4];
 };
 
-static const int k_modelConstantsSlot = 3;
+static const int k_modelCBOSlot = 3;
 
 //-----------------------------------------------------------------------------------------------
 static bool DoesFileExist(char const* filepath)
@@ -285,8 +285,8 @@ void Renderer::Startup()
 	BindShader(m_defaultShader);
 
 	m_immediateVBO = CreateVertexBuffer(sizeof(Vertex_PCU), sizeof(Vertex_PCU));
-	m_cameraCBO = CreateConstantBuffer(sizeof(CameraConstantsOnCPU));
-	m_modelCBO = CreateConstantBuffer(sizeof(ModelConstantsOnCPU));
+	m_cameraCBOonGPU = CreateConstantBuffer(sizeof(CameraCBOonCPU));
+	m_modelCBOonGPU = CreateConstantBuffer(sizeof(ModelCBOonCPU));
 
 	// Blend states
 	D3D11_BLEND_DESC blendDesc = { };
@@ -430,11 +430,11 @@ void Renderer::Shutdown()
 	delete m_immediateVBO;
 	m_immediateVBO = nullptr;
 
-	delete m_cameraCBO;
-	m_cameraCBO = nullptr;
+	delete m_cameraCBOonGPU;
+	m_cameraCBOonGPU = nullptr;
 
-	delete m_modelCBO;
-	m_modelCBO = nullptr;
+	delete m_modelCBOonGPU;
+	m_modelCBOonGPU = nullptr;
 
 	for (int i = 0; i < (int)BlendMode::COUNT; ++i)
 	{
@@ -548,14 +548,14 @@ void Renderer::BeginCamera(Camera const& camera)
 
 	m_deviceContext->RSSetViewports(1, &viewport);
 
-	CameraConstantsOnCPU cameraConstantsOnCPU;
-	cameraConstantsOnCPU.WorldToCameraTransform = camera.GetWorldToCameraTransform();
-	cameraConstantsOnCPU.CameraToRenderTransform = camera.GetCameraToRenderTransform();
-	cameraConstantsOnCPU.RenderToClipTransform = camera.GetRenderToClipTransform();
-	CopyCPUToGPU(&cameraConstantsOnCPU, sizeof(CameraConstantsOnCPU), m_cameraCBO);
-	BindConstantBuffer(k_cameraConstantsSlot, m_cameraCBO);
+	CameraCBOonCPU cameraCBOonCPU;
+	cameraCBOonCPU.WorldToCameraTransform = camera.GetWorldToCameraTransform();
+	cameraCBOonCPU.CameraToRenderTransform = camera.GetCameraToRenderTransform();
+	cameraCBOonCPU.RenderToClipTransform = camera.GetRenderToClipTransform();
+	CopyCPUToGPU(&cameraCBOonCPU, sizeof(CameraCBOonCPU), m_cameraCBOonGPU);
+	BindConstantBuffer(k_cameraCBOSlot, m_cameraCBOonGPU);
 
-	SetModelConstants();
+	SetModelCBO();
 }
 
 //-----------------------------------------------------------------------------------------------
@@ -565,26 +565,26 @@ void Renderer::EndCamera( [[maybe_unused]] Camera const& camera) const
 
 
 //-----------------------------------------------------------------------------------------------
-void Renderer::SetModelConstants(
+void Renderer::SetModelCBO(
 	Mat44 const& modelToWorldTransform,
 	Rgba8 const& modelColor)
 {
-	if (m_modelCBO == nullptr) {
+	if (m_modelCBOonGPU == nullptr) {
 		return;
 	}
 
-	ModelConstantsOnCPU modelConstantsOnCPU;
-	modelConstantsOnCPU.ModelToWorldTransform = modelToWorldTransform;
+	ModelCBOonCPU modelCBOonCPU;
+	modelCBOonCPU.ModelToWorldTransform = modelToWorldTransform;
 
 	float modelColorAsFloats[4];
 	modelColor.GetAsFloats(modelColorAsFloats);
-	modelConstantsOnCPU.ModelColor[0] = modelColorAsFloats[0];
-	modelConstantsOnCPU.ModelColor[1] = modelColorAsFloats[1];
-	modelConstantsOnCPU.ModelColor[2] = modelColorAsFloats[2];
-	modelConstantsOnCPU.ModelColor[3] = modelColorAsFloats[3];
+	modelCBOonCPU.ModelColor[0] = modelColorAsFloats[0];
+	modelCBOonCPU.ModelColor[1] = modelColorAsFloats[1];
+	modelCBOonCPU.ModelColor[2] = modelColorAsFloats[2];
+	modelCBOonCPU.ModelColor[3] = modelColorAsFloats[3];
 
-	CopyCPUToGPU(&modelConstantsOnCPU, sizeof(ModelConstantsOnCPU), m_modelCBO);
-	BindConstantBuffer(k_modelConstantsSlot, m_modelCBO);
+	CopyCPUToGPU(&modelCBOonCPU, sizeof(ModelCBOonCPU), m_modelCBOonGPU);
+	BindConstantBuffer(k_modelCBOSlot, m_modelCBOonGPU);
 }
 
 //-----------------------------------------------------------------------------------------------

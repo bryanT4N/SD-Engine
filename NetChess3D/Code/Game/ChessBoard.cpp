@@ -30,7 +30,7 @@ void ChessBoard::Render() const
 		return;
 	}
 	Renderer* renderer = g_engine->m_render;
-	renderer->SetModelConstants(Mat44(), Rgba8::WHITE);
+	renderer->SetModelCBO(Mat44(), Rgba8::WHITE);
 	renderer->BindTexture(nullptr);
 	renderer->DrawVertexBuffer(m_vertexBuffer, static_cast<unsigned int>(m_vertexCount));
 }

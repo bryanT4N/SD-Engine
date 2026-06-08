@@ -5,14 +5,14 @@ static char const* g_defaultShaderSource = R"(
 Texture2D diffuseTexture : register(t0);
 SamplerState diffuseSampler : register(s0);
 
-cbuffer CameraConstantsOnGPU : register(b2)
+cbuffer CameraCBOonGPU : register(b2)
 {
 	float4x4 WorldToCameraTransform;   // View transform
 	float4x4 CameraToRenderTransform;  // Non-standard transform from game to DirectX conventions
 	float4x4 RenderToClipTransform;    // Projection transform
 };
 
-cbuffer ModelConstantsOnGPU : register(b3)
+cbuffer ModelCBOonGPU : register(b3)
 {
 	float4x4 ModelToWorldTransform;    // Model transform
 	float4 ModelColor;

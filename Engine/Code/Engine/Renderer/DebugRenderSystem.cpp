@@ -237,7 +237,7 @@ void DrawWorldVertsByMode(
 		return;
 	}
 
-	renderer.SetModelConstants(modelTransform, Rgba8::WHITE);
+	renderer.SetModelCBO(modelTransform, Rgba8::WHITE);
 	renderer.BindTexture(texture);
 	renderer.SetRasterizerMode(
 		isWireframe ? RasterizerMode::WIREFRAME_CULL_BACK : RasterizerMode::SOLID_CULL_BACK);
@@ -337,7 +337,7 @@ void RenderWorldTextObject(DebugObject const& object, Camera const& camera)
 	}
 
 	Renderer& renderer = *g_debugRenderState->m_config.m_renderer;
-	renderer.SetModelConstants(textTransform, Rgba8::WHITE);
+	renderer.SetModelCBO(textTransform, Rgba8::WHITE);
 	renderer.BindTexture(&font->GetTexture());
 	renderer.SetRasterizerMode(RasterizerMode::SOLID_CULL_NONE);
 
@@ -408,7 +408,7 @@ void RenderScreenTextObject(DebugObject const& object)
 	}
 
 	Renderer& renderer = *g_debugRenderState->m_config.m_renderer;
-	renderer.SetModelConstants(Mat44(), Rgba8::WHITE);
+	renderer.SetModelCBO(Mat44(), Rgba8::WHITE);
 	renderer.BindTexture(&font->GetTexture());
 	renderer.SetBlendMode(BlendMode::ALPHA);
 	renderer.SetDepthMode(DepthMode::DISABLED);
@@ -450,7 +450,7 @@ void RenderMessages(Camera const& camera)
 	float lineTop = screenMaxs.y - DEBUG_MESSAGE_MARGIN - DEBUG_MESSAGE_LINE_HEIGHT - DEBUG_MESSAGE_LINE_SPACING;
 
 	Renderer& renderer = *g_debugRenderState->m_config.m_renderer;
-	renderer.SetModelConstants(Mat44(), Rgba8::WHITE);
+	renderer.SetModelCBO(Mat44(), Rgba8::WHITE);
 	renderer.BindTexture(&font->GetTexture());
 	renderer.SetBlendMode(BlendMode::ALPHA);
 	renderer.SetDepthMode(DepthMode::DISABLED);
