@@ -31,6 +31,7 @@ public:
 										
 	void SetIsQuitting();				
 	void UpdateFromKeyboard();			
+	void UpdateCursorMode();
 	static bool Command_Quit(EventArgs& args);
 										
 	bool IsQuitting() const;			

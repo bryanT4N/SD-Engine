@@ -3,9 +3,238 @@
 #include <Engine/Math/MathUtils.hpp>
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Core/Vertex.hpp"
+#include "Engine/Core/VertexUtils.hpp"
 #include "Engine/Core/Engine.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 #include "Game/GameCommon.hpp"
+#include "Game/Prop.hpp"
+
+//-----------------------------------------------------------------------------------------------
+static int GetAbsInt(int value)
+{
+	if (value < 0) {
+		return -value;
+	}
+
+	return value;
+}
+
+//-----------------------------------------------------------------------------------------------
+static void GetGridLineStyle(
+	int lineIndex,
+	GridPropConfig const& config,
+	float& outThickness,
+	unsigned char& outIntensity,
+	bool& outIsGrayLine)
+{
+	int majorInterval = config.m_majorLineInterval;
+	if (majorInterval <= 0) {
+		majorInterval = 1;
+	}
+
+	float minorThickness = config.m_minorLineThickness;
+	if (minorThickness <= 0.0f) {
+		minorThickness = 0.01f;
+	}
+
+	outThickness = minorThickness;
+	outIntensity = config.m_minorGrayIntensity;
+	outIsGrayLine = true;
+
+	if (lineIndex == 0) {
+		float axisThickness = config.m_axisLineThickness;
+		if (axisThickness > 0.0f) {
+			outThickness = axisThickness;
+		}
+		outIntensity = config.m_axisIntensity;
+		outIsGrayLine = false;
+		return;
+	}
+
+	if ((GetAbsInt(lineIndex) % majorInterval) == 0) {
+		float majorThickness = config.m_majorLineThickness;
+		if (majorThickness > 0.0f) {
+			outThickness = majorThickness;
+		}
+		outIntensity = config.m_majorRedGreenIntensity;
+		outIsGrayLine = false;
+	}
+}
+
+//-----------------------------------------------------------------------------------------------
+Prop* CreateCubeProp(
+	Game* owner,
+	float sideLength,
+	Texture* texture,
+	AABB2 const& uvs,
+	Rgba8 const& positiveXColor,
+	Rgba8 const& negativeXColor,
+	Rgba8 const& positiveYColor,
+	Rgba8 const& negativeYColor,
+	Rgba8 const& positiveZColor,
+	Rgba8 const& negativeZColor)
+{
+	Prop* cube = new Prop(owner);
+	cube->m_texture = texture;
+	if (sideLength <= 0.0f) {
+		sideLength = 1.0f;
+	}
+
+	float mins = -0.5f * sideLength;
+	float maxs = 0.5f * sideLength;
+
+	// +X face
+	AddVertsForQuad3D(
+		cube->m_vertexes,
+		Vec3(maxs, mins, mins),
+		Vec3(maxs, maxs, mins),
+		Vec3(maxs, maxs, maxs),
+		Vec3(maxs, mins, maxs),
+		positiveXColor,
+		uvs);
+	// -X face
+	AddVertsForQuad3D(
+		cube->m_vertexes,
+		Vec3(mins, mins, maxs),
+		Vec3(mins, maxs, maxs),
+		Vec3(mins, maxs, mins),
+		Vec3(mins, mins, mins),
+		negativeXColor,
+		uvs);
+	// +Y face
+	AddVertsForQuad3D(
+		cube->m_vertexes,
+		Vec3(mins, maxs, mins),
+		Vec3(mins, maxs, maxs),
+		Vec3(maxs, maxs, maxs),
+		Vec3(maxs, maxs, mins),
+		positiveYColor,
+		uvs);
+	// -Y face
+	AddVertsForQuad3D(
+		cube->m_vertexes,
+		Vec3(mins, mins, maxs),
+		Vec3(mins, mins, mins),
+		Vec3(maxs, mins, mins),
+		Vec3(maxs, mins, maxs),
+		negativeYColor,
+		uvs);
+	// +Z face
+	AddVertsForQuad3D(
+		cube->m_vertexes,
+		Vec3(mins, mins, maxs),
+		Vec3(maxs, mins, maxs),
+		Vec3(maxs, maxs, maxs),
+		Vec3(mins, maxs, maxs),
+		positiveZColor,
+		uvs);
+	// -Z face
+	AddVertsForQuad3D(
+		cube->m_vertexes,
+		Vec3(maxs, mins, mins),
+		Vec3(mins, mins, mins),
+		Vec3(mins, maxs, mins),
+		Vec3(maxs, maxs, mins),
+		negativeZColor,
+		uvs);
+
+	return cube;
+}
+
+//-----------------------------------------------------------------------------------------------
+Prop* CreateSphereProp(
+	Game* owner,
+	float radius,
+	int numSlices,
+	int numStacks,
+	Texture* texture,
+	AABB2 const& uvs,
+	Rgba8 const& color)
+{
+	Prop* sphere = new Prop(owner);
+	sphere->m_texture = texture;
+	if (radius <= 0.0f) {
+		radius = 1.0f;
+	}
+	if (numSlices < 3) {
+		numSlices = 3;
+	}
+	if (numStacks < 2) {
+		numStacks = 2;
+	}
+
+	AddVertsForSphere3D(
+		sphere->m_vertexes,
+		Vec3(0.0f, 0.0f, 0.0f),
+		radius,
+		color,
+		uvs,
+		numSlices,
+		numStacks);
+
+	return sphere;
+}
+
+//-----------------------------------------------------------------------------------------------
+Prop* CreateGridProp(Game* owner, GridPropConfig const& config)
+{
+	Prop* grid = new Prop(owner);
+
+	float spacing = config.m_spacing;
+	if (spacing <= 0.0f) {
+		spacing = 1.0f;
+	}
+
+	float halfExtentInput = config.m_halfExtent;
+	if (halfExtentInput <= 0.0f) {
+		halfExtentInput = 1.0f;
+	}
+
+	int lineCountPerSide = static_cast<int>(halfExtentInput / spacing);
+	if (lineCountPerSide < 1) {
+		lineCountPerSide = 1;
+	}
+
+	float halfExtent = static_cast<float>(lineCountPerSide) * spacing;
+	int totalLineCount = (lineCountPerSide * 2) + 1;
+	int estimatedVertexCount = totalLineCount * 2 * 36;
+	grid->m_vertexes.reserve(static_cast<size_t>(estimatedVertexCount));
+
+	for (int lineIndex = -lineCountPerSide; lineIndex <= lineCountPerSide; ++lineIndex) {
+		float thickness = config.m_minorLineThickness;
+		unsigned char intensity = config.m_minorGrayIntensity;
+		bool isGrayLine = true;
+		GetGridLineStyle(lineIndex, config, thickness, intensity, isGrayLine);
+
+		float halfThickness = 0.5f * thickness;
+		float lineCoord = static_cast<float>(lineIndex) * spacing;
+		Rgba8 xLineColor;
+		Rgba8 yLineColor;
+		if (isGrayLine) {
+			xLineColor = Rgba8(intensity, intensity, intensity, 255);
+			yLineColor = xLineColor;
+		}
+		else {
+			xLineColor = Rgba8(intensity, 0, 0, 255);
+			yLineColor = Rgba8(0, intensity, 0, 255);
+		}
+
+		AddVertsForAABB3D(
+			grid->m_vertexes,
+			AABB3(
+				Vec3(-halfExtent, lineCoord - halfThickness, -halfThickness),
+				Vec3(halfExtent, lineCoord + halfThickness, halfThickness)),
+			xLineColor);
+		AddVertsForAABB3D(
+			grid->m_vertexes,
+			AABB3(
+				Vec3(lineCoord - halfThickness, -halfExtent, -halfThickness),
+				Vec3(lineCoord + halfThickness, halfExtent, halfThickness)),
+			yLineColor);
+	}
+
+	return grid;
+}
 
 //-----------------------------------------------------------------------------------------------
 void DebugDrawLine(Vec2 const& startPos, Vec2 const& endPos, float const& thickness, Rgba8 const& startColor, Rgba8 const& endColor)

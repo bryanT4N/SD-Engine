@@ -1,51 +1,31 @@
-# SD1-A04: Starship Gold
+# AceAttorneyApproximation
+
+DFS1 project — Capcom 逆转裁判 (Ace Attorney) 风 ADV with RPG framework hooks.
 
 ## 1 How to Use
 
 ### 1.1 Build and Run
 
-Open the `Starship\Starship.sln` file in Visual Studio, then press `CTRL + SHIFT + B` to build the solution. `Starship_Release_x64.exe` should be under the `Starship\Run\` folder.
+Open `AceAttorneyApproximation\AceAttorneyApproximation.sln` in Visual Studio, then press `CTRL + SHIFT + B` to build the solution. `AceAttorneyApproximation_Release_x64.exe` will be under the `AceAttorneyApproximation\Run\` folder.
 
-### 1.2 Game Control
+Build configurations: `Debug` / `DebugInline` / `FastBreak` / `Release` × `x64` / `Win32`.
 
-The game assumes that the player uses a Xbox Controller for gameplay input. Keyboard is mainly used for cheat codes.
+### 1.2 Controls
 
-##### **<u>Xbox controller input:</u>**
+- `~` opens the DevConsole.
+- Mouse left-click to interact with NPCs, dialogue options, and inventory items.
+- `Esc` opens the pause menu (or returns to attract screen).
 
-- Use `LS` to move around and set the player's facing direction.
-- Hold `RT` to fire continually. You can also press `A` button to shoot a single bullet. 
-- When player has died, press `START` button to respawn the ship.
+## 2 Project Structure
 
-If you don't have a controller, use keyboard for basic movements (advanced features limited) :
+- `Code/Game/` — Game-side code (App / Game / Entity / Player / Prop / GameCommon)
+- `Run/Data/Shaders/` — HLSL shaders
+- `Run/Data/Audio/Fonts/Images/` — assets
 
-- Use `'S'` and `'F'` on your keyboard to turn the player ship direction.
-- Use `'W'` to speed up in the current forward direction.
-- Use the `SPACEBAR` to shoot.
-- When player has died, use key button `'N'` to respawn the player ship.
+Engine is shared at `../Engine/`.
 
-Notice that if a controller is connected, the movements input from keyboard will not be accepted.
+## 3 Status
 
-##### **<u>Cheat codes:</u>**
+Sprint 1 / Milestone 1 — foundation (Basic UI System + Linear Dialogue + Test Conversation).
 
-- Use `F1` to toggle the debug drawing.
-- Use `F8` to restart a new game.
-- Use `'C'` to kill all the enemies.
-- Use `'I'` to generate new asteroids.
-- Holding `'T'` slows the rate of time to 10% normal.
-- Pressing key button `'P'` toggles the game to pause / unpause.
-- Pressing `'O'` to run 1 frame and then pause.
-
-
-
-## 2 Known Issues 
-
-
-
-## 3 Deep Learning
-
-Compared to the small projects I wrote before, working on Starship involved a lot of "adding new features to existing code" situations. A04 in particular required my own decisions and thoughts on this kind of progress, which exposed me to these situations more directly. 
-
-Now I've become more accustomed to starting from the side that directly uses the new thing. Firstly create the new method that will be called, then break it down based on what each part actually does and creates new methods again. I also tend to first build the simplest version possible before thinking about whether the functionality or code needs to be made more complex.
-
-The benefit is that this is less mentally demanding, and the code is easier to read when I look back later because it was built in a way that feels intuitive. I’ve realized this is actually more efficient than trying to “solve everything perfectly in one go”.
-
+Governance documents: `../../Documents/SMUCourses/HGME6226-DFS1/Governance/`.
