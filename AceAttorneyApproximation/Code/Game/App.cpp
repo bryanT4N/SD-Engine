@@ -12,6 +12,7 @@
 #include "Engine/Core/XmlUtils.hpp"
 #include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Engine/Input/InputSystem.hpp"
+#include "Engine/UI/UITheme.hpp"
 #include "Engine/Window/Window.hpp"
 
 App*					g_theApp		= nullptr;
@@ -72,6 +73,10 @@ App::App()
 	DebugRenderConfig debugRenderConfig;
 	debugRenderConfig.m_renderer = g_engine->m_render;
 	DebugRenderSystemStartup(debugRenderConfig);
+
+	g_uiTheme = new UITheme();
+	g_uiTheme->defaultFont = g_engine->m_render->CreateOrGetBitmapFont("Data/Fonts/SquirrelFixedFont");
+
 	m_game				= new Game;
 	SubscribeEventCallbackFunction("Quit", App::Command_Quit);
 	PrintStartupControlsToDevConsole();
@@ -84,6 +89,8 @@ App::~App()
 {
 	UnsubscribeEventCallbackFunction("Quit", App::Command_Quit);
 	delete m_game;
+	delete g_uiTheme;
+	g_uiTheme = nullptr;
 	DebugRenderSystemShutdown();
 	delete g_engine;
 }

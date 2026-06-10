@@ -31,6 +31,9 @@
     <ClCompile Include="Prop.cpp">
       <Filter>Gameplay</Filter>
     </ClCompile>
+    <ClCompile Include="UITestScreen.cpp">
+      <Filter>Gameplay</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp">
@@ -52,6 +55,9 @@
       <Filter>Gameplay</Filter>
     </ClInclude>
     <ClInclude Include="Prop.hpp">
+      <Filter>Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="UITestScreen.hpp">
       <Filter>Gameplay</Filter>
     </ClInclude>
   </ItemGroup>

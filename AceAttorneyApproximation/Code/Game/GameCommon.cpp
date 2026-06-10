@@ -6,8 +6,12 @@
 #include "Engine/Core/VertexUtils.hpp"
 #include "Engine/Core/Engine.hpp"
 #include "Engine/Renderer/Renderer.hpp"
+#include "Engine/UI/UITheme.hpp"
 #include "Game/GameCommon.hpp"
 #include "Game/Prop.hpp"
+
+//-----------------------------------------------------------------------------------------------
+UITheme* g_uiTheme = nullptr;
 
 //-----------------------------------------------------------------------------------------------
 static int GetAbsInt(int value)

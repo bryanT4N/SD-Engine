@@ -87,6 +87,16 @@
     <ClCompile Include="Renderer\SimpleTriangleFont.cpp" />
     <ClCompile Include="Renderer\SpriteSheet.cpp" />
     <ClCompile Include="Renderer\Texture.cpp" />
+    <ClCompile Include="UI\UIAnchorContainer.cpp" />
+    <ClCompile Include="UI\UIAnchorLayout.cpp" />
+    <ClCompile Include="UI\UIButton.cpp" />
+    <ClCompile Include="UI\UIContainer.cpp" />
+    <ClCompile Include="UI\UIImage.cpp" />
+    <ClCompile Include="UI\UILabel.cpp" />
+    <ClCompile Include="UI\UIPanel.cpp" />
+    <ClCompile Include="UI\UIStackContainer.cpp" />
+    <ClCompile Include="UI\UISystem.cpp" />
+    <ClCompile Include="UI\UIWidget.cpp" />
     <ClCompile Include="Window\Window.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -153,6 +163,19 @@
     <ClInclude Include="Renderer\SpriteDefinition.hpp" />
     <ClInclude Include="Renderer\SpriteSheet.hpp" />
     <ClInclude Include="Renderer\Texture.hpp" />
+    <ClInclude Include="UI\UIAnchorContainer.hpp" />
+    <ClInclude Include="UI\UIAnchorLayout.hpp" />
+    <ClInclude Include="UI\UIButton.hpp" />
+    <ClInclude Include="UI\UIContainer.hpp" />
+    <ClInclude Include="UI\UIEventReply.hpp" />
+    <ClInclude Include="UI\UIImage.hpp" />
+    <ClInclude Include="UI\UIInputContext.hpp" />
+    <ClInclude Include="UI\UILabel.hpp" />
+    <ClInclude Include="UI\UIPanel.hpp" />
+    <ClInclude Include="UI\UIStackContainer.hpp" />
+    <ClInclude Include="UI\UISystem.hpp" />
+    <ClInclude Include="UI\UITheme.hpp" />
+    <ClInclude Include="UI\UIWidget.hpp" />
     <ClInclude Include="Window\Window.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

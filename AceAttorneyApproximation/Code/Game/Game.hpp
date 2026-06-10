@@ -11,6 +11,7 @@ class Camera;
 class Entity;
 class Player;
 class Prop;
+class UITestScreen;
 
 //-----------------------------------------------------------------------------------------------
 class Game
@@ -27,6 +28,7 @@ public:
 	Prop*					m_primaryCube		= nullptr;
 	Prop*					m_secondaryCube		= nullptr;
 	std::vector<Entity*>	m_entities;
+	UITestScreen*			m_uiTestScreen		= nullptr;
 
 
 public:

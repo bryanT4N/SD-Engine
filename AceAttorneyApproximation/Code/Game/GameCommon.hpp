@@ -54,7 +54,11 @@ constexpr int ATTRACT_RING_PULSE_PERIOD_TICKS = 100;
 class Game;
 class Prop;
 class Texture;
+struct UITheme;
 struct Vec2;
+
+//-----------------------------------------------------------------------------------------------
+extern UITheme* g_uiTheme;
 
 //-----------------------------------------------------------------------------------------------
 struct GridPropConfig

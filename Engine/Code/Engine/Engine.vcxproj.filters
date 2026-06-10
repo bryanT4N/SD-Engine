@@ -23,6 +23,9 @@
     <Filter Include="ThirdParty\fmod">
       <UniqueIdentifier>{ed24d18e-f6a2-4703-8a77-d35481632496}</UniqueIdentifier>
     </Filter>
+    <Filter Include="UI">
+      <UniqueIdentifier>{8a1b2c3d-4e5f-4a6b-9c7d-8e9f0a1b2c3d}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Window">
       <UniqueIdentifier>{306c42d5-a002-451c-9b20-123e1547ad1e}</UniqueIdentifier>
     </Filter>
@@ -387,5 +390,74 @@
     <ClInclude Include="Renderer\IndexBuffer.hpp">
       <Filter>Renderer</Filter>
     </ClInclude>
+    <ClInclude Include="UI\UIWidget.hpp">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClCompile Include="UI\UIWidget.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClInclude Include="UI\UIAnchorLayout.hpp">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClCompile Include="UI\UIAnchorLayout.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClInclude Include="UI\UIAnchorContainer.hpp">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClCompile Include="UI\UIAnchorContainer.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClInclude Include="UI\UIContainer.hpp">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClCompile Include="UI\UIContainer.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClInclude Include="UI\UITheme.hpp">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\UILabel.hpp">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClCompile Include="UI\UILabel.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClInclude Include="UI\UIImage.hpp">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClCompile Include="UI\UIImage.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClInclude Include="UI\UIPanel.hpp">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClCompile Include="UI\UIPanel.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClInclude Include="UI\UIButton.hpp">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClCompile Include="UI\UIButton.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClInclude Include="UI\UIEventReply.hpp">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\UIInputContext.hpp">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\UISystem.hpp">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClCompile Include="UI\UISystem.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClInclude Include="UI\UIStackContainer.hpp">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClCompile Include="UI\UIStackContainer.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

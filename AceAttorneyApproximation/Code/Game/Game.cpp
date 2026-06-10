@@ -3,6 +3,7 @@
 #include "Game/Game.hpp"
 #include "Game/Player.hpp"
 #include "Game/Prop.hpp"
+#include "Game/UITestScreen.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/Engine.hpp"
 #include "Engine/Core/Clock.hpp"
@@ -129,10 +130,16 @@ void Game::Startup()
 	AddEntity(grid);
 
 	DebugAddWorldBasis();
+
+	m_uiTestScreen = new UITestScreen();
+	m_uiTestScreen->Build(g_uiTheme);
 }
 
 void Game::Shutdown()
 {
+	delete m_uiTestScreen;
+	m_uiTestScreen = nullptr;
+
 	const int entityCount = static_cast<int>(m_entities.size());
 	for (int entityIndex = 0; entityIndex < entityCount; ++entityIndex) {
 		delete m_entities[entityIndex];
@@ -161,6 +168,10 @@ void Game::Update()
 
 	UpdateFromKeyboard();
 	UpdateFromController();
+
+	if (m_uiTestScreen != nullptr) {
+		m_uiTestScreen->Update();
+	}
 
 	DeleteGarbageEntities();
 }
@@ -459,6 +470,11 @@ void Game::Render_Playing() const
 		g_engine->m_render->DrawVertexArray(pausedBgVerts);
 	}
 	DebugRenderScreen(*m_screenCamera);
+
+	if (m_uiTestScreen != nullptr) {
+		m_uiTestScreen->Render(*g_engine->m_render);
+	}
+
 	g_engine->m_render->EndCamera(*m_screenCamera);
 }
 
