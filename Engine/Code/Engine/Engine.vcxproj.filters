@@ -26,6 +26,9 @@
     <Filter Include="UI">
       <UniqueIdentifier>{8a1b2c3d-4e5f-4a6b-9c7d-8e9f0a1b2c3d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Narrative">
+      <UniqueIdentifier>{a2b3c4d5-e6f7-4a8b-9c0d-1e2f3a4b5c6d}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Window">
       <UniqueIdentifier>{306c42d5-a002-451c-9b20-123e1547ad1e}</UniqueIdentifier>
     </Filter>
@@ -395,6 +398,24 @@
     </ClInclude>
     <ClCompile Include="UI\UIWidget.cpp">
       <Filter>UI</Filter>
+    </ClCompile>
+    <ClInclude Include="Narrative\DialogueDefinition.hpp">
+      <Filter>Narrative</Filter>
+    </ClInclude>
+    <ClCompile Include="Narrative\DialogueDefinition.cpp">
+      <Filter>Narrative</Filter>
+    </ClCompile>
+    <ClInclude Include="Narrative\DialogueDatabase.hpp">
+      <Filter>Narrative</Filter>
+    </ClInclude>
+    <ClCompile Include="Narrative\DialogueDatabase.cpp">
+      <Filter>Narrative</Filter>
+    </ClCompile>
+    <ClInclude Include="Narrative\DialogueWalker.hpp">
+      <Filter>Narrative</Filter>
+    </ClInclude>
+    <ClCompile Include="Narrative\DialogueWalker.cpp">
+      <Filter>Narrative</Filter>
     </ClCompile>
     <ClInclude Include="UI\UIAnchorLayout.hpp">
       <Filter>UI</Filter>

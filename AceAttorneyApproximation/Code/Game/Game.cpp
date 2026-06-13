@@ -3,7 +3,8 @@
 #include "Game/Game.hpp"
 #include "Game/Player.hpp"
 #include "Game/Prop.hpp"
-#include "Game/UITestScreen.hpp"
+#include "Game/DialogueScreen.hpp"
+#include "Engine/Narrative/DialogueDefinition.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/Engine.hpp"
 #include "Engine/Core/Clock.hpp"
@@ -22,15 +23,6 @@
 #include "Engine/Math/Vec2.hpp"
 
 
-static Texture* GetTexture(char const* texturePath)
-{
-	if (g_engine == nullptr || g_engine->m_render == nullptr) {
-		return nullptr;
-	}
-
-	return g_engine->m_render->CreateOrGetTextureFromFile(texturePath);
-}
-
 static float ComputeAttractRingOuterRadius()
 {
 	double timeSeconds = GetCurrentTimeSeconds();
@@ -38,32 +30,6 @@ static float ComputeAttractRingOuterRadius()
 		ATTRACT_RING_PULSE_PERIOD_TICKS;
 	float pulseValue = static_cast<float>(pulseTicks) * ATTRACT_RING_PULSE_SCALE;
 	return ATTRACT_RING_BASE_OUTER_RADIUS + abs(pulseValue - ATTRACT_RING_HALF_PULSE_SPAN);
-}
-
-static Vec3 GetPlayerForwardDirection(Player const& player)
-{
-	Camera const& playerCamera = player.GetCamera();
-	EulerAngles const cameraOrientation = playerCamera.GetOrientation();
-	return cameraOrientation.GetForwardDir_IFwd_JLeft_KUp();
-}
-
-static std::string BuildPlayerPoseDebugText(Player const& player)
-{
-	Vec3 const playerPosition = player.m_position;
-	EulerAngles const orientation = player.GetCamera().GetOrientation();
-	return Stringf(
-		"Position: %.1f, %.1f, %.1f Orientation: %.1f %.1f %.1f",
-		playerPosition.x,
-		playerPosition.y,
-		playerPosition.z,
-		orientation.m_yawDegrees,
-		orientation.m_pitchDegrees,
-		orientation.m_rollDegrees);
-}
-
-static float GetDebugConfigFloat(char const* key, float defaultValue)
-{
-	return g_gameConfigBlackboard.GetValue(key, defaultValue);
 }
 
 Game::Game()
@@ -95,50 +61,18 @@ Game::~Game()
 
 void Game::Startup()
 {
-	Texture* cubeTexture = nullptr;
-	Texture* sphereTexture = GetTexture(SCENE_SPHERE_TEXTURE_PATH);
-
 	m_player = new Player(this);
-	m_player->m_position = Vec3(-2.f, 0.f, 1.f);
 	AddEntity(m_player);
 
-	Prop* firstCube = CreateCubeProp(this, SCENE_CUBE_SIDE_LENGTH, cubeTexture);
-	firstCube->m_position = Vec3(2.f, 2.f, 0.f);
-	firstCube->m_angularVelocity = EulerAngles(
-		0.f,
-		SCENE_PRIMARY_CUBE_ROTATE_SPEED_DEGREES,
-		SCENE_PRIMARY_CUBE_ROTATE_SPEED_DEGREES);
-	m_primaryCube = firstCube;
-	AddEntity(firstCube);
-
-	Prop* secondCube = CreateCubeProp(this, SCENE_CUBE_SIDE_LENGTH, cubeTexture);
-	secondCube->m_position = Vec3(-2.f, -2.f, 0.f);
-	m_secondaryCube = secondCube;
-	AddEntity(secondCube);
-
-	Prop* sphere = CreateSphereProp(
-		this,
-		SCENE_SPHERE_RADIUS,
-		SCENE_SPHERE_NUM_SLICES,
-		SCENE_SPHERE_NUM_STACKS,
-		sphereTexture);
-	sphere->m_position = Vec3(10.f, -5.f, 1.f);
-	sphere->m_angularVelocity = EulerAngles(SCENE_SPHERE_ROTATE_Z_SPEED_DEGREES, 0.f, 0.f);
-	AddEntity(sphere);
-
-	Prop* grid = CreateGridProp(this, GridPropConfig());
-	AddEntity(grid);
-
-	DebugAddWorldBasis();
-
-	m_uiTestScreen = new UITestScreen();
-	m_uiTestScreen->Build(g_uiTheme);
+	m_dialogueDatabase.LoadFile("Data/Dialogues/test.xml");
+	m_dialogueScreen = new DialogueScreen();
+	m_dialogueScreen->Build(g_uiTheme);
 }
 
 void Game::Shutdown()
 {
-	delete m_uiTestScreen;
-	m_uiTestScreen = nullptr;
+	delete m_dialogueScreen;
+	m_dialogueScreen = nullptr;
 
 	const int entityCount = static_cast<int>(m_entities.size());
 	for (int entityIndex = 0; entityIndex < entityCount; ++entityIndex) {
@@ -148,8 +82,6 @@ void Game::Shutdown()
 
 	m_entities.clear();
 	m_player = nullptr;
-	m_primaryCube = nullptr;
-	m_secondaryCube = nullptr;
 }
 
 void Game::AddEntity(Entity* entity)
@@ -164,13 +96,12 @@ void Game::AddEntity(Entity* entity)
 void Game::Update()
 {
 	UpdateEntities();
-	UpdateAnimatedSceneProps();
 
 	UpdateFromKeyboard();
 	UpdateFromController();
 
-	if (m_uiTestScreen != nullptr) {
-		m_uiTestScreen->Update();
+	if (m_dialogueScreen != nullptr && m_dialogueScreen->IsActive()) {
+		m_dialogueScreen->Update(GetDeltaSeconds());
 	}
 
 	DeleteGarbageEntities();
@@ -201,133 +132,10 @@ void Game::UpdateFromKeyboard()
 		m_nextGameState = GameStates::ATTRACT;
 	}
 
-	if (m_player == nullptr) {
-		return;
-	}
-
-	Vec3 const playerPosition = m_player->m_position;
-	Vec3 playerForward = GetPlayerForwardDirection(*m_player);
-	if (playerForward.GetLengthSquared() == 0.f) {
-		playerForward = Vec3(1.f, 0.f, 0.f);
-	}
-
-	if (inputSystem->WasKeyJustPressed('1')) {
-		float debugCylinderLength = GetDebugConfigFloat("debugCylinderLength", 20.f);
-		float debugCylinderRadius = GetDebugConfigFloat("debugCylinderRadius", 0.0625f);
-		float debugCylinderDuration = GetDebugConfigFloat("debugCylinderDuration", 10.f);
-		DebugAddWorldCylinder(
-			playerPosition,
-			playerPosition + (playerForward * debugCylinderLength),
-			debugCylinderRadius,
-			debugCylinderDuration,
-			Rgba8::YELLOW,
-			Rgba8::YELLOW,
-			DebugRenderMode::XRAY);
-	}
-
-	if (inputSystem->IsKeyDown('2')) {
-		float debugSphereRadius = GetDebugConfigFloat("debugWorldSphereRadius", 0.25f);
-		float debugSphereDuration = GetDebugConfigFloat("debugWorldSphereDuration", 60.f);
-		DebugAddWorldSphere(
-			Vec3(playerPosition.x, playerPosition.y, 0.f),
-			debugSphereRadius,
-			debugSphereDuration,
-			Rgba8(150, 75, 0, 255),
-			Rgba8(150, 75, 0, 255),
-			DebugRenderMode::USE_DEPTH);
-	}
-
-	if (inputSystem->WasKeyJustPressed('3')) {
-		float debugWireSphereForwardOffset =
-			GetDebugConfigFloat("debugWireSphereForwardOffset", 2.f);
-		float debugWireSphereRadius = GetDebugConfigFloat("debugWireSphereRadius", 1.f);
-		float debugWireSphereDuration = GetDebugConfigFloat("debugWireSphereDuration", 5.f);
-		DebugAddWorldWireSphere(
-			playerPosition + (playerForward * debugWireSphereForwardOffset),
-			debugWireSphereRadius,
-			debugWireSphereDuration,
-			Rgba8::GREEN,
-			Rgba8::RED,
-			DebugRenderMode::USE_DEPTH);
-	}
-
-	if (inputSystem->WasKeyJustPressed('4')) {
-		float debugBasisDuration = GetDebugConfigFloat("debugBasisDuration", 20.f);
-		float debugBasisAxisLength = GetDebugConfigFloat("debugBasisAxisLength", 1.f);
-		float debugBasisAxisThickness = GetDebugConfigFloat("debugBasisAxisThickness", 0.12f);
-		float debugBasisTextHeight = GetDebugConfigFloat("debugBasisTextHeight", 1.f);
-		float debugBasisTextDuration = GetDebugConfigFloat("debugBasisTextDuration", 1.f);
-		DebugAddBasis(
-			m_player->GetModelToWorldTransform(),
-			debugBasisDuration,
-			debugBasisAxisLength,
-			debugBasisAxisThickness,
-			debugBasisTextHeight,
-			debugBasisTextDuration,
-			DebugRenderMode::USE_DEPTH);
-	}
-
-	if (inputSystem->WasKeyJustPressed('5')) {
-		Camera const& playerCamera = m_player->GetCamera();
-		Vec3 cameraForward;
-		Vec3 cameraLeft;
-		Vec3 cameraUp;
-		playerCamera.GetOrientation().GetAsVectors_IFwd_JLeft_KUp(cameraForward, cameraLeft, cameraUp);
-		(void)cameraLeft;
-		cameraForward = cameraForward.GetNormalized();
-		cameraUp = cameraUp.GetNormalized();
-		if (cameraForward.GetLengthSquared() == 0.f) {
-			cameraForward = Vec3(1.f, 0.f, 0.f);
-		}
-		if (cameraUp.GetLengthSquared() == 0.f) {
-			cameraUp = Vec3(0.f, 0.f, 1.f);
-		}
-
-		float debugBillboardForwardOffset =
-			GetDebugConfigFloat("debugBillboardForwardOffset", 2.0f);
-		float debugBillboardUpOffset = GetDebugConfigFloat("debugBillboardUpOffset", 0.15f);
-		float debugBillboardTextHeight = GetDebugConfigFloat("debugBillboardTextHeight", 0.125f);
-		float debugBillboardDuration = GetDebugConfigFloat("debugBillboardDuration", 10.f);
-		Vec3 const textOrigin =
-			playerCamera.GetPosition() + (cameraForward * debugBillboardForwardOffset) +
-			(cameraUp * debugBillboardUpOffset);
-		DebugAddWorldBillboardText(
-			BuildPlayerPoseDebugText(*m_player),
-			textOrigin,
-			debugBillboardTextHeight,
-			Vec2(0.5f, 0.5f),
-			debugBillboardDuration,
-			Rgba8::WHITE,
-			Rgba8::RED,
-			DebugRenderMode::USE_DEPTH);
-	}
-
-	if (inputSystem->WasKeyJustPressed('6')) {
-		float debugWireCylinderHeight = GetDebugConfigFloat("debugWireCylinderHeight", 1.f);
-		float debugWireCylinderRadius = GetDebugConfigFloat("debugWireCylinderRadius", 0.5f);
-		float debugWireCylinderDuration = GetDebugConfigFloat("debugWireCylinderDuration", 10.f);
-		DebugAddWorldWireCylinder(
-			playerPosition,
-			playerPosition + Vec3(0.f, 0.f, debugWireCylinderHeight),
-			debugWireCylinderRadius,
-			debugWireCylinderDuration,
-			Rgba8::WHITE,
-			Rgba8::RED,
-			DebugRenderMode::USE_DEPTH);
-	}
-
-	if (inputSystem->WasKeyJustPressed('7')) {
-		float debugMessageDuration = GetDebugConfigFloat("debugMessageDuration", 5.f);
-		EulerAngles const cameraOrientation = m_player->GetCamera().GetOrientation();
-		DebugAddMessage(
-			Stringf(
-				"Camera orientation: %.1f %.1f %.1f",
-				cameraOrientation.m_yawDegrees,
-				cameraOrientation.m_pitchDegrees,
-				cameraOrientation.m_rollDegrees),
-			debugMessageDuration,
-			Rgba8::WHITE,
-			Rgba8::WHITE);
+	if (inputSystem->WasKeyJustPressed(KEYCODE_SPACE) &&
+		m_dialogueScreen != nullptr && !m_dialogueScreen->IsActive()) {
+		DialogueDefinition const* dialogue = m_dialogueDatabase.Find("test_dialogue");
+		m_dialogueScreen->Open(dialogue, &m_worldState);
 	}
 }
 
@@ -443,18 +251,13 @@ void Game::Render_Playing() const
 		0.f,
 		Rgba8::WHITE,
 		Rgba8::WHITE);
-	if (m_player != nullptr) {
-		Vec3 const playerPosition = m_player->m_position;
-		std::string playerPositionMessage = Stringf(
-			"Player position: %.2f, %.2f, %.2f",
-			playerPosition.x,
-			playerPosition.y,
-			playerPosition.z);
+	bool isDialogueActive = (m_dialogueScreen != nullptr && m_dialogueScreen->IsActive());
+	if (!isDialogueActive) {
 		DebugAddScreenText(
-			playerPositionMessage,
-			AABB2(10.f, SCREEN_SIZE_Y - 30.f, 780.f, SCREEN_SIZE_Y - 5.f),
-			10.f,
-			Vec2(0.f, 1.f),
+			"Press Space to start the test dialogue",
+			AABB2(0.f, 0.f, SCREEN_SIZE_X, SCREEN_SIZE_Y),
+			20.f,
+			Vec2(0.5f, 0.5f),
 			0.f,
 			Rgba8::WHITE,
 			Rgba8::WHITE);
@@ -471,8 +274,8 @@ void Game::Render_Playing() const
 	}
 	DebugRenderScreen(*m_screenCamera);
 
-	if (m_uiTestScreen != nullptr) {
-		m_uiTestScreen->Render(*g_engine->m_render);
+	if (isDialogueActive) {
+		m_dialogueScreen->Render(*g_engine->m_render);
 	}
 
 	g_engine->m_render->EndCamera(*m_screenCamera);
@@ -481,18 +284,6 @@ void Game::Render_Playing() const
 float Game::GetDeltaSeconds() const
 {
 	return static_cast<float>(m_gameClock.GetDeltaSeconds());
-}
-
-
-void Game::UpdateAnimatedSceneProps()
-{
-	if (m_secondaryCube == nullptr) {
-		return;
-	}
-
-	float elapsedSeconds = static_cast<float>(m_gameClock.GetTotalSeconds());
-	float brightness = 0.5f * (SinDegrees(elapsedSeconds * 90.f) + 1.f);
-	m_secondaryCube->m_color = Interpolate(Rgba8::BLACK, Rgba8::WHITE, brightness);
 }
 
 

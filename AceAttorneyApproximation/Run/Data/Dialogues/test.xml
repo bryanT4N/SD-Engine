@@ -1,0 +1,10 @@
+<Dialogue id="test_dialogue" start="l1">
+	<Line id="l1" speaker="Speaker A" next="l2">This is a placeholder dialogue line. It is intentionally long so it wraps across multiple lines inside the dialogue box and demonstrates word wrapping.</Line>
+	<Line id="l2" speaker="Speaker B" next="ask">This is a second placeholder line spoken by a different speaker.</Line>
+	<Choice id="ask" prompt="This is a placeholder choice prompt.">
+		<Option text="This is the first placeholder option." next="opt1"/>
+		<Option text="This is the second placeholder option." next="opt2"/>
+	</Choice>
+	<Line id="opt1" speaker="Speaker A" next="end">This is the placeholder branch line for the first option.</Line>
+	<Line id="opt2" speaker="Speaker A" next="end">This is the placeholder branch line for the second option.</Line>
+</Dialogue>

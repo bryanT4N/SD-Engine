@@ -2,7 +2,9 @@
 #include "Game/GameCommon.hpp"
 #include "Engine/Core/Vertex.hpp"
 #include "Engine/Core/Clock.hpp"
+#include "Engine/Core/NamedStrings.hpp"
 #include "Engine/Math/RandomNumberGenerator.hpp"
+#include "Engine/Narrative/DialogueDatabase.hpp"
 
 #include <vector>
 
@@ -11,7 +13,7 @@ class Camera;
 class Entity;
 class Player;
 class Prop;
-class UITestScreen;
+class DialogueScreen;
 
 //-----------------------------------------------------------------------------------------------
 class Game
@@ -25,10 +27,10 @@ public:
 	Camera*					m_screenCamera		= nullptr;
 	Camera*					m_attractCamera		= nullptr;
 	Player*					m_player			= nullptr;
-	Prop*					m_primaryCube		= nullptr;
-	Prop*					m_secondaryCube		= nullptr;
 	std::vector<Entity*>	m_entities;
-	UITestScreen*			m_uiTestScreen		= nullptr;
+	DialogueScreen*			m_dialogueScreen	= nullptr;
+	DialogueDatabase		m_dialogueDatabase;
+	NamedStrings			m_worldState;
 
 
 public:
@@ -49,7 +51,6 @@ public:
 
 	void UpdateEntities();
 	void DeleteGarbageEntities();
-	void UpdateAnimatedSceneProps();
 	float GetDeltaSeconds() const;
 
 };

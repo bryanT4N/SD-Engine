@@ -22,4 +22,5 @@ public:
 	float		m_textHeight = 16.f;
 	Rgba8		m_color = Rgba8::WHITE;
 	BitmapFont*	m_font = nullptr;
+	bool		m_wrapText = false;
 };

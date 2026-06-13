@@ -22,7 +22,7 @@ RandomNumberGenerator	g_appRNG;
 double					timeCurrentFrame;
 double					timePreviousFrame;
 
-static void PrintStartupControlsToDevConsole()
+[[maybe_unused]] static void PrintStartupControlsToDevConsole()
 {
 	if (g_engine == nullptr || g_engine->m_devConsole == nullptr) {
 		return;
@@ -31,23 +31,11 @@ static void PrintStartupControlsToDevConsole()
 	DevConsole* devConsole = g_engine->m_devConsole;
 	devConsole->AddLine(DevConsole::LOG_COLOR_INFO_MAJOR, "AceAttorneyApproximation Controls:");
 	std::string controlsBlockText =
-		"Mouse  - Aim\n"
-		"W / A  - Move\n"
-		"S / D  - Strafe\n"
-		"Q / E  - Roll\n"
-		"Z / C  - Elevate\n"
-		"Shift  - Sprint\n"
-		"H      - Set Camera to Origin\n"
-		"1      - Spawn Line\n"
-		"2      - Spawn Point\n"
-		"3      - Spawn Wireframe Sphere\n"
-		"4      - Spawn Basis\n"
-		"5      - Spawn Billboarded Text\n"
-		"6      - Spawn Wireframe Cylinder\n"
-		"7      - Add Message\n"
+		"Mouse  - Click dialogue choices\n"
+		"Space  - Start dialogue / advance line\n"
+		"P      - Pause\n"
 		"`~`    - Open Dev Console\n"
-		"Escape - Exit Game\n"
-		"Space  - Start Game";
+		"Escape - Return to Attract";
 	devConsole->AddLine(DevConsole::LOG_COLOR_INFO_MINOR, controlsBlockText);
 }
 
@@ -79,7 +67,6 @@ App::App()
 
 	m_game				= new Game;
 	SubscribeEventCallbackFunction("Quit", App::Command_Quit);
-	PrintStartupControlsToDevConsole();
 
 	timeCurrentFrame	= GetCurrentTimeSeconds();
 	timePreviousFrame	= timeCurrentFrame;
@@ -137,27 +124,7 @@ void App::UpdateCursorMode()
 		return;
 	}
 
-	bool windowHasFocus = true;
-	if (g_engine->m_window != nullptr) {
-		windowHasFocus = g_engine->m_window->HasFocus();
-	}
-
-	bool isDevConsoleOpen = false;
-	if (g_engine->m_devConsole != nullptr) {
-		isDevConsoleOpen = g_engine->m_devConsole->IsOpen();
-	}
-
-	bool isAttractState = true;
-	if (m_game != nullptr) {
-		isAttractState = (m_game->m_currentGameState == GameStates::ATTRACT);
-	}
-
-	if (!windowHasFocus || isDevConsoleOpen || isAttractState) {
-		g_engine->m_input->SetCursorMode(CursorMode::POINTER);
-	}
-	else {
-		g_engine->m_input->SetCursorMode(CursorMode::FPS);
-	}
+	g_engine->m_input->SetCursorMode(CursorMode::POINTER);
 }
 
 void App::SetIsQuitting()

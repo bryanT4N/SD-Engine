@@ -369,6 +369,7 @@
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Prop.cpp" />
     <ClCompile Include="UITestScreen.cpp" />
+    <ClCompile Include="DialogueScreen.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp" />
@@ -379,6 +380,7 @@
     <ClInclude Include="Player.hpp" />
     <ClInclude Include="Prop.hpp" />
     <ClInclude Include="UITestScreen.hpp" />
+    <ClInclude Include="DialogueScreen.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,5 +1,6 @@
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Core/VertexUtils.hpp"
+#include "Engine/Core/StringUtils.hpp"
 
 //-----------------------------------------------------------------------------------------------
 BitmapFont::BitmapFont( char const* fontFilePathNameWithNoExtension, Texture& fontTexture )
@@ -289,6 +290,84 @@ void BitmapFont::AddVertsForTextInBox2D( std::vector<Vertex>& vertexArray, std::
 
 		penPosition.x += glyphWidth;
 		++glyphsDrawn;
+	}
+}
+
+//-----------------------------------------------------------------------------------------------
+std::string BitmapFont::GetTextWrappedToWidth( std::string const& text, float boxWidth, float cellHeight, float cellAspectScale )
+{
+	float singleGlyphWidth = GetTextWidth( cellHeight, "M", cellAspectScale );
+	if( singleGlyphWidth <= 0.0f || boxWidth <= 0.0f ) {
+		return text;
+	}
+
+	int maxCharsPerLine = static_cast<int>( boxWidth / singleGlyphWidth );
+	if( maxCharsPerLine < 1 ) {
+		maxCharsPerLine = 1;
+	}
+
+	std::string wrappedText;
+	Strings authoredLines = SplitStringOnDelimiter( text, '\n' );
+
+	for( int authoredLineIndex = 0; authoredLineIndex < static_cast<int>( authoredLines.size() ); ++authoredLineIndex ) {
+		if( authoredLineIndex > 0 ) {
+			wrappedText += '\n';
+		}
+
+		Strings words = SplitStringOnDelimiter( authoredLines[static_cast<size_t>( authoredLineIndex )], ' ' );
+		int currentLineLength = 0;
+		bool currentLineHasContent = false;
+
+		for( std::string word : words ) {
+			while( static_cast<int>( word.length() ) > maxCharsPerLine ) {
+				if( currentLineHasContent ) {
+					wrappedText += '\n';
+					currentLineLength = 0;
+					currentLineHasContent = false;
+				}
+				wrappedText += word.substr( 0, static_cast<size_t>( maxCharsPerLine ) );
+				wrappedText += '\n';
+				word = word.substr( static_cast<size_t>( maxCharsPerLine ) );
+			}
+
+			int wordLength = static_cast<int>( word.length() );
+			int lengthIfAppended = currentLineHasContent ? currentLineLength + 1 + wordLength : wordLength;
+
+			if( currentLineHasContent && lengthIfAppended > maxCharsPerLine ) {
+				wrappedText += '\n';
+				currentLineLength = 0;
+				currentLineHasContent = false;
+				lengthIfAppended = wordLength;
+			}
+
+			if( currentLineHasContent ) {
+				wrappedText += ' ';
+			}
+			wrappedText += word;
+			currentLineLength = lengthIfAppended;
+			currentLineHasContent = true;
+		}
+	}
+
+	return wrappedText;
+}
+
+//-----------------------------------------------------------------------------------------------
+void BitmapFont::AddVertsForWrappedTextInBox2D( std::vector<Vertex>& vertexArray, std::string const& text, AABB2 const& box,
+	float cellHeight, Rgba8 tint, float cellAspectScale )
+{
+	if( cellHeight <= 0.0f ) {
+		return;
+	}
+
+	Vec2 boxDimensions = box.GetDimensions();
+	std::string wrappedText = GetTextWrappedToWidth( text, boxDimensions.x, cellHeight, cellAspectScale );
+	Strings lines = SplitStringOnDelimiter( wrappedText, '\n' );
+
+	float topLineMinY = box.m_maxs.y - cellHeight;
+	for( int lineIndex = 0; lineIndex < static_cast<int>( lines.size() ); ++lineIndex ) {
+		float lineMinY = topLineMinY - static_cast<float>( lineIndex ) * cellHeight;
+		AddVertsForText2D( vertexArray, Vec2( box.m_mins.x, lineMinY ), cellHeight, lines[static_cast<size_t>( lineIndex )], tint, cellAspectScale );
 	}
 }
 

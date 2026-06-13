@@ -20,7 +20,11 @@ void UILabel::Render(Renderer& renderer) const
 	if (m_text.empty()) return;
 
 	std::vector<Vertex> textVerts;
-	m_font->AddVertsForTextInBox2D(textVerts, m_text, m_screenBounds, m_textHeight, m_color);
+	if (m_wrapText) {
+		m_font->AddVertsForWrappedTextInBox2D(textVerts, m_text, m_screenBounds, m_textHeight, m_color);
+	} else {
+		m_font->AddVertsForTextInBox2D(textVerts, m_text, m_screenBounds, m_textHeight, m_color);
+	}
 
 	renderer.SetBlendMode(BlendMode::ALPHA);
 	renderer.SetSamplerMode(SamplerMode::POINT_CLAMP);

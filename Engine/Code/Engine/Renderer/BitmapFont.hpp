@@ -47,6 +47,11 @@ public:
 		Vec2 alignment = Vec2( 0.5f, 0.5f ), TextBoxMode mode = TextBoxMode::SHRINK_TO_FIT,
 		int maxGlyphsToDraw = 99999999 );
 
+	std::string GetTextWrappedToWidth( std::string const& text, float boxWidth, float cellHeight, float cellAspectScale = 1.f );
+
+	void AddVertsForWrappedTextInBox2D( std::vector<Vertex>& vertexArray, std::string const& text, AABB2 const& box,
+		float cellHeight, Rgba8 tint = Rgba8::WHITE, float cellAspectScale = 1.f );
+
 	float GetTextWidth( float cellHeight, std::string const& text, float cellAspectScale = 1.f );
 
 protected:

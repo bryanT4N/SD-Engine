@@ -97,6 +97,9 @@
     <ClCompile Include="UI\UIStackContainer.cpp" />
     <ClCompile Include="UI\UISystem.cpp" />
     <ClCompile Include="UI\UIWidget.cpp" />
+    <ClCompile Include="Narrative\DialogueDatabase.cpp" />
+    <ClCompile Include="Narrative\DialogueDefinition.cpp" />
+    <ClCompile Include="Narrative\DialogueWalker.cpp" />
     <ClCompile Include="Window\Window.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -176,6 +179,9 @@
     <ClInclude Include="UI\UISystem.hpp" />
     <ClInclude Include="UI\UITheme.hpp" />
     <ClInclude Include="UI\UIWidget.hpp" />
+    <ClInclude Include="Narrative\DialogueDatabase.hpp" />
+    <ClInclude Include="Narrative\DialogueDefinition.hpp" />
+    <ClInclude Include="Narrative\DialogueWalker.hpp" />
     <ClInclude Include="Window\Window.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
