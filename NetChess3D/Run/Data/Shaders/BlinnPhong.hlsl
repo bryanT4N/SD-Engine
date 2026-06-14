@@ -26,6 +26,15 @@ struct v2p_t
 };
 
 //------------------------------------------------------------------------------------------------
+cbuffer PerFrameCBOonGPU : register(b1)
+{
+	float c_time;
+	int c_debugInt;
+	float c_debugFloat;
+	float EMPTY_PADDING;
+};
+
+//------------------------------------------------------------------------------------------------
 cbuffer CameraCBOonGPU : register(b2)
 {
 	float4x4 WorldToCameraTransform;
@@ -95,5 +104,9 @@ float4 PixelMain(v2p_t input) : SV_Target0
 //	finalColor.rgb = EncodeXYZToRGB(normalize(input.worldTangent));
 //	finalColor.rgb = EncodeXYZToRGB(normalize(input.worldBitangent));
 //	finalColor.rgb = EncodeXYZToRGB(worldNormal);
+
+	// temporary c_time binding check
+	float perFramePulse = 0.5 + 0.5 * sin(c_time * 2.0);
+	finalColor.rgb *= perFramePulse;
 	return finalColor;
 }

@@ -61,6 +61,17 @@ struct ModelCBOonCPU
 static const int k_modelCBOSlot = 3;
 
 //-----------------------------------------------------------------------------------------------
+struct PerFrameCBOonCPU
+{
+	float c_time;
+	int c_debugInt;
+	float c_debugFloat;
+	float padding;
+};
+
+static const int k_perFrameCBOSlot = 1;
+
+//-----------------------------------------------------------------------------------------------
 static bool DoesFileExist(char const* filepath)
 {
 	if (filepath == nullptr) {
@@ -287,6 +298,7 @@ void Renderer::Startup()
 	m_immediateVBO = CreateVertexBuffer(sizeof(Vertex_PCU), sizeof(Vertex_PCU));
 	m_cameraCBOonGPU = CreateConstantBuffer(sizeof(CameraCBOonCPU));
 	m_modelCBOonGPU = CreateConstantBuffer(sizeof(ModelCBOonCPU));
+	m_perFrameCBOonGPU = CreateConstantBuffer(sizeof(PerFrameCBOonCPU));
 
 	// Blend states
 	D3D11_BLEND_DESC blendDesc = { };
@@ -435,6 +447,9 @@ void Renderer::Shutdown()
 
 	delete m_modelCBOonGPU;
 	m_modelCBOonGPU = nullptr;
+
+	delete m_perFrameCBOonGPU;
+	m_perFrameCBOonGPU = nullptr;
 
 	for (int i = 0; i < (int)BlendMode::COUNT; ++i)
 	{
@@ -585,6 +600,23 @@ void Renderer::SetModelCBO(
 
 	CopyCPUToGPU(&modelCBOonCPU, sizeof(ModelCBOonCPU), m_modelCBOonGPU);
 	BindConstantBuffer(k_modelCBOSlot, m_modelCBOonGPU);
+}
+
+//-----------------------------------------------------------------------------------------------
+void Renderer::SetPerFrameConstants(float time, int debugInt, float debugFloat)
+{
+	if (m_perFrameCBOonGPU == nullptr) {
+		return;
+	}
+
+	PerFrameCBOonCPU perFrameCBOonCPU;
+	perFrameCBOonCPU.c_time = time;
+	perFrameCBOonCPU.c_debugInt = debugInt;
+	perFrameCBOonCPU.c_debugFloat = debugFloat;
+	perFrameCBOonCPU.padding = 0.f;
+
+	CopyCPUToGPU(&perFrameCBOonCPU, sizeof(PerFrameCBOonCPU), m_perFrameCBOonGPU);
+	BindConstantBuffer(k_perFrameCBOSlot, m_perFrameCBOonGPU);
 }
 
 //-----------------------------------------------------------------------------------------------

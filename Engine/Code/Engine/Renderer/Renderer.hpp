@@ -109,6 +109,7 @@ protected:
 	VertexBuffer*				m_immediateVBO				= nullptr;
 	ConstantBuffer*				m_cameraCBOonGPU			= nullptr;
 	ConstantBuffer*				m_modelCBOonGPU				= nullptr;
+	ConstantBuffer*				m_perFrameCBOonGPU			= nullptr;
 
 	ID3D11BlendState*			m_blendState				= nullptr;
 	BlendMode					m_desiredBlendMode			= BlendMode::ALPHA;
@@ -140,6 +141,7 @@ public:
 	void		SetModelCBO(
 					Mat44 const& modelToWorldTransform = Mat44(),
 					Rgba8 const& modelColor = Rgba8::WHITE);
+	void		SetPerFrameConstants(float time, int debugInt, float debugFloat);
 
 	void		DrawVertexArray(int numVertexes, Vertex const* vertexes);
 	void		DrawVertexArray(const std::vector<Vertex>& vertexes);

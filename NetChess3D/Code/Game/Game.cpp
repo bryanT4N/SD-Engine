@@ -261,6 +261,8 @@ void Game::Render_Playing() const
 	g_engine->m_render->SetDepthMode(DepthMode::READ_WRITE_LESS_EQUAL);
 	g_engine->m_render->BeginCamera(worldCamera);
 	{
+		g_engine->m_render->SetPerFrameConstants(
+			static_cast<float>(m_gameClock.GetTotalSeconds()), 0, 0.f);
 		if (m_chessMatch != nullptr) {
 			g_engine->m_render->BindShader(m_litShader);
 			m_chessMatch->Render();
