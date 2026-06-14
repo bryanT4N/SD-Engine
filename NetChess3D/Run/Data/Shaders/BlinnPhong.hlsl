@@ -106,21 +106,18 @@ float4 PixelMain(v2p_t input) : SV_Target0
 	float4 modelColor = ModelColor;
 	float4 diffuseColor = diffuseTexel * surfaceColor * modelColor;
 
+	float3 worldNormal = normalize(input.worldNormal);
 	float3 lightDir = normalize(float3(3.0, 1.0, -2.0));
 	float3 sunlightColor = float3(1.0, 1.0, 1.0);
-	float3 worldNormal = normalize(input.worldNormal);
 	float diffuseLightDot = dot(-lightDir, worldNormal);
 	float lightStrength = clamp(diffuseLightDot, 0.2, 1.0);
 
 	float4 finalColor = float4(diffuseColor.rgb * sunlightColor * lightStrength, diffuseColor.a);
 	clip(finalColor.a - 0.01);
 
-//	finalColor.rgb = float3(uvCoords.xy, 0.0);
-//	finalColor.rgb = EncodeXYZToRGB(normalize(input.worldTangent));
-//	finalColor.rgb = EncodeXYZToRGB(normalize(input.worldBitangent));
-//	finalColor.rgb = EncodeXYZToRGB(worldNormal);
+	if (c_debugInt == 1) { finalColor.rgba = diffuseTexel.rgba; }
+	else if (c_debugInt == 3) { finalColor.rgb = float3(uvCoords.x, uvCoords.y, 0.0); }
+	else if (c_debugInt == 7) { finalColor.rgba = normalTexel.rgba; }
 
-	// temporary world-normal TBN check
-	finalColor.rgb = EncodeXYZToRGB(worldNormal);
 	return finalColor;
 }

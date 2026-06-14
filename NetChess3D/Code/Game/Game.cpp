@@ -178,6 +178,13 @@ void Game::UpdateFromKeyboard()
 	if (inputSystem->WasKeyJustPressed(KEYCODE_F4)) {
 		CycleCameraMode();
 	}
+
+	bool shiftHeld = inputSystem->IsKeyDown(KEYCODE_SHIFT);
+	for (int digit = 0; digit <= 9; ++digit) {
+		if (inputSystem->WasKeyJustPressed(static_cast<unsigned char>('0' + digit))) {
+			m_debugInt = shiftHeld ? (digit + 10) : digit;
+		}
+	}
 }
 
 void Game::UpdateFromController()
@@ -262,7 +269,7 @@ void Game::Render_Playing() const
 	g_engine->m_render->BeginCamera(worldCamera);
 	{
 		g_engine->m_render->SetPerFrameConstants(
-			static_cast<float>(m_gameClock.GetTotalSeconds()), 0, 0.f);
+			static_cast<float>(m_gameClock.GetTotalSeconds()), m_debugInt, 0.f);
 		if (m_chessMatch != nullptr) {
 			g_engine->m_render->BindShader(m_litShader);
 			m_chessMatch->Render();

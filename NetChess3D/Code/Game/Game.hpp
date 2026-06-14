@@ -33,6 +33,7 @@ public:
 	Shader*					m_litShader			= nullptr;
 	ChessMatch*				m_chessMatch		= nullptr;
 	CameraMode				m_currentCameraMode	= CameraMode::POV;
+	int						m_debugInt			= 0;
 
 
 public:
