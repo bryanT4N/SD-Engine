@@ -96,6 +96,21 @@ void ChessMatch::Render() const
 	}
 }
 
+void ChessMatch::Update(float deltaSeconds)
+{
+	if (m_board == nullptr) {
+		return;
+	}
+	for (int file = 0; file < ChessBoard::BOARD_SIZE; ++file) {
+		for (int rank = 0; rank < ChessBoard::BOARD_SIZE; ++rank) {
+			ChessPiece* piece = m_board->GetPieceAt(IntVec2(file, rank));
+			if (piece != nullptr) {
+				piece->UpdateAnimation(deltaSeconds);
+			}
+		}
+	}
+}
+
 void ChessMatch::PrintBoardToDevConsole() const
 {
 	if (g_engine == nullptr || g_engine->m_devConsole == nullptr || m_board == nullptr) {
@@ -215,6 +230,7 @@ bool ChessMatch::TryExecuteMove(
 		(deltaFileMoved == 2 || deltaFileMoved == -2);
 	IntVec2 castlingRookFromSquare(-1, -1);
 	IntVec2 castlingRookToSquare(-1, -1);
+	bool isKnightHop = (movingPiece->m_pieceType == PieceType::KNIGHT);
 
 	if (isCastling) {
 		if (!IsCastlingLegal(movingPiece, fromSquare, toSquare,
@@ -333,6 +349,7 @@ bool ChessMatch::TryExecuteMove(
 	movingPiece->m_square = toSquare;
 	movingPiece->m_hasEverMoved = true;
 	m_board->SetPieceAt(toSquare, movingPiece);
+	movingPiece->StartMoveAnimation(fromSquare, toSquare, isKnightHop);
 	if (isPromotion) {
 		movingPiece->m_pieceType = promoteToType;
 	}
@@ -351,6 +368,7 @@ bool ChessMatch::TryExecuteMove(
 			castlingRook->m_square = castlingRookToSquare;
 			castlingRook->m_hasEverMoved = true;
 			m_board->SetPieceAt(castlingRookToSquare, castlingRook);
+			castlingRook->StartMoveAnimation(castlingRookFromSquare, castlingRookToSquare, false);
 		}
 	}
 

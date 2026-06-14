@@ -28,6 +28,7 @@ public:
 	~ChessMatch();
 
 	void Render() const;
+	void Update(float deltaSeconds);
 
 	void PrintBoardToDevConsole() const;
 	void PrintGameStateToDevConsole() const;

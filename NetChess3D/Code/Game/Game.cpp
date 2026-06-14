@@ -144,6 +144,10 @@ void Game::Update()
 
 	UpdateEntities();
 
+	if (m_chessMatch != nullptr) {
+		m_chessMatch->Update(GetDeltaSeconds());
+	}
+
 	UpdateFromKeyboard();
 	UpdateFromController();
 

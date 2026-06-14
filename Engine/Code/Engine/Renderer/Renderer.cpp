@@ -1092,6 +1092,7 @@ void Renderer::SetStatesIfChanged()
 	{
 		m_samplerState = m_samplerStates[(int)m_desiredSamplerMode];
 		m_deviceContext->PSSetSamplers(0, 1, &m_samplerState);
+		m_deviceContext->PSSetSamplers(1, 1, &m_samplerState);
 	}
 
 	if (m_depthStencilState != m_depthStencilStates[(int)m_desiredDepthMode])
