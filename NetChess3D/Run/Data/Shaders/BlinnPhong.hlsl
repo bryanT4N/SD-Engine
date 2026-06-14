@@ -23,6 +23,9 @@ struct v2p_t
 	float3 worldTangent : WORLD_TANGENT;
 	float3 worldBitangent : WORLD_BITANGENT;
 	float3 worldNormal : WORLD_NORMAL;
+	float3 modelTangent : MODEL_TANGENT;
+	float3 modelBitangent : MODEL_BITANGENT;
+	float3 modelNormal : MODEL_NORMAL;
 };
 
 //------------------------------------------------------------------------------------------------
@@ -52,6 +55,8 @@ cbuffer ModelCBOonGPU : register(b3)
 //------------------------------------------------------------------------------------------------
 Texture2D diffuseTexture : register(t0);
 SamplerState diffuseSampler : register(s0);
+Texture2D normalTexture : register(t1);
+SamplerState normalSampler : register(s1);
 
 //------------------------------------------------------------------------------------------------
 v2p_t VertexMain(vs_input_t input)
@@ -73,6 +78,9 @@ v2p_t VertexMain(vs_input_t input)
 	v2p.worldTangent = worldTangent.xyz;
 	v2p.worldBitangent = worldBitangent.xyz;
 	v2p.worldNormal = worldNormal.xyz;
+	v2p.modelTangent = input.modelTangent;
+	v2p.modelBitangent = input.modelBitangent;
+	v2p.modelNormal = input.modelNormal;
 	return v2p;
 }
 
@@ -83,10 +91,17 @@ float3 EncodeXYZToRGB(float3 vec)
 }
 
 //------------------------------------------------------------------------------------------------
+float3 DecodeRGBToXYZ(float3 color)
+{
+	return (color * 2.0) - 1.0;
+}
+
+//------------------------------------------------------------------------------------------------
 float4 PixelMain(v2p_t input) : SV_Target0
 {
 	float2 uvCoords = input.uv;
 	float4 diffuseTexel = diffuseTexture.Sample(diffuseSampler, uvCoords);
+	float4 normalTexel = normalTexture.Sample(normalSampler, uvCoords);
 	float4 surfaceColor = input.color;
 	float4 modelColor = ModelColor;
 	float4 diffuseColor = diffuseTexel * surfaceColor * modelColor;
@@ -105,8 +120,7 @@ float4 PixelMain(v2p_t input) : SV_Target0
 //	finalColor.rgb = EncodeXYZToRGB(normalize(input.worldBitangent));
 //	finalColor.rgb = EncodeXYZToRGB(worldNormal);
 
-	// temporary c_time binding check
-	float perFramePulse = 0.5 + 0.5 * sin(c_time * 2.0);
-	finalColor.rgb *= perFramePulse;
+	// temporary world-normal TBN check
+	finalColor.rgb = EncodeXYZToRGB(worldNormal);
 	return finalColor;
 }

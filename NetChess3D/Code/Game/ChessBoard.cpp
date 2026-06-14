@@ -31,7 +31,8 @@ void ChessBoard::Render() const
 	}
 	Renderer* renderer = g_engine->m_render;
 	renderer->SetModelCBO(Mat44(), Rgba8::WHITE);
-	renderer->BindTexture(nullptr);
+	renderer->BindTexture(renderer->CreateOrGetTextureFromFile("Data/Images/woodfloor_d.png"), 0);
+	renderer->BindTexture(renderer->CreateOrGetTextureFromFile("Data/Images/woodfloor_n.png"), 1);
 	renderer->DrawVertexBuffer(m_vertexBuffer, static_cast<unsigned int>(m_vertexCount));
 }
 

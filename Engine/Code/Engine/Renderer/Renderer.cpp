@@ -1031,7 +1031,7 @@ Texture* Renderer::GetTextureFromFileName(char const* imageFilePath)
 }
 
 //-----------------------------------------------------------------------------------------------
-void Renderer::BindTexture(const Texture* texture)
+void Renderer::BindTexture(const Texture* texture, int slot)
 {
 	if (texture == nullptr)
 	{
@@ -1039,7 +1039,7 @@ void Renderer::BindTexture(const Texture* texture)
 	}
 
 	m_currentTexture = texture;
-	m_deviceContext->PSSetShaderResources(0, 1, &m_currentTexture->m_shaderResourceView);
+	m_deviceContext->PSSetShaderResources(slot, 1, &m_currentTexture->m_shaderResourceView);
 }
 
 

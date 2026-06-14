@@ -42,7 +42,8 @@ void ChessPiece::Render() const
 	Mat44 modelToWorld = Mat44::MakeTranslation3D(piecePosition);
 
 	renderer->SetModelCBO(modelToWorld, tint);
-	renderer->BindTexture(nullptr);
+	renderer->BindTexture(renderer->CreateOrGetTextureFromFile("Data/Images/Bricks_d.png"), 0);
+	renderer->BindTexture(renderer->CreateOrGetTextureFromFile("Data/Images/Bricks_n.png"), 1);
 	renderer->DrawIndexedVertexBuffer(vbo, ibo, static_cast<unsigned int>(indexCount));
 }
 

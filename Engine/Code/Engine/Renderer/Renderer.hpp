@@ -154,7 +154,7 @@ public:
 	void		BindIndexBuffer(IndexBuffer* ibo) const;
 	void		DrawIndexedVertexBuffer(VertexBuffer* vbo, IndexBuffer* ibo, unsigned int indexCount);
 
-	void		BindTexture(const Texture* texture);
+	void		BindTexture(const Texture* texture, int slot = 0);
 	void		SetBlendMode(BlendMode blendMode);
 	void		SetSamplerMode(SamplerMode samplerMode);
 	void		SetDepthMode(DepthMode depthMode);
