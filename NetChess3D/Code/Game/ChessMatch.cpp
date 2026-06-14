@@ -194,7 +194,35 @@ bool ChessMatch::TryExecuteMove(
 		return false;
 	}
 
-	if (!isTeleport) {
+	bool isEnPassantCapture =
+		!isTeleport &&
+		movingPiece->m_pieceType == PieceType::PAWN &&
+		destPiece == nullptr &&
+		fromSquare.x != toSquare.x &&
+		toSquare.x == m_enPassantSquare.x && toSquare.y == m_enPassantSquare.y;
+	int deltaRankMoved = toSquare.y - fromSquare.y;
+	bool isPawnDoubleStep =
+		movingPiece->m_pieceType == PieceType::PAWN &&
+		fromSquare.x == toSquare.x &&
+		(deltaRankMoved == 2 || deltaRankMoved == -2);
+	IntVec2 enPassantMiddleSquare(fromSquare.x, fromSquare.y + deltaRankMoved / 2);
+
+	int deltaFileMoved = toSquare.x - fromSquare.x;
+	bool isCastling =
+		!isTeleport &&
+		movingPiece->m_pieceType == PieceType::KING &&
+		deltaRankMoved == 0 &&
+		(deltaFileMoved == 2 || deltaFileMoved == -2);
+	IntVec2 castlingRookFromSquare(-1, -1);
+	IntVec2 castlingRookToSquare(-1, -1);
+
+	if (isCastling) {
+		if (!IsCastlingLegal(movingPiece, fromSquare, toSquare,
+			castlingRookFromSquare, castlingRookToSquare, out_errorMessage)) {
+			return false;
+		}
+	}
+	else if (!isTeleport) {
 		std::string geometryError;
 		if (!IsMoveGeometryLegalForPiece(movingPiece, fromSquare, toSquare, geometryError)) {
 			out_errorMessage = geometryError;
@@ -258,6 +286,9 @@ bool ChessMatch::TryExecuteMove(
 				" and promoted to %s",
 				ChessPieceDefinition::GetDefinition(promoteToType).m_name.c_str());
 		}
+		if (isCastling) {
+			*out_moveAnnouncement += " (castling)";
+		}
 	}
 
 	bool capturedKingThisMove = false;
@@ -279,6 +310,24 @@ bool ChessMatch::TryExecuteMove(
 		}
 		m_board->CapturePieceAt(toSquare);
 	}
+	else if (isEnPassantCapture) {
+		ChessPiece* enPassantVictim = m_board->GetPieceAt(m_enPassantVictimSquare);
+		if (enPassantVictim != nullptr) {
+			int victimPlayerIdx = enPassantVictim->m_ownerPlayerIdx;
+			ChessPieceDefinition const& capturedDef =
+				ChessPieceDefinition::GetDefinition(enPassantVictim->m_pieceType);
+			if (out_captureAnnouncement != nullptr) {
+				*out_captureAnnouncement = Stringf(
+					"%s captured %s's %s at %c%c",
+					m_players[currentPlayerIdx]->GetDisplayName().c_str(),
+					m_players[victimPlayerIdx]->GetDisplayName().c_str(),
+					capturedDef.m_name.c_str(),
+					static_cast<char>('A' + m_enPassantVictimSquare.x),
+					static_cast<char>('1' + m_enPassantVictimSquare.y));
+			}
+			m_board->CapturePieceAt(m_enPassantVictimSquare);
+		}
+	}
 
 	m_board->SetPieceAt(fromSquare, nullptr);
 	movingPiece->m_square = toSquare;
@@ -286,6 +335,23 @@ bool ChessMatch::TryExecuteMove(
 	m_board->SetPieceAt(toSquare, movingPiece);
 	if (isPromotion) {
 		movingPiece->m_pieceType = promoteToType;
+	}
+
+	m_enPassantSquare = IntVec2(-1, -1);
+	m_enPassantVictimSquare = IntVec2(-1, -1);
+	if (!isTeleport && isPawnDoubleStep) {
+		m_enPassantSquare = enPassantMiddleSquare;
+		m_enPassantVictimSquare = toSquare;
+	}
+
+	if (isCastling) {
+		ChessPiece* castlingRook = m_board->GetPieceAt(castlingRookFromSquare);
+		if (castlingRook != nullptr) {
+			m_board->SetPieceAt(castlingRookFromSquare, nullptr);
+			castlingRook->m_square = castlingRookToSquare;
+			castlingRook->m_hasEverMoved = true;
+			m_board->SetPieceAt(castlingRookToSquare, castlingRook);
+		}
 	}
 
 	if (capturedKingThisMove) {
@@ -420,6 +486,8 @@ bool ChessMatch::ApplyOverride(std::string const& board64, std::string& out_erro
 		}
 	}
 
+	m_enPassantSquare = IntVec2(-1, -1);
+	m_enPassantVictimSquare = IntVec2(-1, -1);
 	return true;
 }
 
@@ -540,6 +608,9 @@ bool ChessMatch::IsPawnMoveLegal(
 		if (destPiece != nullptr) {
 			return true;
 		}
+		if (toSquare.x == m_enPassantSquare.x && toSquare.y == m_enPassantSquare.y) {
+			return true;
+		}
 		out_errorMessage = "Illegal move: pawns capture diagonally.";
 		return false;
 	}
@@ -572,5 +643,52 @@ bool ChessMatch::IsKingDistanceLegal(
 			}
 		}
 	}
+	return true;
+}
+
+bool ChessMatch::IsCastlingLegal(
+	ChessPiece const* movingKing,
+	IntVec2 const& fromSquare,
+	IntVec2 const& toSquare,
+	IntVec2& out_rookFromSquare,
+	IntVec2& out_rookToSquare,
+	std::string& out_errorMessage) const
+{
+	if (movingKing->m_hasEverMoved) {
+		out_errorMessage = "Illegal move: the king has already moved.";
+		return false;
+	}
+
+	int rank = fromSquare.y;
+	bool isKingside = (toSquare.x > fromSquare.x);
+	int rookFromFile = isKingside ? (ChessBoard::BOARD_SIZE - 1) : 0;
+	out_rookFromSquare = IntVec2(rookFromFile, rank);
+	out_rookToSquare = IntVec2(isKingside ? (toSquare.x - 1) : (toSquare.x + 1), rank);
+
+	ChessPiece* rook = m_board->GetPieceAt(out_rookFromSquare);
+	if (rook == nullptr || rook->m_pieceType != PieceType::ROOK
+		|| rook->m_ownerPlayerIdx != movingKing->m_ownerPlayerIdx) {
+		out_errorMessage = "Illegal move: no rook to castle with.";
+		return false;
+	}
+	if (rook->m_hasEverMoved) {
+		out_errorMessage = "Illegal move: the rook has already moved.";
+		return false;
+	}
+
+	int stepFile = isKingside ? 1 : -1;
+	for (int file = fromSquare.x + stepFile; file != rookFromFile; file += stepFile) {
+		if (m_board->GetPieceAt(IntVec2(file, rank)) != nullptr) {
+			out_errorMessage = "Illegal move: cannot castle through pieces.";
+			return false;
+		}
+	}
+
+	std::string kingDistanceError;
+	if (!IsKingDistanceLegal(movingKing, toSquare, kingDistanceError)) {
+		out_errorMessage = kingDistanceError;
+		return false;
+	}
+
 	return true;
 }

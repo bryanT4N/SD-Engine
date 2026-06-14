@@ -21,6 +21,8 @@ public:
 	ChessPlayer* m_players[2] = { nullptr, nullptr };
 	ChessBoard* m_board = nullptr;
 	ChessGameState m_currentState = ChessGameState::FIRST_PLAYER_TURN;
+	IntVec2 m_enPassantSquare = IntVec2(-1, -1);
+	IntVec2 m_enPassantVictimSquare = IntVec2(-1, -1);
 
 	ChessMatch();
 	~ChessMatch();
@@ -65,5 +67,12 @@ private:
 	bool IsKingDistanceLegal(
 		ChessPiece const* movingKing,
 		IntVec2 const& toSquare,
+		std::string& out_errorMessage) const;
+	bool IsCastlingLegal(
+		ChessPiece const* movingKing,
+		IntVec2 const& fromSquare,
+		IntVec2 const& toSquare,
+		IntVec2& out_rookFromSquare,
+		IntVec2& out_rookToSquare,
 		std::string& out_errorMessage) const;
 };
