@@ -60,9 +60,14 @@ void ChessPiece::Render() const
 	}
 	Mat44 modelToWorld = Mat44::MakeTranslation3D(piecePosition);
 
+	char const* diffusePath = (m_ownerPlayerIdx == 0)
+		? "Data/Images/GreenPiece_d.jpg" : "Data/Images/RedPiece_d.jpg";
+	char const* normalPath = (m_ownerPlayerIdx == 0)
+		? "Data/Images/GreenPiece_n.jpg" : "Data/Images/RedPiece_n.jpg";
+
 	renderer->SetModelCBO(modelToWorld, tint);
-	renderer->BindTexture(renderer->CreateOrGetTextureFromFile("Data/Images/Bricks_d.png"), 0);
-	renderer->BindTexture(renderer->CreateOrGetTextureFromFile("Data/Images/Bricks_n.png"), 1);
+	renderer->BindTexture(renderer->CreateOrGetTextureFromFile(diffusePath), 0);
+	renderer->BindTexture(renderer->CreateOrGetTextureFromFile(normalPath), 1);
 	renderer->DrawIndexedVertexBuffer(vbo, ibo, static_cast<unsigned int>(indexCount));
 }
 

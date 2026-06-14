@@ -15,9 +15,11 @@
 #include "Engine/Core/Time.hpp"
 #include "Engine/Core/VertexUtils.hpp"
 #include "Engine/Input/InputSystem.hpp"
+#include "Engine/Math/AABB3.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Math/Mat44.hpp"
 #include "Engine/Renderer/Camera.hpp"
+#include "Engine/Renderer/VertexBuffer.hpp"
 #include "Engine/Renderer/DebugRenderSystem.hpp"
 #include "Engine/Renderer/Renderer.hpp"
 #include "Engine/Renderer/Shader.hpp"
@@ -65,7 +67,6 @@ Game::~Game()
 void Game::Startup()
 {
 	m_player = new Player(this);
-	m_player->m_position = Vec3(-2.f, 0.f, 1.f);
 	AddEntity(m_player);
 
 	DebugAddWorldBasis();
@@ -102,6 +103,10 @@ void Game::Startup()
 	m_overheadCamera->SetPositionAndOrientation(
 		Vec3(4.f, 4.f, 13.f),
 		EulerAngles(90.f, 89.f, 0.f));
+
+	CreateTestCubeMesh();
+
+	m_player->SnapToPose(m_povCamera->GetPosition(), m_povCamera->GetOrientation());
 }
 
 void Game::Shutdown()
@@ -125,6 +130,9 @@ void Game::Shutdown()
 
 	delete m_overheadCamera;
 	m_overheadCamera = nullptr;
+
+	delete m_testCubeVBO;
+	m_testCubeVBO = nullptr;
 }
 
 void Game::AddEntity(Entity* entity)
@@ -274,10 +282,11 @@ void Game::Render_Playing() const
 	{
 		g_engine->m_render->SetPerFrameConstants(
 			static_cast<float>(m_gameClock.GetTotalSeconds()), m_debugInt, 0.f);
+		g_engine->m_render->BindShader(m_litShader);
 		if (m_chessMatch != nullptr) {
-			g_engine->m_render->BindShader(m_litShader);
 			m_chessMatch->Render();
 		}
+		RenderTestCubes();
 		g_engine->m_render->BindShader(nullptr);
 		DebugRenderWorld(worldCamera);
 	}
@@ -358,6 +367,57 @@ void Game::Render_Playing() const
 	g_engine->m_render->EndCamera(*m_screenCamera);
 }
 
+void Game::CreateTestCubeMesh()
+{
+	if (g_engine == nullptr || g_engine->m_render == nullptr) {
+		return;
+	}
+	Renderer* renderer = g_engine->m_render;
+
+	float const halfSize = 0.75f;
+	AABB3 cubeBounds(-halfSize, -halfSize, -halfSize, halfSize, halfSize, halfSize);
+	std::vector<Vertex> verts;
+	AddVertsForAABB3D(verts, cubeBounds);
+	if (verts.empty()) {
+		return;
+	}
+
+	unsigned int vertexBytes = static_cast<unsigned int>(verts.size() * sizeof(Vertex));
+	m_testCubeVBO = renderer->CreateVertexBuffer(vertexBytes, sizeof(Vertex));
+	renderer->CopyCPUToGPU(verts.data(), vertexBytes, m_testCubeVBO);
+	m_testCubeVertexCount = static_cast<int>(verts.size());
+}
+
+void Game::RenderTestCubes() const
+{
+	if (g_engine == nullptr || g_engine->m_render == nullptr) {
+		return;
+	}
+	if (m_testCubeVBO == nullptr || m_testCubeVertexCount == 0) {
+		return;
+	}
+	Renderer* renderer = g_engine->m_render;
+
+	struct TestCube
+	{
+		Vec3 position;
+		char const* diffusePath;
+		char const* normalPath;
+	};
+	TestCube const testCubes[] = {
+		{ Vec3(1.5f, -5.f, 2.f), "Data/Images/Cobblestone_Diffuse.png", "Data/Images/Cobblestone_Normal.png" },
+		{ Vec3(6.5f, -5.f, 2.f), "Data/Images/FunkyBricks_d.png",       "Data/Images/FunkyBricks_n.png" },
+	};
+
+	for (TestCube const& cube : testCubes) {
+		Mat44 modelToWorld = Mat44::MakeTranslation3D(cube.position);
+		renderer->SetModelCBO(modelToWorld, Rgba8::WHITE);
+		renderer->BindTexture(renderer->CreateOrGetTextureFromFile(cube.diffusePath), 0);
+		renderer->BindTexture(renderer->CreateOrGetTextureFromFile(cube.normalPath), 1);
+		renderer->DrawVertexBuffer(m_testCubeVBO, static_cast<unsigned int>(m_testCubeVertexCount));
+	}
+}
+
 float Game::GetDeltaSeconds() const
 {
 	return static_cast<float>(m_gameClock.GetDeltaSeconds());
@@ -386,9 +446,9 @@ void Game::CycleCameraMode()
 
 	switch (m_currentCameraMode)
 	{
+	case CameraMode::FREE_SPECTATOR:	m_currentCameraMode = CameraMode::POV;				break;
 	case CameraMode::POV:				m_currentCameraMode = CameraMode::OVERHEAD;			break;
 	case CameraMode::OVERHEAD:			m_currentCameraMode = CameraMode::FREE_SPECTATOR;	break;
-	case CameraMode::FREE_SPECTATOR:	m_currentCameraMode = CameraMode::POV;				break;
 	default:																				break;
 	}
 

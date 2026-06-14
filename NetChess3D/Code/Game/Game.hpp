@@ -14,6 +14,7 @@ class Entity;
 class Player;
 class Prop;
 class Shader;
+class VertexBuffer;
 
 //-----------------------------------------------------------------------------------------------
 class Game
@@ -32,8 +33,10 @@ public:
 	std::vector<Entity*>	m_entities;
 	Shader*					m_litShader			= nullptr;
 	ChessMatch*				m_chessMatch		= nullptr;
-	CameraMode				m_currentCameraMode	= CameraMode::POV;
+	CameraMode				m_currentCameraMode	= CameraMode::FREE_SPECTATOR;
 	int						m_debugInt			= 0;
+	VertexBuffer*			m_testCubeVBO		= nullptr;
+	int						m_testCubeVertexCount = 0;
 
 
 public:
@@ -47,6 +50,8 @@ public:
 	void Render() const;
 	void Render_Attract() const;
 	void Render_Playing() const;
+	void RenderTestCubes() const;
+	void CreateTestCubeMesh();
 
 	void Update();
 	void UpdateFromKeyboard();
