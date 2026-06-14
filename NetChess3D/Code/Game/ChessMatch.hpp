@@ -4,6 +4,7 @@
 #include <string>
 
 class ChessBoard;
+class ChessPiece;
 class ChessPlayer;
 
 enum class ChessGameState
@@ -34,11 +35,35 @@ public:
 	bool TryExecuteMove(
 		IntVec2 const& fromSquare,
 		IntVec2 const& toSquare,
+		bool isTeleport,
+		std::string const& promoteTo,
 		std::string& out_errorMessage,
 		std::string* out_moveAnnouncement = nullptr,
 		std::string* out_captureAnnouncement = nullptr,
 		std::string* out_victoryAnnouncement = nullptr);
 	static IntVec2 ParseSquareNotation(std::string const& notation);
 
+	bool ApplyOverride(std::string const& board64, std::string& out_error);
+
 	int GetCurrentPlayerIdx() const;
+
+private:
+	bool IsMoveGeometryLegalForPiece(
+		ChessPiece const* movingPiece,
+		IntVec2 const& fromSquare,
+		IntVec2 const& toSquare,
+		std::string& out_errorMessage) const;
+	bool IsSlidingPathClear(
+		IntVec2 const& fromSquare,
+		IntVec2 const& toSquare,
+		std::string& out_errorMessage) const;
+	bool IsPawnMoveLegal(
+		ChessPiece const* movingPiece,
+		IntVec2 const& fromSquare,
+		IntVec2 const& toSquare,
+		std::string& out_errorMessage) const;
+	bool IsKingDistanceLegal(
+		ChessPiece const* movingKing,
+		IntVec2 const& toSquare,
+		std::string& out_errorMessage) const;
 };

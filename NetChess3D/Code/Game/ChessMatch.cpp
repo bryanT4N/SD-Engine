@@ -18,6 +18,37 @@ static char const* TURN_SEPARATOR =
 static char const* VICTORY_SEPARATOR =
 	"#################################################################";
 
+static bool TryParseBoardChar(char asciiPiece, PieceType& out_type, int& out_owner)
+{
+	bool isBlack = (asciiPiece >= 'a' && asciiPiece <= 'z');
+	out_owner = isBlack ? 1 : 0;
+	char upper = isBlack ? static_cast<char>(asciiPiece - 'a' + 'A') : asciiPiece;
+	switch (upper)
+	{
+	case 'K':	out_type = PieceType::KING;		return true;
+	case 'Q':	out_type = PieceType::QUEEN;		return true;
+	case 'R':	out_type = PieceType::ROOK;		return true;
+	case 'B':	out_type = PieceType::BISHOP;	return true;
+	case 'N':	out_type = PieceType::KNIGHT;	return true;
+	case 'P':	out_type = PieceType::PAWN;		return true;
+	default:									return false;
+	}
+}
+
+static bool TryParsePromoteToType(std::string const& value, PieceType& out_type)
+{
+	std::string lower;
+	lower.reserve(value.size());
+	for (char c : value) {
+		lower.push_back((c >= 'A' && c <= 'Z') ? static_cast<char>(c - 'A' + 'a') : c);
+	}
+	if (lower == "queen")	{ out_type = PieceType::QUEEN;	return true; }
+	if (lower == "rook")	{ out_type = PieceType::ROOK;	return true; }
+	if (lower == "bishop")	{ out_type = PieceType::BISHOP;	return true; }
+	if (lower == "knight")	{ out_type = PieceType::KNIGHT;	return true; }
+	return false;
+}
+
 ChessMatch::ChessMatch()
 {
 	m_players[0] = new ChessPlayer(0, PLAYER_TINT_GREEN, "Green");
@@ -120,32 +151,32 @@ IntVec2 ChessMatch::ParseSquareNotation(std::string const& notation)
 bool ChessMatch::TryExecuteMove(
 	IntVec2 const& fromSquare,
 	IntVec2 const& toSquare,
+	bool isTeleport,
+	std::string const& promoteTo,
 	std::string& out_errorMessage,
 	std::string* out_moveAnnouncement,
 	std::string* out_captureAnnouncement,
 	std::string* out_victoryAnnouncement)
 {
 	if (m_board == nullptr) {
-		out_errorMessage = "Internal error: board is null";
+		out_errorMessage = "Illegal move: no board.";
 		return false;
 	}
 
 	if (m_currentState == ChessGameState::GAME_OVER_PLAYER_0_WINS
 		|| m_currentState == ChessGameState::GAME_OVER_PLAYER_1_WINS) {
-		out_errorMessage = "Illegal move: game is over, no moves allowed.";
+		out_errorMessage = "Illegal move: game is over.";
 		return false;
 	}
 
 	if (fromSquare.x == toSquare.x && fromSquare.y == toSquare.y) {
-		out_errorMessage = Stringf("Illegal move: 'from' and 'to' are the same square (%c%c).",
-			static_cast<char>('a' + fromSquare.x),
-			static_cast<char>('1' + fromSquare.y));
+		out_errorMessage = "Illegal move: same square.";
 		return false;
 	}
 
 	ChessPiece* movingPiece = m_board->GetPieceAt(fromSquare);
 	if (movingPiece == nullptr) {
-		out_errorMessage = Stringf("Illegal move: there is no piece at %c%c.",
+		out_errorMessage = Stringf("Illegal move: no piece at %c%c.",
 			static_cast<char>('A' + fromSquare.x),
 			static_cast<char>('1' + fromSquare.y));
 		return false;
@@ -153,28 +184,62 @@ bool ChessMatch::TryExecuteMove(
 
 	int currentPlayerIdx = GetCurrentPlayerIdx();
 	if (movingPiece->m_ownerPlayerIdx != currentPlayerIdx) {
-		ChessPieceDefinition const& movingDef =
-			ChessPieceDefinition::GetDefinition(movingPiece->m_pieceType);
-		out_errorMessage = Stringf(
-			"Illegal move: the %s at %c%c belongs to player %d, but it is currently player %d's turn.",
-			movingDef.m_name.c_str(),
-			static_cast<char>('A' + fromSquare.x),
-			static_cast<char>('1' + fromSquare.y),
-			movingPiece->m_ownerPlayerIdx,
-			currentPlayerIdx);
+		out_errorMessage = "Illegal move: not your turn.";
 		return false;
 	}
 
 	ChessPiece* destPiece = m_board->GetPieceAt(toSquare);
 	if (destPiece != nullptr && destPiece->m_ownerPlayerIdx == currentPlayerIdx) {
-		ChessPieceDefinition const& destDef =
-			ChessPieceDefinition::GetDefinition(destPiece->m_pieceType);
-		out_errorMessage = Stringf(
-			"Illegal move: %c%c is occupied by your own %s.",
-			static_cast<char>('A' + toSquare.x),
-			static_cast<char>('1' + toSquare.y),
-			destDef.m_name.c_str());
+		out_errorMessage = "Illegal move: your own piece is there.";
 		return false;
+	}
+
+	if (!isTeleport) {
+		std::string geometryError;
+		if (!IsMoveGeometryLegalForPiece(movingPiece, fromSquare, toSquare, geometryError)) {
+			out_errorMessage = geometryError;
+			return false;
+		}
+
+		PieceType movingType = movingPiece->m_pieceType;
+		bool isSlidingPiece =
+			movingType == PieceType::ROOK ||
+			movingType == PieceType::BISHOP ||
+			movingType == PieceType::QUEEN;
+		if (isSlidingPiece) {
+			std::string blockedError;
+			if (!IsSlidingPathClear(fromSquare, toSquare, blockedError)) {
+				out_errorMessage = blockedError;
+				return false;
+			}
+		}
+
+		if (movingType == PieceType::KING) {
+			std::string kingDistanceError;
+			if (!IsKingDistanceLegal(movingPiece, toSquare, kingDistanceError)) {
+				out_errorMessage = kingDistanceError;
+				return false;
+			}
+		}
+	}
+
+	bool isPromotion = false;
+	PieceType promoteToType = PieceType::INVALID;
+	if (movingPiece->m_pieceType == PieceType::PAWN) {
+		bool reachesFarRank =
+			(movingPiece->m_ownerPlayerIdx == 0 && toSquare.y == ChessBoard::BOARD_SIZE - 1) ||
+			(movingPiece->m_ownerPlayerIdx == 1 && toSquare.y == 0);
+		if (reachesFarRank) {
+			if (promoteTo.empty()) {
+				out_errorMessage = "Illegal move: need promoteTo= (queen/rook/bishop/knight).";
+				return false;
+			}
+			if (!TryParsePromoteToType(promoteTo, promoteToType)) {
+				out_errorMessage = Stringf("Illegal move: bad promoteTo: %s", promoteTo.c_str());
+				return false;
+			}
+			isPromotion = true;
+		}
 	}
 
 	ChessPieceDefinition const& movingDef =
@@ -188,6 +253,11 @@ bool ChessMatch::TryExecuteMove(
 			static_cast<char>('1' + fromSquare.y),
 			static_cast<char>('A' + toSquare.x),
 			static_cast<char>('1' + toSquare.y));
+		if (isPromotion) {
+			*out_moveAnnouncement += Stringf(
+				" and promoted to %s",
+				ChessPieceDefinition::GetDefinition(promoteToType).m_name.c_str());
+		}
 	}
 
 	bool capturedKingThisMove = false;
@@ -212,7 +282,11 @@ bool ChessMatch::TryExecuteMove(
 
 	m_board->SetPieceAt(fromSquare, nullptr);
 	movingPiece->m_square = toSquare;
+	movingPiece->m_hasEverMoved = true;
 	m_board->SetPieceAt(toSquare, movingPiece);
+	if (isPromotion) {
+		movingPiece->m_pieceType = promoteToType;
+	}
 
 	if (capturedKingThisMove) {
 		m_currentState = (currentPlayerIdx == 0)
@@ -287,4 +361,216 @@ void ChessMatch::PrintVictoryHeaderToDevConsole(std::string const& victoryAnnoun
 	devConsole->AddLine(DevConsole::LOG_COLOR_WARNING, VICTORY_SEPARATOR);
 	devConsole->AddLine(DevConsole::LOG_COLOR_WARNING, victoryAnnouncement);
 	devConsole->AddLine(DevConsole::LOG_COLOR_WARNING, VICTORY_SEPARATOR);
+}
+
+bool ChessMatch::ApplyOverride(std::string const& board64, std::string& out_error)
+{
+	if (m_board == nullptr) {
+		out_error = "Illegal ChessOverride: no board.";
+		return false;
+	}
+
+	int const squareCount = ChessBoard::BOARD_SIZE * ChessBoard::BOARD_SIZE;
+	if (static_cast<int>(board64.length()) != squareCount) {
+		out_error = Stringf(
+			"Illegal ChessOverride: board must be 64 chars (got %d).",
+			static_cast<int>(board64.length()));
+		return false;
+	}
+
+	for (int index = 0; index < squareCount; ++index) {
+		char asciiPiece = board64[index];
+		PieceType parsedType;
+		int parsedOwner;
+		if (asciiPiece != '.' && !TryParseBoardChar(asciiPiece, parsedType, parsedOwner)) {
+			out_error = Stringf("Illegal ChessOverride: bad char '%c' at %d.", asciiPiece, index);
+			return false;
+		}
+	}
+
+	for (int index = 0; index < squareCount; ++index) {
+		int file = index % ChessBoard::BOARD_SIZE;
+		int rank = index / ChessBoard::BOARD_SIZE;
+		IntVec2 square(file, rank);
+		char desired = board64[index];
+
+		ChessPiece* existing = m_board->GetPieceAt(square);
+		char current = (existing != nullptr) ? existing->GetDisplayLetter() : '.';
+		if (current == desired) {
+			continue;
+		}
+
+		if (existing != nullptr) {
+			m_board->CapturePieceAt(square);
+		}
+		if (desired != '.') {
+			PieceType parsedType;
+			int parsedOwner;
+			TryParseBoardChar(desired, parsedType, parsedOwner);
+			m_board->SetPieceAt(square, new ChessPiece(parsedType, parsedOwner, square));
+		}
+	}
+
+	for (int file = 0; file < ChessBoard::BOARD_SIZE; ++file) {
+		for (int rank = 0; rank < ChessBoard::BOARD_SIZE; ++rank) {
+			ChessPiece* piece = m_board->GetPieceAt(IntVec2(file, rank));
+			if (piece != nullptr) {
+				piece->m_hasEverMoved = false;
+			}
+		}
+	}
+
+	return true;
+}
+
+bool ChessMatch::IsMoveGeometryLegalForPiece(
+	ChessPiece const* movingPiece,
+	IntVec2 const& fromSquare,
+	IntVec2 const& toSquare,
+	std::string& out_errorMessage) const
+{
+	int deltaFile = toSquare.x - fromSquare.x;
+	int deltaRank = toSquare.y - fromSquare.y;
+	int absFile = (deltaFile < 0) ? -deltaFile : deltaFile;
+	int absRank = (deltaRank < 0) ? -deltaRank : deltaRank;
+	bool isDiagonal = (absFile == absRank) && (absFile != 0);
+	bool isAxisAligned = (deltaFile == 0) != (deltaRank == 0);
+
+	switch (movingPiece->m_pieceType)
+	{
+	case PieceType::BISHOP:
+		if (isDiagonal) {
+			return true;
+		}
+		out_errorMessage = "Illegal move: bishops move diagonally.";
+		return false;
+	case PieceType::ROOK:
+		if (isAxisAligned) {
+			return true;
+		}
+		out_errorMessage = "Illegal move: rooks move straight.";
+		return false;
+	case PieceType::QUEEN:
+		if (isDiagonal || isAxisAligned) {
+			return true;
+		}
+		out_errorMessage = "Illegal move: queens move straight or diagonally.";
+		return false;
+	case PieceType::KNIGHT:
+		if ((absFile == 1 && absRank == 2) || (absFile == 2 && absRank == 1)) {
+			return true;
+		}
+		out_errorMessage = "Illegal move: knights move in an L.";
+		return false;
+	case PieceType::KING:
+		if (absFile <= 1 && absRank <= 1) {
+			return true;
+		}
+		out_errorMessage = "Illegal move: kings move one square.";
+		return false;
+	case PieceType::PAWN:
+		return IsPawnMoveLegal(movingPiece, fromSquare, toSquare, out_errorMessage);
+	default:
+		return true;
+	}
+}
+
+bool ChessMatch::IsSlidingPathClear(
+	IntVec2 const& fromSquare,
+	IntVec2 const& toSquare,
+	std::string& out_errorMessage) const
+{
+	int deltaFile = toSquare.x - fromSquare.x;
+	int deltaRank = toSquare.y - fromSquare.y;
+	int stepFile = (deltaFile > 0) - (deltaFile < 0);
+	int stepRank = (deltaRank > 0) - (deltaRank < 0);
+
+	IntVec2 cursor(fromSquare.x + stepFile, fromSquare.y + stepRank);
+	while (cursor.x != toSquare.x || cursor.y != toSquare.y) {
+		if (m_board->GetPieceAt(cursor) != nullptr) {
+			out_errorMessage = Stringf(
+				"Illegal move: path blocked at %c%c.",
+				static_cast<char>('A' + cursor.x),
+				static_cast<char>('1' + cursor.y));
+			return false;
+		}
+		cursor.x += stepFile;
+		cursor.y += stepRank;
+	}
+	return true;
+}
+
+bool ChessMatch::IsPawnMoveLegal(
+	ChessPiece const* movingPiece,
+	IntVec2 const& fromSquare,
+	IntVec2 const& toSquare,
+	std::string& out_errorMessage) const
+{
+	int forwardDir = (movingPiece->m_ownerPlayerIdx == 0) ? 1 : -1;
+	int deltaFile = toSquare.x - fromSquare.x;
+	int deltaRank = toSquare.y - fromSquare.y;
+	int absFile = (deltaFile < 0) ? -deltaFile : deltaFile;
+	ChessPiece* destPiece = m_board->GetPieceAt(toSquare);
+
+	if (deltaFile == 0) {
+		if (deltaRank == forwardDir) {
+			if (destPiece != nullptr) {
+				out_errorMessage = "Illegal move: pawns can't capture forward.";
+				return false;
+			}
+			return true;
+		}
+		if (deltaRank == 2 * forwardDir) {
+			if (movingPiece->m_hasEverMoved) {
+				out_errorMessage = "Illegal move: pawn already moved.";
+				return false;
+			}
+			IntVec2 middleSquare(fromSquare.x, fromSquare.y + forwardDir);
+			if (m_board->GetPieceAt(middleSquare) != nullptr || destPiece != nullptr) {
+				out_errorMessage = "Illegal move: path blocked.";
+				return false;
+			}
+			return true;
+		}
+		out_errorMessage = "Illegal move: pawns move forward.";
+		return false;
+	}
+
+	if (absFile == 1 && deltaRank == forwardDir) {
+		if (destPiece != nullptr) {
+			return true;
+		}
+		out_errorMessage = "Illegal move: pawns capture diagonally.";
+		return false;
+	}
+
+	out_errorMessage = "Illegal move: bad pawn move.";
+	return false;
+}
+
+bool ChessMatch::IsKingDistanceLegal(
+	ChessPiece const* movingKing,
+	IntVec2 const& toSquare,
+	std::string& out_errorMessage) const
+{
+	int enemyOwner = 1 - movingKing->m_ownerPlayerIdx;
+	for (int file = 0; file < ChessBoard::BOARD_SIZE; ++file) {
+		for (int rank = 0; rank < ChessBoard::BOARD_SIZE; ++rank) {
+			ChessPiece* piece = m_board->GetPieceAt(IntVec2(file, rank));
+			if (piece == nullptr || piece->m_pieceType != PieceType::KING
+				|| piece->m_ownerPlayerIdx != enemyOwner) {
+				continue;
+			}
+			int deltaFile = toSquare.x - file;
+			int deltaRank = toSquare.y - rank;
+			int absFile = (deltaFile < 0) ? -deltaFile : deltaFile;
+			int absRank = (deltaRank < 0) ? -deltaRank : deltaRank;
+			int chebyshevDistance = (absFile > absRank) ? absFile : absRank;
+			if (chebyshevDistance < 2) {
+				out_errorMessage = "Illegal move: kings can't be adjacent.";
+				return false;
+			}
+		}
+	}
+	return true;
 }

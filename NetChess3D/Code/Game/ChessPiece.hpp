@@ -9,6 +9,7 @@ public:
 	PieceType m_pieceType = PieceType::INVALID;
 	int m_ownerPlayerIdx = -1;
 	IntVec2 m_square = IntVec2(-1, -1);
+	bool m_hasEverMoved = false;
 
 	ChessPiece(PieceType pieceType, int ownerPlayerIdx, IntVec2 const& square);
 	virtual ~ChessPiece() override = default;

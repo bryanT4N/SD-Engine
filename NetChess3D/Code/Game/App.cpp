@@ -76,6 +76,7 @@ App::App()
 	m_game				= new Game;
 	SubscribeEventCallbackFunction("Quit", App::Command_Quit);
 	SubscribeEventCallbackFunction("ChessMove", Game::ChessMove_Cmd);
+	SubscribeEventCallbackFunction("ChessOverride", Game::ChessOverride_Cmd);
 	//PrintStartupControlsToDevConsole();
 
 	timeCurrentFrame	= GetCurrentTimeSeconds();

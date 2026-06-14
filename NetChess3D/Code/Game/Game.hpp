@@ -60,4 +60,5 @@ public:
 	void CycleCameraMode();
 
 	static bool ChessMove_Cmd(EventArgs& args);
+	static bool ChessOverride_Cmd(EventArgs& args);
 };

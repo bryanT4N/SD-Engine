@@ -429,7 +429,7 @@ bool Game::ChessMove_Cmd(EventArgs& args)
 		if (g_engine != nullptr && g_engine->m_devConsole != nullptr) {
 			g_engine->m_devConsole->AddLine(
 				DevConsole::LOG_COLOR_ERROR,
-				"Illegal move: 'from=' and 'to=' arguments are required. Example: ChessMove from=e2 to=e4");
+				"Illegal move: need from= and to= (e.g. from=e2 to=e4).");
 		}
 		return true;
 	}
@@ -439,8 +439,7 @@ bool Game::ChessMove_Cmd(EventArgs& args)
 		if (g_engine != nullptr && g_engine->m_devConsole != nullptr) {
 			g_engine->m_devConsole->AddLine(
 				DevConsole::LOG_COLOR_ERROR,
-				Stringf("Illegal move: 'from=%s' is not a valid square (squares are a-h x 1-8).",
-					fromSquareArg.c_str()));
+				Stringf("Illegal move: bad 'from' square: %s", fromSquareArg.c_str()));
 		}
 		return true;
 	}
@@ -450,8 +449,7 @@ bool Game::ChessMove_Cmd(EventArgs& args)
 		if (g_engine != nullptr && g_engine->m_devConsole != nullptr) {
 			g_engine->m_devConsole->AddLine(
 				DevConsole::LOG_COLOR_ERROR,
-				Stringf("Illegal move: 'to=%s' is not a valid square (squares are a-h x 1-8).",
-					toSquareArg.c_str()));
+				Stringf("Illegal move: bad 'to' square: %s", toSquareArg.c_str()));
 		}
 		return true;
 	}
@@ -461,12 +459,14 @@ bool Game::ChessMove_Cmd(EventArgs& args)
 	}
 
 	ChessMatch* match = g_theApp->m_game->m_chessMatch;
+	bool isTeleport = args.GetValue("teleport", false);
+	std::string promoteTo = args.GetValue("promoteTo", "");
 	std::string errorMessage;
 	std::string moveAnnouncement;
 	std::string captureAnnouncement;
 	std::string victoryAnnouncement;
 	bool moveSucceeded = match->TryExecuteMove(
-		fromSquare, toSquare, errorMessage,
+		fromSquare, toSquare, isTeleport, promoteTo, errorMessage,
 		&moveAnnouncement, &captureAnnouncement, &victoryAnnouncement);
 
 	if (!moveSucceeded) {
@@ -496,6 +496,40 @@ bool Game::ChessMove_Cmd(EventArgs& args)
 	}
 
 	match->PrintTurnHeaderToDevConsole();
+	return true;
+}
+
+
+//-----------------------------------------------------------------------------------------------
+bool Game::ChessOverride_Cmd(EventArgs& args)
+{
+	std::string boardArg = args.GetValue("board", "");
+	if (boardArg.empty()) {
+		if (g_engine != nullptr && g_engine->m_devConsole != nullptr) {
+			g_engine->m_devConsole->AddLine(
+				DevConsole::LOG_COLOR_ERROR,
+				"Illegal ChessOverride: need board= (64 chars).");
+		}
+		return true;
+	}
+
+	if (g_theApp == nullptr || g_theApp->m_game == nullptr || g_theApp->m_game->m_chessMatch == nullptr) {
+		return true;
+	}
+
+	ChessMatch* match = g_theApp->m_game->m_chessMatch;
+	std::string errorMessage;
+	if (!match->ApplyOverride(boardArg, errorMessage)) {
+		if (g_engine != nullptr && g_engine->m_devConsole != nullptr) {
+			g_engine->m_devConsole->AddLine(DevConsole::LOG_COLOR_ERROR, errorMessage);
+		}
+		return true;
+	}
+
+	if (g_engine != nullptr && g_engine->m_devConsole != nullptr) {
+		g_engine->m_devConsole->AddLine(DevConsole::LOG_COLOR_INFO_MAJOR, "Board overridden.");
+	}
+	match->PrintBoardToDevConsole();
 	return true;
 }
 
