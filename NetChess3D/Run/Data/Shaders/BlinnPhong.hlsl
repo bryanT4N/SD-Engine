@@ -107,9 +107,20 @@ float4 PixelMain(v2p_t input) : SV_Target0
 	float4 diffuseColor = diffuseTexel * surfaceColor * modelColor;
 
 	float3 worldNormal = normalize(input.worldNormal);
+	float3 worldTangent = normalize(input.worldTangent - dot(input.worldTangent, worldNormal) * worldNormal);
+	float3 worldBitangent = cross(worldNormal, worldTangent);
+	float3x3 tbnToWorld = float3x3(worldTangent, worldBitangent, worldNormal);
+
+	float3 tbnSpaceNormal = normalize(DecodeRGBToXYZ(normalTexel.rgb));
+	float3 worldMicroNormal = normalize(mul(tbnSpaceNormal, tbnToWorld)); // reverse-mul applies transpose
+
 	float3 lightDir = normalize(float3(3.0, 1.0, -2.0));
 	float3 sunlightColor = float3(1.0, 1.0, 1.0);
-	float diffuseLightDot = dot(-lightDir, worldNormal);
+	float diffuseLightDot = dot(-lightDir, worldMicroNormal);
+	if (c_debugInt == 10 || c_debugInt == 12)
+	{
+		diffuseLightDot = dot(-lightDir, worldNormal);
+	}
 	float lightStrength = clamp(diffuseLightDot, 0.2, 1.0);
 
 	float4 finalColor = float4(diffuseColor.rgb * sunlightColor * lightStrength, diffuseColor.a);
@@ -118,8 +129,6 @@ float4 PixelMain(v2p_t input) : SV_Target0
 	float3 modelTangent = normalize(input.modelTangent);
 	float3 modelBitangent = normalize(input.modelBitangent);
 	float3 modelNormal = normalize(input.modelNormal);
-	float3 worldTangent = normalize(input.worldTangent);
-	float3 worldBitangent = normalize(input.worldBitangent);
 
 	if (c_debugInt == 1) { finalColor.rgba = diffuseTexel.rgba; }
 	else if (c_debugInt == 3) { finalColor.rgb = float3(uvCoords.x, uvCoords.y, 0.0); }
@@ -127,6 +136,9 @@ float4 PixelMain(v2p_t input) : SV_Target0
 	else if (c_debugInt == 5) { finalColor.rgb = EncodeXYZToRGB(modelBitangent); }
 	else if (c_debugInt == 6) { finalColor.rgb = EncodeXYZToRGB(modelNormal); }
 	else if (c_debugInt == 7) { finalColor.rgba = normalTexel.rgba; }
+	else if (c_debugInt == 8) { finalColor.rgb = EncodeXYZToRGB(tbnSpaceNormal); }
+	else if (c_debugInt == 9) { finalColor.rgb = EncodeXYZToRGB(worldMicroNormal); }
+	else if (c_debugInt == 11 || c_debugInt == 12) { finalColor.rgb = lightStrength.xxx; }
 	else if (c_debugInt == 14) { finalColor.rgb = EncodeXYZToRGB(worldTangent); }
 	else if (c_debugInt == 15) { finalColor.rgb = EncodeXYZToRGB(worldBitangent); }
 	else if (c_debugInt == 16) { finalColor.rgb = EncodeXYZToRGB(worldNormal); }
