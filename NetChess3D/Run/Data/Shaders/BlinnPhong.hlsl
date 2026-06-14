@@ -115,9 +115,24 @@ float4 PixelMain(v2p_t input) : SV_Target0
 	float4 finalColor = float4(diffuseColor.rgb * sunlightColor * lightStrength, diffuseColor.a);
 	clip(finalColor.a - 0.01);
 
+	float3 modelTangent = normalize(input.modelTangent);
+	float3 modelBitangent = normalize(input.modelBitangent);
+	float3 modelNormal = normalize(input.modelNormal);
+	float3 worldTangent = normalize(input.worldTangent);
+	float3 worldBitangent = normalize(input.worldBitangent);
+
 	if (c_debugInt == 1) { finalColor.rgba = diffuseTexel.rgba; }
 	else if (c_debugInt == 3) { finalColor.rgb = float3(uvCoords.x, uvCoords.y, 0.0); }
+	else if (c_debugInt == 4) { finalColor.rgb = EncodeXYZToRGB(modelTangent); }
+	else if (c_debugInt == 5) { finalColor.rgb = EncodeXYZToRGB(modelBitangent); }
+	else if (c_debugInt == 6) { finalColor.rgb = EncodeXYZToRGB(modelNormal); }
 	else if (c_debugInt == 7) { finalColor.rgba = normalTexel.rgba; }
+	else if (c_debugInt == 14) { finalColor.rgb = EncodeXYZToRGB(worldTangent); }
+	else if (c_debugInt == 15) { finalColor.rgb = EncodeXYZToRGB(worldBitangent); }
+	else if (c_debugInt == 16) { finalColor.rgb = EncodeXYZToRGB(worldNormal); }
+	else if (c_debugInt == 17) { finalColor.rgb = EncodeXYZToRGB(normalize(mul(ModelToWorldTransform, float4(1.0, 0.0, 0.0, 0.0)).xyz)); }
+	else if (c_debugInt == 18) { finalColor.rgb = EncodeXYZToRGB(normalize(mul(ModelToWorldTransform, float4(0.0, 1.0, 0.0, 0.0)).xyz)); }
+	else if (c_debugInt == 19) { finalColor.rgb = EncodeXYZToRGB(normalize(mul(ModelToWorldTransform, float4(0.0, 0.0, 1.0, 0.0)).xyz)); }
 
 	return finalColor;
 }
