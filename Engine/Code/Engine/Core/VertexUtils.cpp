@@ -239,32 +239,32 @@ void AddVertsForAABB3D(
 		color, UVs);
 	// -X
 	PushQuadVertsWithTBN(verts,
-		Vec3(minX, minY, maxZ),
-		Vec3(minX, maxY, maxZ),
 		Vec3(minX, maxY, minZ),
 		Vec3(minX, minY, minZ),
-		Vec3(0.f, 1.f, 0.f),
-		Vec3(0.f, 0.f, -1.f),
+		Vec3(minX, minY, maxZ),
+		Vec3(minX, maxY, maxZ),
+		Vec3(0.f, -1.f, 0.f),
+		Vec3(0.f, 0.f, 1.f),
 		Vec3(-1.f, 0.f, 0.f),
 		color, UVs);
 	// +Y
 	PushQuadVertsWithTBN(verts,
+		Vec3(maxX, maxY, minZ),
 		Vec3(minX, maxY, minZ),
 		Vec3(minX, maxY, maxZ),
 		Vec3(maxX, maxY, maxZ),
-		Vec3(maxX, maxY, minZ),
+		Vec3(-1.f, 0.f, 0.f),
 		Vec3(0.f, 0.f, 1.f),
-		Vec3(1.f, 0.f, 0.f),
 		Vec3(0.f, 1.f, 0.f),
 		color, UVs);
 	// -Y
 	PushQuadVertsWithTBN(verts,
-		Vec3(minX, minY, maxZ),
 		Vec3(minX, minY, minZ),
 		Vec3(maxX, minY, minZ),
 		Vec3(maxX, minY, maxZ),
-		Vec3(0.f, 0.f, -1.f),
+		Vec3(minX, minY, maxZ),
 		Vec3(1.f, 0.f, 0.f),
+		Vec3(0.f, 0.f, 1.f),
 		Vec3(0.f, -1.f, 0.f),
 		color, UVs);
 	// +Z
@@ -279,12 +279,12 @@ void AddVertsForAABB3D(
 		color, UVs);
 	// -Z
 	PushQuadVertsWithTBN(verts,
-		Vec3(maxX, minY, minZ),
-		Vec3(minX, minY, minZ),
 		Vec3(minX, maxY, minZ),
 		Vec3(maxX, maxY, minZ),
-		Vec3(-1.f, 0.f, 0.f),
-		Vec3(0.f, 1.f, 0.f),
+		Vec3(maxX, minY, minZ),
+		Vec3(minX, minY, minZ),
+		Vec3(1.f, 0.f, 0.f),
+		Vec3(0.f, -1.f, 0.f),
 		Vec3(0.f, 0.f, -1.f),
 		color, UVs);
 }

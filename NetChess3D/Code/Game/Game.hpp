@@ -52,6 +52,7 @@ public:
 	void Render_Playing() const;
 	void RenderTestCubes() const;
 	void CreateTestCubeMesh();
+	void PreloadGameTextures();
 
 	void Update();
 	void UpdateFromKeyboard();
@@ -62,6 +63,7 @@ public:
 	float GetDeltaSeconds() const;
 
 	Camera const& GetActiveWorldCamera() const;
+	char const* GetDebugRenderModeText(int debugInt) const;
 	void UpdatePoVCameraForCurrentPlayer();
 	void CycleCameraMode();
 

@@ -114,7 +114,7 @@ float4 PixelMain(v2p_t input) : SV_Target0
 	float3 tbnSpaceNormal = normalize(DecodeRGBToXYZ(normalTexel.rgb));
 	float3 worldMicroNormal = normalize(mul(tbnSpaceNormal, tbnToWorld)); // reverse-mul applies transpose
 
-	float3 lightDir = normalize(float3(3.0, 1.0, -2.0));
+	float3 lightDir = normalize(float3(cos(0.5 * c_time), sin(0.5 * c_time), -1.0));
 	float3 sunlightColor = float3(1.0, 1.0, 1.0);
 	float diffuseLightDot = dot(-lightDir, worldMicroNormal);
 	if (c_debugInt == 10 || c_debugInt == 12)
@@ -131,6 +131,7 @@ float4 PixelMain(v2p_t input) : SV_Target0
 	float3 modelNormal = normalize(input.modelNormal);
 
 	if (c_debugInt == 1) { finalColor.rgba = diffuseTexel.rgba; }
+	else if (c_debugInt == 2) { finalColor.rgba = surfaceColor.rgba; }
 	else if (c_debugInt == 3) { finalColor.rgb = float3(uvCoords.x, uvCoords.y, 0.0); }
 	else if (c_debugInt == 4) { finalColor.rgb = EncodeXYZToRGB(modelTangent); }
 	else if (c_debugInt == 5) { finalColor.rgb = EncodeXYZToRGB(modelBitangent); }

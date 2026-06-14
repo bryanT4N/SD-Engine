@@ -105,6 +105,7 @@ void Game::Startup()
 		EulerAngles(90.f, 89.f, 0.f));
 
 	CreateTestCubeMesh();
+	PreloadGameTextures();
 
 	m_player->SnapToPose(m_povCamera->GetPosition(), m_povCamera->GetOrientation());
 }
@@ -333,9 +334,13 @@ void Game::Render_Playing() const
 		}
 	}
 
+	std::string debugModeText = Stringf(
+		"DebugInt=%d; render mode is %s",
+		m_debugInt,
+		GetDebugRenderModeText(m_debugInt));
 	DebugAddScreenText(
-		"Use the DevConsole (~) to enter commands.",
-		AABB2(10.f, SCREEN_SIZE_Y - 30.f, 780.f, SCREEN_SIZE_Y - 5.f),
+		debugModeText,
+		AABB2(10.f, SCREEN_SIZE_Y - 30.f, SCREEN_SIZE_X - 10.f, SCREEN_SIZE_Y - 5.f),
 		10.f,
 		Vec2(0.f, 1.f),
 		0.f,
@@ -365,6 +370,25 @@ void Game::Render_Playing() const
 	}
 	DebugRenderScreen(*m_screenCamera);
 	g_engine->m_render->EndCamera(*m_screenCamera);
+}
+
+void Game::PreloadGameTextures()
+{
+	if (g_engine == nullptr || g_engine->m_render == nullptr) {
+		return;
+	}
+	Renderer* renderer = g_engine->m_render;
+
+	char const* texturePaths[] = {
+		"Data/Images/woodfloor_d.png",        "Data/Images/woodfloor_n.png",
+		"Data/Images/GreenPiece_d.jpg",       "Data/Images/GreenPiece_n.jpg",
+		"Data/Images/RedPiece_d.jpg",         "Data/Images/RedPiece_n.jpg",
+		"Data/Images/Cobblestone_Diffuse.png", "Data/Images/Cobblestone_Normal.png",
+		"Data/Images/FunkyBricks_d.png",      "Data/Images/FunkyBricks_n.png",
+	};
+	for (char const* path : texturePaths) {
+		renderer->CreateOrGetTextureFromFile(path);
+	}
 }
 
 void Game::CreateTestCubeMesh()
@@ -423,6 +447,33 @@ float Game::GetDeltaSeconds() const
 	return static_cast<float>(m_gameClock.GetDeltaSeconds());
 }
 
+char const* Game::GetDebugRenderModeText(int debugInt) const
+{
+	switch (debugInt)
+	{
+	case 0:		return "Lit (including normal maps)";
+	case 1:		return "Diffuse texture only";
+	case 2:		return "Vertex Color only (C)";
+	case 3:		return "UV TexCoords only (U)";
+	case 4:		return "Vertex Tangents: raw, in Model Space (T)";
+	case 5:		return "Vertex Bitangents: raw, in Model Space (B)";
+	case 6:		return "Vertex Normals: raw, in Model Space (N)";
+	case 7:		return "Normal Map texel only";
+	case 8:		return "Pixel Normal in TBN space (decoded, raw)";
+	case 9:		return "Pixel Normal in World space (decoded, transformed)";
+	case 10:	return "Lit, but ignoring normal maps (surface normals only)";
+	case 11:	return "Light strength (with normal maps)";
+	case 12:	return "Light strength (vs. vertex/surface normals only)";
+	case 14:	return "Vertex Tangents: transformed, into World space (T)";
+	case 15:	return "Vertex Bitangents: transformed, into World space (B)";
+	case 16:	return "Vertex Normals: transformed, into World space (N)";
+	case 17:	return "ModelToWorld I (forward) basis vector, in World space (I)";
+	case 18:	return "ModelToWorld J (left) basis vector, in World space (J)";
+	case 19:	return "ModelToWorld K (up) basis vector, in World space (K)";
+	default:	return "???";
+	}
+}
+
 Camera const& Game::GetActiveWorldCamera() const
 {
 	if (m_currentCameraMode == CameraMode::POV && m_povCamera != nullptr) {
@@ -436,27 +487,12 @@ Camera const& Game::GetActiveWorldCamera() const
 
 void Game::CycleCameraMode()
 {
-	Camera const* previousCamera = nullptr;
-	if (m_currentCameraMode == CameraMode::POV) {
-		previousCamera = m_povCamera;
-	}
-	else if (m_currentCameraMode == CameraMode::OVERHEAD) {
-		previousCamera = m_overheadCamera;
-	}
-
 	switch (m_currentCameraMode)
 	{
 	case CameraMode::FREE_SPECTATOR:	m_currentCameraMode = CameraMode::POV;				break;
 	case CameraMode::POV:				m_currentCameraMode = CameraMode::OVERHEAD;			break;
 	case CameraMode::OVERHEAD:			m_currentCameraMode = CameraMode::FREE_SPECTATOR;	break;
 	default:																				break;
-	}
-
-	if (m_currentCameraMode == CameraMode::FREE_SPECTATOR &&
-		m_player != nullptr && previousCamera != nullptr) {
-		m_player->SnapToPose(
-			previousCamera->GetPosition(),
-			previousCamera->GetOrientation());
 	}
 }
 
