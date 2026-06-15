@@ -37,6 +37,16 @@ An Ace Attorney style adventure game. It has a dialogue system driven by XML, a 
 - **UI** — widget framework.
 - **Narrative** — XML dialogue.
 
+## Building now: UI and dialogue frameworks
+
+For the Ace Attorney style game, I'm building two engine frameworks.
+
+**UI** is a retained-mode widget system. Widgets live in containers, with anchor-based and stack-based layout (Unity-style anchors). Input uses capture and focus, so one widget can hold the mouse. A theme layer keeps shared colors and fonts in one place.
+
+**Dialogue** is data-driven. Conversations are authored as nodes in data files (modeled after Articy:draft). A walker steps through the nodes at runtime, so writers can change the story without touching code.
+
+Both are still in progress.
+
 ## Build
 
 - Visual Studio 2022, x64.
