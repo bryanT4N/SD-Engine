@@ -1,0 +1,22 @@
+# Visual Studio / build output
+.vs/
+Temporary/
+x64/
+Debug/
+Release/
+*.user
+*.obj
+*.pdb
+*.ilk
+*.idb
+*.exp
+*.lib
+*.exe
+*.tlog
+*.log
+
+# FMOD SDK (proprietary middleware — not redistributed; install locally, see Engine/Code/ThirdParty/fmod/README.md)
+Engine/Code/ThirdParty/fmod/*
+!Engine/Code/ThirdParty/fmod/README.md
+**/Run/fmod.dll
+**/Run/fmod64.dll
