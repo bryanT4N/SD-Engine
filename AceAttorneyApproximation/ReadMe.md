@@ -1,31 +1,17 @@
 # AceAttorneyApproximation
 
-DFS1 project — Capcom 逆转裁判 (Ace Attorney) 风 ADV with RPG framework hooks.
+An Ace Attorney style adventure game, built on a custom C++ engine.
 
-## 1 How to Use
+## How to Use
 
-### 1.1 Build and Run
+Open `AceAttorneyApproximation.sln` in Visual Studio 2022, then build (`Ctrl + Shift + B`). The executable is in the `Run/` folder.
 
-Open `AceAttorneyApproximation\AceAttorneyApproximation.sln` in Visual Studio, then press `CTRL + SHIFT + B` to build the solution. `AceAttorneyApproximation_Release_x64.exe` will be under the `AceAttorneyApproximation\Run\` folder.
+### Controls
 
-Build configurations: `Debug` / `DebugInline` / `FastBreak` / `Release` × `x64` / `Win32`.
+- `~` opens the dev console.
+- Left-click to interact with NPCs, dialogue options, and items.
+- `Esc` opens the pause menu.
 
-### 1.2 Controls
+## Status
 
-- `~` opens the DevConsole.
-- Mouse left-click to interact with NPCs, dialogue options, and inventory items.
-- `Esc` opens the pause menu (or returns to attract screen).
-
-## 2 Project Structure
-
-- `Code/Game/` — Game-side code (App / Game / Entity / Player / Prop / GameCommon)
-- `Run/Data/Shaders/` — HLSL shaders
-- `Run/Data/Audio/Fonts/Images/` — assets
-
-Engine is shared at `../Engine/`.
-
-## 3 Status
-
-Sprint 1 / Milestone 1 — foundation (Basic UI System + Linear Dialogue + Test Conversation).
-
-Governance documents: `../../Documents/SMUCourses/HGME6226-DFS1/Governance/`.
+In development.
